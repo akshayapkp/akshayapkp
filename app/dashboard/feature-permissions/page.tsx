@@ -108,6 +108,12 @@ const initialPermissions: PermissionItem[] = [
   accountantAccess: false,
   staffAccess: false,
 },
+{
+  id: "17",
+  featureName: "Latest Billed Entry",
+  accountantAccess: true,
+  staffAccess: true,
+},
 ];
 
 export default function FeaturePermissionsPage() {
@@ -129,15 +135,39 @@ export default function FeaturePermissionsPage() {
         if (error) throw error;
 
         if (!cancelled && data?.permissions) {
-          const savedPermissions = Array.isArray(data.permissions)
+          const storedPermissions = Array.isArray(data.permissions)
             ? (data.permissions as PermissionItem[])
-            : initialPermissions;
+            : [];
+
+          // Keep existing saved permissions, while automatically adding any
+          // newly introduced features (such as Latest Billed Entry).
+          const savedPermissions = initialPermissions.map((defaultItem) => {
+            const existingItem = storedPermissions.find(
+              (item) => String(item.id) === String(defaultItem.id)
+            );
+            return existingItem ? { ...defaultItem, ...existingItem } : defaultItem;
+          });
 
           setPermissions(savedPermissions);
           localStorage.setItem(
             "role_feature_permissions",
             JSON.stringify(savedPermissions)
           );
+
+          // Persist newly added feature definitions to Supabase without
+          // changing the user's existing access choices.
+          if (storedPermissions.length !== savedPermissions.length) {
+            await supabase
+              .from("feature_permissions")
+              .upsert(
+                {
+                  id: 1,
+                  permissions: savedPermissions,
+                  updated_at: new Date().toISOString(),
+                },
+                { onConflict: "id" }
+              );
+          }
           return;
         }
 
