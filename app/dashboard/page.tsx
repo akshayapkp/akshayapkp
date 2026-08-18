@@ -11,7 +11,9 @@ import ImageToTextTool from "./tools/ImageToText";
 import CalculatorTool from "./tools/calculatol";
 import ResumeStudio from "./tools/ResumeStudio";
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import {
   FileText,
   Wallet,
@@ -19,6 +21,7 @@ import {
   DollarSign,
   ArrowUpRight,
   Bell,
+  History,
   Megaphone,
   ChevronDown,
   ChevronUp,
@@ -35,24 +38,6 @@ interface WalletItem {
   currentBalance: number;
   lastUpdated: string;
 }
-
-const DEFAULT_WALLETS: WalletItem[] = [
-  { id: "1", name: "Cash", openingBalance: 0, currentBalance: 0, lastUpdated: "" },
-  { id: "2", name: "BANK", openingBalance: 50717.21, currentBalance: 0, lastUpdated: "" },
-  { id: "3", name: "Edistrict", openingBalance: 1767, currentBalance: 0, lastUpdated: "" },
-  { id: "4", name: "CSC", openingBalance: 70, currentBalance: 0, lastUpdated: "" },
-];
-
-const DEFAULT_SERVICE_LINKS: ServiceItem[] = [
-  { id: "4", title: "Aadhaar online Demographic Update", url: "https://myaadhaar.uidai.gov.in/", note: "myaadhaar.uidai.gov.in" },
-  { id: "15", title: "Caste Certificate", url: "https://e-district.kerala.gov.in/", note: "e-district.kerala.gov.in" },
-  { id: "16", title: "Driving Licence Application", url: "https://parivahan.gov.in/", note: "parivahan.gov.in" },
-  { id: "17", title: "Electricity Bill Payment", url: "https://kseb.in/", note: "kseb.in" },
-  { id: "19", title: "PAN Card Application", url: "https://www.protean.in/", note: "protean.in" },
-  { id: "20", title: "Ration Card Services", url: "https://civilsupplieskerala.gov.in/", note: "civilsupplieskerala.gov.in" },
-  { id: "22", title: "Passport Application", url: "https://www.passportindia.gov.in/", note: "passportindia.gov.in" },
-  { id: "23", title: "Voter ID Registration", url: "https://voters.eci.gov.in/", note: "voters.eci.gov.in" },
-];
 
 interface ServiceItem {
   id?: string;
@@ -73,6 +58,65 @@ interface QuickLinkItem {
   isInternal: boolean;
 }
 
+const CENTRAL_STORAGE_ROW_ID = 999999;
+const CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";
+
+interface LatestEntry {
+  billId: string;
+  staffName: string;
+  customerName: string;
+  phone: string;
+  serviceName: string;
+  totalAmount: number;
+  totalPaid: number;
+  balance: number;
+  dateTime: string;
+  timestamp: string;
+}
+
+const parseArray = (value: any): any[] => {
+  if (!Array.isArray(value)) return [];
+  return value;
+};
+
+const readLocalArray = (key: string): any[] => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const loadCentralDashboardStore = async (): Promise<Record<string, any[]> | null> => {
+  try {
+    // Central storage is only a shared-sync layer. The dashboard must never
+    // crash or open the Next.js error overlay when the row is unavailable,
+    // blocked by RLS, or temporarily unreachable. Local storage remains the
+    // safe fallback inside refreshLatestEntry().
+    const { data, error } = await supabase
+      .from("feature_permissions")
+      .select("id, permissions")
+      .eq("id", CENTRAL_STORAGE_ROW_ID)
+      .limit(1);
+
+    if (error || !Array.isArray(data) || data.length === 0) {
+      return null;
+    }
+
+    const payload = data[0]?.permissions;
+    if (!payload || typeof payload !== "object") return null;
+    if (payload.storageKey && payload.storageKey !== CENTRAL_STORAGE_KEY) return null;
+
+    return payload.data && typeof payload.data === "object"
+      ? payload.data as Record<string, any[]>
+      : null;
+  } catch {
+    // Never surface a central-storage read problem to the UI.
+    return null;
+  }
+};
+
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState({
@@ -91,8 +135,6 @@ export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState("");
   const [todayDate, setTodayDate] = useState("");
   const [showUpdateBubble, setShowUpdateBubble] = useState(false);
-  const [pendingCreditBills, setPendingCreditBills] = useState<any[]>([]);
-  const [showAllPendingCredits, setShowAllPendingCredits] = useState(false);
 
   // Popup States for Tools
   const [showCashCounterModal, setShowCashCounterModal] = useState(false);
@@ -114,6 +156,13 @@ export default function DashboardPage() {
   const currentVersion = "1.0.0";
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  const [isLatestEntryOpen, setIsLatestEntryOpen] = useState(false);
+  const [latestEntry, setLatestEntry] = useState<LatestEntry | null>(null);
+  const [latestEntryStaff, setLatestEntryStaff] = useState("ALL");
+  const [latestEntryStaffList, setLatestEntryStaffList] = useState<string[]>([]);
+  const [latestEntryLoading, setLatestEntryLoading] = useState(false);
+  const latestEntryRef = useRef<HTMLDivElement>(null);
 
   const [quickLinks, setQuickLinks] = useState<QuickLinkItem[]>([
     {
@@ -201,22 +250,15 @@ const loadDashboardData = () => {
     if (savedWallets) {
       const parsedWallets = JSON.parse(savedWallets);
 
-      if (Array.isArray(parsedWallets)) {
-        setWallets(
-          parsedWallets.map((wallet: any) => ({
-            ...wallet,
-            openingBalance: Number(wallet.openingBalance || 0),
-            currentBalance: Number(wallet.currentBalance || 0),
-          }))
-        );
-      } else {
-        setWallets(DEFAULT_WALLETS);
-        localStorage.setItem("managedWallets", JSON.stringify(DEFAULT_WALLETS));
-      }
+      setWallets(
+        parsedWallets.map((wallet: any) => ({
+          ...wallet,
+          openingBalance: Number(wallet.openingBalance || 0),
+          currentBalance: Number(wallet.currentBalance || 0),
+        }))
+      );
     } else {
-      // Keep Dashboard and Wallet Management consistent on first load.
-      setWallets(DEFAULT_WALLETS);
-      localStorage.setItem("managedWallets", JSON.stringify(DEFAULT_WALLETS));
+      setWallets([]);
     }
   } catch (err) {
     console.error("Wallet load failed:", err);
@@ -267,44 +309,38 @@ const loadDashboardData = () => {
         setQuickLinks(baseTools);
       }
 
-      let loadedServices: any[] = [];
+// REPLACE ONLY THIS BLOCK
 
-      const savedManagedServices = localStorage.getItem("managedServices");
+let loadedServices: any[] = [];
 
-      if (savedManagedServices) {
-        try {
-          const parsedServices = JSON.parse(savedManagedServices);
-          if (Array.isArray(parsedServices)) {
-            loadedServices = parsedServices;
-          }
-        } catch (err) {
-          console.error("Error loading managedServices:", err);
-        }
-      }
+const savedManagedServices = localStorage.getItem("managedServices");
 
-      const sourceServices =
-        loadedServices.length > 0 ? loadedServices : DEFAULT_SERVICE_LINKS;
+if (savedManagedServices) {
+  try {
+    const parsedServices = JSON.parse(savedManagedServices);
 
-      const filteredWithUrls: ServiceItem[] = sourceServices
-        .map((service: any) => {
-          const url = String(
-            service.portalUrl ??
-            service.url ??
-            service.webUrl ??
-            service.link ??
-            ""
-          ).trim();
+    if (Array.isArray(parsedServices)) {
+      loadedServices = parsedServices;
+    }
+  } catch (err) {
+    console.error("Error loading managedServices:", err);
+  }
+}
 
-          return {
-            id: service.id,
-            title: service.title ?? service.name ?? service.serviceName ?? "Untitled Service",
-            url,
-            note: url.replace(/^https?:\/\//, ""),
-          };
-        })
-        .filter((service: ServiceItem) => Boolean(service.url));
+const filteredWithUrls = loadedServices
+  .filter(
+    (service: any) =>
+      service.portalUrl &&
+      service.portalUrl.trim() !== ""
+  )
+  .map((service: any) => ({
+    id: service.id,
+    title: service.name,
+    url: service.portalUrl,
+    note: service.portalUrl.replace(/^https?:\/\//, ""),
+  }));
 
-      setServiceDirectory(filteredWithUrls);
+setServiceDirectory(filteredWithUrls);
     };
 
     loadDashboardData();
@@ -326,93 +362,10 @@ const loadDashboardData = () => {
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
-        const loggedInUsername = parsed.username || "Admin User";
         setCurrentUser({
-          username: loggedInUsername,
+          username: parsed.username || "Admin User",
           role: parsed.role || "staff",
         });
-
-        // Attendance popup: show only the pending credit bills belonging
-        // to the currently logged-in account.
-        try {
-          const savedCreditBills = JSON.parse(
-            localStorage.getItem("smart_akshaya_bills") || "[]"
-          );
-
-          const normalizeStaffValue = (value: unknown) =>
-            String(value ?? "")
-              .trim()
-              .replace(/\\s+/g, " ")
-              .toLowerCase();
-
-          const loggedInUserValues = [
-            parsed.username,
-            parsed.name,
-            parsed.fullName,
-            parsed.displayName,
-            parsed.staffName,
-          ]
-            .map(normalizeStaffValue)
-            .filter(Boolean);
-
-          if (Array.isArray(savedCreditBills)) {
-            const ownPendingCredits = savedCreditBills
-              .filter((bill: any) => {
-                if (Number(bill?.owedAmount || 0) <= 0) return false;
-
-                // Different versions of the service-entry/staff data may
-                // store the same staff identity under slightly different
-                // field names. Compare all known identity fields without
-                // changing the existing credit data structure.
-                const billStaffValues = [
-                  bill?.staffName,
-                  bill?.staff,
-                  bill?.staffUsername,
-                  bill?.username,
-                  bill?.createdBy,
-                  bill?.employeeName,
-                ]
-                  .map((value) => {
-                    if (value && typeof value === "object") {
-                      return [
-                        value.username,
-                        value.name,
-                        value.fullName,
-                        value.displayName,
-                        value.staffName,
-                      ]
-                        .map(normalizeStaffValue)
-                        .filter(Boolean);
-                    }
-                    return [normalizeStaffValue(value)].filter(Boolean);
-                  })
-                  .flat();
-
-                return billStaffValues.some((billStaff) =>
-                  loggedInUserValues.includes(billStaff)
-                );
-              })
-              .sort((a: any, b: any) => {
-                const aTime = new Date(
-                  a?.dateTime || a?.date || a?.createdAt || 0
-                ).getTime();
-                const bTime = new Date(
-                  b?.dateTime || b?.date || b?.createdAt || 0
-                ).getTime();
-
-                if (Number.isFinite(aTime) && Number.isFinite(bTime)) {
-                  return bTime - aTime;
-                }
-                return 0;
-              });
-
-            setPendingCreditBills(ownPendingCredits);
-          } else {
-            setPendingCreditBills([]);
-          }
-        } catch {
-          setPendingCreditBills([]);
-        }
 
         const logs = JSON.parse(localStorage.getItem("staff_attendance_logs") || "[]");
         const today = new Date().toISOString().split("T")[0];
@@ -443,50 +396,211 @@ const loadDashboardData = () => {
     }
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (notificationRef.current && !notificationRef.current.contains(target)) {
         setIsNotificationsOpen(false);
+      }
+
+      if (latestEntryRef.current && !latestEntryRef.current.contains(target)) {
+        const insideLatestModal = (target as HTMLElement)?.closest?.("[data-latest-entry-overlay]");
+        if (!insideLatestModal) setIsLatestEntryOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
 
-    const refreshDashboardData = () => {
-      loadDashboardData();
-    };
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (
-        event.key === "managedWallets" ||
-        event.key === "managedServices" ||
-        event.key === "smart_akshaya_bills" ||
-        event.key === "loggedInUser" ||
-        event.key === null
-      ) {
-        refreshDashboardData();
-      }
-    };
-
-    const handleFocus = () => {
-      refreshDashboardData();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        refreshDashboardData();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearInterval(timer);
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLatestEntryPermission = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("feature_permissions")
+          .select("permissions")
+          .eq("id", 1)
+          .maybeSingle();
+
+        if (error || !data?.permissions || cancelled) return;
+
+        const permissions = Array.isArray(data.permissions)
+          ? data.permissions
+          : [];
+
+        const latestPermission = permissions.find(
+          (item: any) =>
+            item?.featureName === "Latest Billed Entry" ||
+            String(item?.id) === "17"
+        );
+
+        if (latestPermission) {
+          setLatestEntryPermission({
+            accountantAccess: latestPermission.accountantAccess !== false,
+            staffAccess: latestPermission.staffAccess !== false,
+          });
+        }
+      } catch {
+        // Keep the existing default access if permissions cannot be read.
+      }
+    };
+
+    loadLatestEntryPermission();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const refreshLatestEntry = async (requestedStaff = latestEntryStaff) => {
+    setLatestEntryLoading(true);
+
+    try {
+      const localPerformance = readLocalArray("performanceRecords");
+      const localServices = readLocalArray("serviceEntries");
+      const localDeleted = new Set(readLocalArray("deletedBillIds").map(String));
+
+      let remoteStore: Record<string, any[]> | null = null;
+      try {
+        remoteStore = await loadCentralDashboardStore();
+      } catch {
+        remoteStore = null;
+      }
+
+      const performanceRecords = parseArray(remoteStore?.performanceRecords).length
+        ? parseArray(remoteStore?.performanceRecords)
+        : localPerformance;
+
+      const serviceEntries = parseArray(remoteStore?.serviceEntries).length
+        ? parseArray(remoteStore?.serviceEntries)
+        : localServices;
+
+      const mergedPerformance = new Map<string, any>();
+
+      [...performanceRecords, ...localPerformance].forEach((record: any, index: number) => {
+        if (!record || typeof record !== "object") return;
+
+        const key = String(
+          record.billId ||
+          record.id ||
+          `${record.staffName || "staff"}-${record.timestamp || record.date || index}`
+        );
+
+        if (!mergedPerformance.has(key)) {
+          mergedPerformance.set(key, record);
+        }
+      });
+
+      const mergedServices = new Map<string, any>();
+      [...serviceEntries, ...localServices].forEach((entry: any, index: number) => {
+        if (!entry || typeof entry !== "object") return;
+
+        const key = String(
+          entry.id ||
+          `${entry.billId || "bill"}-${entry.serviceName || entry.service || "service"}-${index}`
+        );
+
+        if (!mergedServices.has(key)) {
+          mergedServices.set(key, entry);
+        }
+      });
+
+      const allServices = Array.from(mergedServices.values());
+
+      const staffNames = Array.from(
+        new Set(
+          Array.from(mergedPerformance.values())
+            .map((record: any) => String(record.staffName || record.staff || "").trim())
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b));
+
+      setLatestEntryStaffList(staffNames);
+
+      const candidates = Array.from(mergedPerformance.values())
+        .filter((record: any) => {
+          const billKey = String(record.billId || record.id || "").trim();
+          if (billKey && localDeleted.has(billKey)) return false;
+
+          const staffName = String(record.staffName || record.staff || "").trim();
+          return requestedStaff === "ALL" || staffName === requestedStaff;
+        })
+        .sort((a: any, b: any) => {
+          const aTime = new Date(a.timestamp || a.createdAt || a.dateTime || a.date || 0).getTime();
+          const bTime = new Date(b.timestamp || b.createdAt || b.dateTime || b.date || 0).getTime();
+          return bTime - aTime;
+        });
+
+      const latest = candidates[0];
+
+      if (!latest) {
+        setLatestEntry(null);
+        return;
+      }
+
+      const billId = String(latest.billId || latest.id || "").trim();
+
+      const billServices = allServices.filter(
+        (entry: any) =>
+          String(entry.billId || entry.billID || entry.invoiceId || "").trim() === billId
+      );
+
+      const uniqueServiceNames = Array.from(
+        new Set(
+          billServices
+            .map((entry: any) => String(entry.serviceName || entry.service || entry.name || "").trim())
+            .filter(Boolean)
+        )
+      );
+
+      const serviceName =
+        uniqueServiceNames.length > 0
+          ? uniqueServiceNames.join(" + ")
+          : String(latest.serviceName || latest.service || "Service");
+
+      const calculatedServiceTotal = billServices.reduce(
+        (sum: number, entry: any) =>
+          sum + (Number(entry.totalAmount) || Number(entry.total) || 0),
+        0
+      );
+
+      setLatestEntry({
+        billId,
+        staffName: String(latest.staffName || latest.staff || "Admin"),
+        customerName: String(latest.customerName || latest.name || "Walk-in"),
+        phone: String(latest.phone || latest.customerPhone || latest.mobile || "-"),
+        serviceName,
+        totalAmount: Number(latest.totalAmount) || calculatedServiceTotal || 0,
+        totalPaid: Number(latest.totalPaid ?? latest.paidAmount ?? latest.receivedAmount) || 0,
+        balance: Number(latest.balance ?? latest.owedAmount ?? latest.pendingAmount) || 0,
+        dateTime: String(latest.dateTime || latest.date || latest.timestamp || "-"),
+        timestamp: String(latest.timestamp || latest.createdAt || latest.dateTime || latest.date || ""),
+      });
+    } catch (error) {
+      console.error("Failed to load latest billed entry:", error);
+      setLatestEntry(null);
+    } finally {
+      setLatestEntryLoading(false);
+    }
+  };
+
+  const handleLatestEntryToggle = async () => {
+    const nextOpen = !isLatestEntryOpen;
+    setIsLatestEntryOpen(nextOpen);
+
+    if (nextOpen) {
+      await refreshLatestEntry("ALL");
+    }
+  };
+
+  const handleLatestEntryStaffChange = async (staff: string) => {
+    setLatestEntryStaff(staff);
+    await refreshLatestEntry(staff);
+  };
 
   const handleClearAllNotifications = () => {
     const username = currentUser.username;
@@ -515,6 +629,25 @@ const loadDashboardData = () => {
 
   const netWalletBalance = wallets.reduce((acc, curr) => acc + curr.currentBalance, 0);
   const isAdmin = currentUser.role.toLowerCase() === "admin";
+  const normalizedRole = currentUser.role.toLowerCase().trim();
+
+  // Latest Billed Entry visibility is controlled by Feature Permissions.
+  // Admin always has access; Accountant/Staff follow the centrally saved
+  // permission values. Existing Latest Entry loading and UI are unchanged.
+  const [latestEntryPermission, setLatestEntryPermission] = useState({
+    accountantAccess: true,
+    staffAccess: true,
+  });
+
+  const canViewLatestEntry =
+    isAdmin ||
+    (normalizedRole === "accountant" ||
+      normalizedRole === "account" ||
+      normalizedRole === "accounts" ||
+      normalizedRole === "account staff" ||
+      normalizedRole === "accounts staff"
+      ? latestEntryPermission.accountantAccess
+      : latestEntryPermission.staffAccess);
   const displayRoleTitle = isAdmin ? "Admin User" : `${currentUser.username} User`;
 
   const filteredServices = serviceDirectory.filter(
@@ -586,142 +719,7 @@ const loadDashboardData = () => {
                 <p className="text-xs text-slate-500 uppercase">Current Time</p>
                 <p className="text-2xl font-bold text-blue-600">{currentTime}</p>
               </div>
-
-              {pendingCreditBills.length > 0 && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-left">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-extrabold uppercase tracking-wider text-red-500">
-                        Pending Credits
-                      </p>
-                      <p className="mt-1 text-sm font-bold text-slate-800">
-                        {pendingCreditBills.length} customer{pendingCreditBills.length === 1 ? "" : "s"} • ₹
-                        {pendingCreditBills
-                          .reduce(
-                            (sum, bill) => sum + Number(bill?.owedAmount || 0),
-                            0
-                          )
-                          .toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{" "}
-                        pending
-                      </p>
-                    </div>
-                    <div className="rounded-xl bg-red-100 px-3 py-2 text-lg font-black text-red-600">
-                      ₹
-                    </div>
-                  </div>
-
-                  <div className="mt-3 space-y-2">
-                    {pendingCreditBills.slice(0, 3).map((bill) => (
-                      <div
-                        key={String(bill?.id || bill?.billNumber || bill?.mobileNumber)}
-                        className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 shadow-sm"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-slate-800">
-                            {bill?.customerName || "Customer"}
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            {bill?.mobileNumber || bill?.customerPhone || ""}
-                          </p>
-                        </div>
-                        <p className="shrink-0 text-sm font-black text-red-600">
-                          ₹{Number(bill?.owedAmount || 0).toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {pendingCreditBills.length > 3 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowAllPendingCredits(true)}
-                      className="mt-3 w-full rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-extrabold text-red-600 transition hover:bg-red-100"
-                    >
-                      View All Pending Credits ({pendingCreditBills.length - 3} more)
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {pendingCreditBills.length === 0 && (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left">
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-emerald-600">
-                    Pending Credits
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-emerald-700">
-                    No pending customer credit.
-                  </p>
-                </div>
-              )}
             </div>
-
-            {showAllPendingCredits && pendingCreditBills.length > 3 && (
-              <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-                <div className="w-full max-w-lg rounded-3xl bg-white p-5 text-left shadow-2xl">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-xl font-black text-slate-800">
-                        Pending Credits
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        {currentUser.username} • {pendingCreditBills.length} customers
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowAllPendingCredits(false)}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-lg font-bold text-slate-500 hover:bg-slate-200"
-                      aria-label="Close pending credit list"
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  <div className="mt-4 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
-                    {pendingCreditBills.map((bill) => (
-                      <div
-                        key={String(bill?.id || bill?.billNumber || bill?.mobileNumber)}
-                        className="flex items-center justify-between gap-3 rounded-2xl border border-red-100 bg-red-50/60 px-4 py-3"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-slate-800">
-                            {bill?.customerName || "Customer"}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {bill?.mobileNumber || bill?.customerPhone || ""}
-                          </p>
-                          {bill?.dateTime || bill?.date ? (
-                            <p className="mt-0.5 text-[10px] text-slate-400">
-                              {bill?.dateTime || bill?.date}
-                            </p>
-                          ) : null}
-                        </div>
-                        <p className="shrink-0 text-sm font-black text-red-600">
-                          ₹{Number(bill?.owedAmount || 0).toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowAllPendingCredits(false)}
-                    className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
 
             {attendanceSaved ? (
               <div className="mt-8 flex flex-col items-center">
@@ -782,22 +780,25 @@ const loadDashboardData = () => {
         <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1600px] space-y-4 pb-8">
-        <div className="flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl mb-1">
+      <div className="relative z-10 mx-auto w-full max-w-[1600px] space-y-2.5 pb-5">
+        <div className="flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl mb-0">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
+            <h2 className="text-lg font-bold text-slate-800">Dashboard</h2>
           </div>
 
-          <div className="relative" ref={notificationRef}>
-            <button
-              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              className="relative rounded-2xl border border-slate-200/80 bg-white/70 p-2.5 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
-            >
-              <Bell size={20} />
-              {announcements.length > 0 && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"></span>
-              )}
-            </button>
+          <div className="flex items-center gap-2">
+            <div className="relative" ref={notificationRef}>
+              <button
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="relative rounded-2xl border border-slate-200/80 bg-white/70 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <Bell size={19} />
+                {announcements.length > 0 && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"></span>
+                )}
+              </button>
 
             {isNotificationsOpen && (
               <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
@@ -838,65 +839,80 @@ const loadDashboardData = () => {
                   )}
                 </div>
               </div>
+              )}
+            </div>
+
+            {canViewLatestEntry && (
+            <div className="relative" ref={latestEntryRef}>
+              <button
+                onClick={handleLatestEntryToggle}
+                className="relative rounded-2xl border border-slate-200/80 bg-white/70 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                aria-label="Latest billed entry"
+                title="Latest billed entry"
+              >
+                <History size={19} />
+              </button>
+
+            </div>
             )}
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[28px] border border-white/20 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 p-6 text-white shadow-[0_24px_70px_rgba(37,99,235,0.22)] sm:p-7 lg:p-8">
-          <div>
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-200">{todayDate}</p>
-            <h3 className="text-2xl font-black tracking-tight sm:text-3xl">Welcome back, {currentUser.username}!</h3>
+        <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 px-5 py-4 text-white shadow-[0_20px_55px_rgba(37,99,235,0.20)] sm:px-6 sm:py-5">
+          <div className="relative z-10 pr-2 sm:pr-52">
+            <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-blue-200">{todayDate}</p>
+            <h3 className="text-xl font-black tracking-tight sm:text-2xl">Welcome back, {currentUser.username}!</h3>
           </div>
-          <div className="hidden rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-right backdrop-blur-xl sm:block">
-            <p className="text-xs opacity-80 uppercase font-semibold">Logged in as</p>
-            <p className="text-sm font-bold">{displayRoleTitle}</p>
+          <div className="absolute bottom-3 right-4 hidden min-w-[150px] rounded-xl border border-white/15 bg-white/10 px-3 py-1.5 text-right backdrop-blur-xl sm:block">
+            <p className="text-[10px] opacity-80 uppercase font-semibold">Logged in as</p>
+            <p className="text-xs font-bold">{displayRoleTitle}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="group flex items-center justify-between rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]">
+          <div className="group flex h-[78px] items-center justify-between gap-2 rounded-2xl border border-white/80 bg-white/85 p-3 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]">
             <div>
-              <p className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Today's Entries</p>
-              <p className="text-2xl font-bold mt-1">{todayEntriesCount}</p>
+              <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Today's Entries</p>
+              <p className="mt-0.5 text-lg font-bold leading-none">{todayEntriesCount}</p>
             </div>
-            <div className="rounded-2xl bg-emerald-50 p-3.5 text-emerald-600 shadow-sm transition-transform duration-200 group-hover:scale-105">
-              <FileText size={22} />
+            <div className="rounded-xl bg-emerald-50 p-2 text-emerald-600 shadow-sm transition-transform duration-200 group-hover:scale-105">
+              <FileText size={19} />
             </div>
           </div>
 
-          <div className="group flex items-center justify-between rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]">
+          <div className="group flex h-[78px] items-center justify-between gap-2 rounded-2xl border border-white/80 bg-white/85 p-3 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]">
             <div>
-              <p className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Completed Today</p>
-              <p className="text-2xl font-bold mt-1">{completedTodayCount}</p>
+              <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Completed Today</p>
+              <p className="mt-0.5 text-lg font-bold leading-none">{completedTodayCount}</p>
             </div>
-            <div className="rounded-2xl bg-blue-50 p-3.5 text-blue-600 shadow-sm transition-transform duration-200 group-hover:scale-105">
+            <div className="rounded-xl bg-blue-50 p-2 text-blue-600 shadow-sm transition-transform duration-200 group-hover:scale-105">
               <Wallet size={22} />
             </div>
           </div>
 
-          <div className="group flex items-center justify-between rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]">
+          <div className="group flex h-[78px] items-center justify-between gap-2 rounded-2xl border border-white/80 bg-white/85 p-3 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]">
             <div>
-              <p className="text-xs font-semibold uppercase text-slate-400 tracking-wider">Total Cash Collection</p>
-              <p className="text-2xl font-bold mt-1">₹{totalCashCollection.toFixed(2)}</p>
+              <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Total Cash Collection</p>
+              <p className="mt-0.5 text-lg font-bold leading-none">₹{totalCashCollection.toFixed(2)}</p>
             </div>
-            <div className="rounded-2xl bg-rose-50 p-3.5 text-rose-600 shadow-sm transition-transform duration-200 group-hover:scale-105">
+            <div className="rounded-xl bg-rose-50 p-2 text-rose-600 shadow-sm transition-transform duration-200 group-hover:scale-105">
               <DollarSign size={22} />
             </div>
           </div>
 
           <div
             onClick={() => setShowWalletDetails(!showWalletDetails)}
-            className="group flex cursor-pointer items-center justify-between rounded-2xl border border-white/80 bg-white/85 p-5 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:border-fuchsia-300/60 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]"
+            className="group flex h-[78px] cursor-pointer items-center justify-between gap-2 rounded-2xl border border-white/80 bg-white/85 p-3 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:border-fuchsia-300/60 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]"
           >
             <div>
-              <p className="text-xs font-semibold uppercase text-slate-400 tracking-wider flex items-center gap-1">
+              <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400 flex items-center gap-1">
                 Net Wallet Balance {showWalletDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </p>
-              <p className={`text-2xl font-bold mt-1 ${netWalletBalance < 0 ? "text-rose-600" : "text-emerald-600"}`}>
+              <p className={`mt-0.5 text-lg font-bold leading-none ${netWalletBalance < 0 ? "text-rose-600" : "text-emerald-600"}`}>
                 ₹{netWalletBalance.toFixed(2)}
               </p>
             </div>
-            <div className="rounded-2xl bg-fuchsia-50 p-3.5 text-fuchsia-600 shadow-sm transition-transform duration-200 group-hover:scale-105">
+            <div className="rounded-xl bg-fuchsia-50 p-2 text-fuchsia-600 shadow-sm transition-transform duration-200 group-hover:scale-105">
               <Wallet size={22} />
             </div>
           </div>
@@ -920,8 +936,8 @@ const loadDashboardData = () => {
           </div>
         )}
 
-        <div className="rounded-3xl border border-white/80 bg-white/85 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.07)] backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-3xl border border-white/80 bg-white/85 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.07)] backdrop-blur-xl">
+          <div className="flex items-center justify-between mb-2.5">
             <div>
               <h4 className="font-bold text-slate-800">Quick Launch Tools</h4>
               <p className="text-xs text-slate-400">
@@ -932,7 +948,7 @@ const loadDashboardData = () => {
               {!isCustomizing ? (
                 <button
                   onClick={() => setIsCustomizing(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
                 >
                   <Settings size={14} />
                   Customize Layout
@@ -940,7 +956,7 @@ const loadDashboardData = () => {
               ) : (
                 <button
                   onClick={handleSaveLayout}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition"
                 >
                   <Save size={14} />
                   Save Layout
@@ -949,7 +965,7 @@ const loadDashboardData = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {quickLinks.map((tool, index) => {
               const isCashCounter = tool.name.toLowerCase().includes("cash") || (tool.url && tool.url.toLowerCase().includes("cash"));
               const isSslc = tool.name.toLowerCase().includes("sslc") || (tool.url && tool.url.toLowerCase().includes("sslc"));
@@ -1017,14 +1033,14 @@ const loadDashboardData = () => {
                     }}
                     target={tool.isInternal ? "_self" : "_blank"}
                     rel="noopener noreferrer"
-                    className={`flex h-28 flex-col justify-between p-4 bg-gradient-to-br ${
+                    className={`flex h-24 flex-col justify-between p-3 bg-gradient-to-br ${
                       tool.bgColor || "from-indigo-500 to-violet-600"
                     } text-white rounded-2xl shadow-[0_12px_30px_rgba(15,23,42,0.14)] hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.18)] transition-all duration-200 ${
                       isCustomizing ? "ring-2 ring-blue-400 ring-offset-2 opacity-95" : ""
                     }`}
                   >
                     <div className="flex justify-between items-start">
-                      <FileText size={22} />
+                      <FileText size={19} />
                       {isCustomizing ? (
                         <GripHorizontal size={20} className="text-white/80" />
                       ) : (
@@ -1032,7 +1048,7 @@ const loadDashboardData = () => {
                       )}
                     </div>
                     <div>
-                      <span className="text-base font-bold block truncate">{tool.name}</span>
+                      <span className="text-sm font-bold block truncate">{tool.name}</span>
                       <span className="text-xs opacity-80">
                         {(tool.isInternal || isCashCounter || isSslc || isCropResize || isPsc || isPassport || isPdfTool || isConverterTool || isImageToTextTool || isCalculatorTool)
                           ? "Internal Tool"
@@ -1046,7 +1062,7 @@ const loadDashboardData = () => {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/80 bg-white/85 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.07)] backdrop-blur-xl">
+        <div className="rounded-3xl border border-white/80 bg-white/85 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.07)] backdrop-blur-xl">
           <div 
             onClick={() => setShowServiceDirectory(!showServiceDirectory)}
             className="flex items-center justify-between cursor-pointer select-none"
@@ -1055,7 +1071,7 @@ const loadDashboardData = () => {
               <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">
                 Service Directory
               </span>
-              <h4 className="text-lg font-bold text-slate-800">Quickly Access Any Service</h4>
+              <h4 className="text-base font-bold text-slate-800">Quickly Access Any Service</h4>
             </div>
             <button className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-600 transition">
               {showServiceDirectory ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -1099,6 +1115,99 @@ const loadDashboardData = () => {
             </div>
           )}
         </div>
+
+      {canViewLatestEntry && isLatestEntryOpen && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            data-latest-entry-overlay
+            className="fixed inset-0 z-[999999] flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 pt-6 backdrop-blur-[3px] sm:pt-10"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setIsLatestEntryOpen(false);
+            }}
+          >
+            <div className="relative w-full max-w-[30rem] max-h-[calc(100vh-3rem)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.35)] animate-in fade-in slide-in-from-top-3 sm:max-h-[calc(100vh-5rem)]">
+              <div className="border-b border-slate-100 bg-slate-50/60 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800">Latest Billed Entry</h4>
+                    <p className="mt-0.5 text-xs text-slate-500">Latest bill from all staff</p>
+                  </div>
+                  <History size={18} className="shrink-0 text-blue-600" />
+                </div>
+
+                <select
+                  value={latestEntryStaff}
+                  onChange={(e) => void handleLatestEntryStaffChange(e.target.value)}
+                  className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="ALL">All Staff — Latest Entry</option>
+                  {latestEntryStaffList.map((staff) => (
+                    <option key={staff} value={staff}>
+                      {staff}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {latestEntryLoading ? (
+                <div className="p-8 text-center text-sm text-slate-400">
+                  Loading latest entry...
+                </div>
+              ) : latestEntry ? (
+                <div className="p-4">
+                  <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Staff</p>
+                        <p className="truncate text-sm font-bold text-slate-800">{latestEntry.staffName}</p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p>
+                        <p className="text-lg font-black text-blue-700">₹{latestEntry.totalAmount.toFixed(2)}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-2.5">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Service</p>
+                        <p className="text-sm font-semibold text-slate-700">{latestEntry.serviceName}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Customer</p>
+                          <p className="truncate text-xs font-semibold text-slate-700">{latestEntry.customerName}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Mobile</p>
+                          <p className="truncate text-xs font-semibold text-slate-700">{latestEntry.phone}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-xl border border-slate-100 bg-white p-2.5">
+                          <p className="text-[10px] text-slate-400">Paid</p>
+                          <p className="text-sm font-bold text-emerald-600">₹{latestEntry.totalPaid.toFixed(2)}</p>
+                        </div>
+                        <div className="rounded-xl border border-slate-100 bg-white p-2.5">
+                          <p className="text-[10px] text-slate-400">Balance</p>
+                          <p className={`text-sm font-bold ${latestEntry.balance > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                            ₹{latestEntry.balance.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-1 text-[10px] text-slate-400">{latestEntry.dateTime}</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-8 text-center text-sm text-slate-400">No billed entries found.</div>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     </div>
   );
