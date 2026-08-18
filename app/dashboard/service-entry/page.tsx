@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import QuickReceiptScan from "./components/QuickReceiptScan";
 import { supabase } from '@/lib/supabase';
 import { 
-  Calendar, User, Phone, Search, Plus, Trash2, 
+  User, Phone, Search, Plus, Trash2, 
   ReceiptText, CreditCard, Calculator, Printer, Share2, QrCode, Lock, ShieldCheck, X, Palette
 } from "lucide-react";
 
@@ -166,28 +166,52 @@ const writeLocalSharedStore = (store: SharedStorage) => {
   }
 };
 
-const loadCentralSharedStore = async (): Promise<SharedStorage | null> => {
+type CentralLoadResult = {
+  ok: boolean;
+  exists: boolean;
+  store: SharedStorage | null;
+};
+
+const loadCentralSharedStore = async (): Promise<CentralLoadResult> => {
   try {
+    // Supabase is only a shared-sync layer. The billing page must never fail
+    // just because the central row is temporarily unavailable.
     const { data, error } = await supabase
       .from("feature_permissions")
-      .select("permissions")
+      .select("id, permissions")
       .eq("id", CENTRAL_STORAGE_ROW_ID)
-      .maybeSingle();
+      .limit(1);
 
-    if (error) throw error;
+    if (error) {
+      return { ok: false, exists: false, store: null };
+    }
 
-    const payload = data?.permissions;
-    if (!payload || payload.storageKey !== CENTRAL_STORAGE_KEY) {
-      return null;
+    const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    if (!row) {
+      return { ok: true, exists: false, store: null };
+    }
+
+    const payload = row.permissions as any;
+    if (!payload || typeof payload !== "object") {
+      return { ok: true, exists: true, store: null };
+    }
+
+    // Accept the current storage key. If the row was created before the
+    // shared-storage migration, keep its data only when it has the expected
+    // shape; otherwise the current browser data can safely initialize it.
+    if (payload.storageKey && payload.storageKey !== CENTRAL_STORAGE_KEY) {
+      return { ok: true, exists: true, store: null };
     }
 
     const remoteStore = payload.data as SharedStorage | undefined;
-    if (!remoteStore || typeof remoteStore !== "object") return null;
+    if (!remoteStore || typeof remoteStore !== "object") {
+      return { ok: true, exists: true, store: null };
+    }
 
-    return remoteStore;
-  } catch (error) {
-    console.error("Central shared storage read failed:", error);
-    return null;
+    return { ok: true, exists: true, store: remoteStore };
+  } catch {
+    // Keep localStorage as the safe fallback.
+    return { ok: false, exists: false, store: null };
   }
 };
 
@@ -195,36 +219,56 @@ const saveCentralSharedStore = async (store: SharedStorage): Promise<boolean> =>
   try {
     const { error } = await supabase
       .from("feature_permissions")
-      .upsert(
-        {
-          id: CENTRAL_STORAGE_ROW_ID,
-          permissions: {
-            storageKey: CENTRAL_STORAGE_KEY,
-            version: CENTRAL_STORAGE_VERSION,
-            data: store,
-          },
-          updated_at: new Date().toISOString(),
+      .update({
+        permissions: {
+          storageKey: CENTRAL_STORAGE_KEY,
+          version: CENTRAL_STORAGE_VERSION,
+          data: store,
         },
-        { onConflict: "id" },
-      );
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", CENTRAL_STORAGE_ROW_ID);
 
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Central shared storage write failed:", error);
+    if (!error) return true;
+
+    // If the central row was removed, recreate it. This fallback is also
+    // silent so a temporary RLS/network problem never becomes a Next.js
+    // runtime overlay.
+    const { error: insertError } = await supabase
+      .from("feature_permissions")
+      .insert({
+        id: CENTRAL_STORAGE_ROW_ID,
+        permissions: {
+          storageKey: CENTRAL_STORAGE_KEY,
+          version: CENTRAL_STORAGE_VERSION,
+          data: store,
+        },
+        updated_at: new Date().toISOString(),
+      });
+
+    return !insertError;
+  } catch {
     return false;
   }
 };
 
 const syncCentralStorage = async (): Promise<SharedStorage> => {
   const localStore = readLocalSharedStore();
-  const remoteStore = await loadCentralSharedStore();
+  const remoteResult = await loadCentralSharedStore();
 
+  // If the remote read itself failed, never overwrite the central database
+  // with this browser's possibly stale local snapshot. Keep the local cache
+  // working and wait for the next focus/online sync attempt.
+  if (!remoteResult.ok) {
+    return localStore;
+  }
+
+  const remoteStore = remoteResult.store;
   const merged: SharedStorage = {};
 
   for (const key of SHARED_STORAGE_KEYS) {
     merged[key] = mergeSharedArrays(
-      Array.isArray(remoteStore?.[key]) ? remoteStore?.[key] : [],
+      Array.isArray(remoteStore?.[key]) ? remoteStore[key] : [],
       Array.isArray(localStore[key]) ? localStore[key] : [],
       key,
     );
@@ -232,9 +276,8 @@ const syncCentralStorage = async (): Promise<SharedStorage> => {
 
   writeLocalSharedStore(merged);
 
-  // Always push the merged snapshot back. This both migrates existing
-  // localhost data after deployment and makes later staff/admin sessions share
-  // the same central data without changing the existing page structure.
+  // Initialize/update the central row only after a successful read. This
+  // prevents a temporary network/RLS problem from wiping another PC's data.
   await saveCentralSharedStore(merged);
 
   return merged;
@@ -242,10 +285,17 @@ const syncCentralStorage = async (): Promise<SharedStorage> => {
 
 const pushCurrentLocalStorageToCentral = async () => {
   // Never push a browser's stale snapshot directly over the central store.
-  // First merge the current browser data with the latest central snapshot so
-  // records created on another PC are retained.
+  // First merge the current browser data with the latest central snapshot.
   const localStore = readLocalSharedStore();
-  const remoteStore = await loadCentralSharedStore();
+  const remoteResult = await loadCentralSharedStore();
+
+  if (!remoteResult.ok) {
+    // Keep local changes. Do not overwrite central data while the latest
+    // central snapshot cannot be read. A later focus/online event retries it.
+    return;
+  }
+
+  const remoteStore = remoteResult.store;
   const merged: SharedStorage = {};
 
   for (const key of SHARED_STORAGE_KEYS) {
@@ -361,7 +411,12 @@ function ServiceEntryForm() {
       loadWallets();
       loadSavedCustomers();
 
-      const merged = await syncCentralStorage();
+      let merged: SharedStorage;
+      try {
+        merged = await syncCentralStorage();
+      } catch {
+        merged = readLocalSharedStore();
+      }
       if (cancelled) return;
 
       writeLocalSharedStore(merged);
@@ -374,13 +429,15 @@ function ServiceEntryForm() {
     void initialiseSharedStorage();
 
     const handleFocus = () => {
-      void syncCentralStorage().then(() => {
-        if (!cancelled) {
-          loadWallets();
-          loadSavedCustomers();
-          loadManagedServices();
-        }
-      });
+      void syncCentralStorage()
+        .catch(() => readLocalSharedStore())
+        .then(() => {
+          if (!cancelled) {
+            loadWallets();
+            loadSavedCustomers();
+            loadManagedServices();
+          }
+        });
     };
 
     window.addEventListener('focus', handleFocus);
@@ -1516,7 +1573,7 @@ function ServiceEntryForm() {
         </div>
       )}
 
-      <div className={`w-full max-w-[1600px] mx-auto space-y-5 relative min-h-screen transition-colors duration-300 px-4 py-4 lg:px-5 lg:py-5 xl:px-6 ${activeTheme.bg} ${activeTheme.text}`} ref={customerDropdownRef}>
+      <div className={`w-full max-w-none mx-auto space-y-1.5 relative min-h-screen transition-colors duration-300 px-2 py-1.5 lg:px-3 lg:py-1.5 ${activeTheme.bg} ${activeTheme.text}`} ref={customerDropdownRef}>
         {showStaffModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
             <div className="w-full rounded-3xl border border-slate-200/80 bg-white/95 px-5 py-4 shadow-[0_25px_70px_rgba(15,23,42,0.18)] backdrop-blur-xl">
@@ -1780,74 +1837,92 @@ function ServiceEntryForm() {
           </div>
         )}
 
-        {/* Top Header with New Entry & Theme Selector Dropdown */}
-        <div className="flex justify-between items-center">
-          <div className="inline-block bg-white border border-slate-200 px-4 py-1.5 rounded-xl text-xs font-bold text-slate-700 shadow-sm">
-            New Entry {editId ? '(Edit Bill)' : resumeId ? '(Settle / Resume Bill)' : ''}
+        {/* Compact Service Entry / Billing UI */}
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white/90 px-3 py-2 shadow-sm">
+          <div className="flex min-w-0 items-center gap-2">
+            <ReceiptText size={18} className="shrink-0 text-blue-600" />
+            <h1 className="truncate text-base font-black text-slate-800">
+              Billing <span className="text-slate-500">MPM250</span>
+            </h1>
+            <span className="hidden h-4 w-px bg-slate-300 sm:block" />
+            <span className="hidden text-xs font-bold text-slate-600 sm:inline">
+              Staff: {currentStaff}
+            </span>
+            {editId && (
+              <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                EDIT
+              </span>
+            )}
+            {resumeId && !editId && (
+              <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-black text-blue-700">
+                RESUME
+              </span>
+            )}
           </div>
 
-          {/* Theme Selector Dropdown */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
-            <Palette size={14} className="text-indigo-600" />
-            <label className="text-xs font-bold text-slate-600">Theme:</label>
-            <select
-              value={currentTheme}
-              onChange={(e) => setCurrentTheme(e.target.value)}
-              className="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer"
-            >
-              <option value="slate">Light Slate</option>
-              <option value="green">Soft Green</option>
-              <option value="blue">Soft Blue</option>
-              <option value="purple">Soft Purple</option>
-              <option value="amber">Soft Amber</option>
-              <option value="rose">Soft Rose</option>
-            </select>
-          </div>
-        </div>
-        <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-cyan-900 to-blue-900 p-5 text-white shadow-[0_20px_55px_rgba(15,23,42,0.22)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-cyan-400/10">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-cyan-200">Billing Dashboard</p>
-            <h2 className="text-5xl font-black mt-1">₹{totalAmount.toFixed(2)}</h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            
-            <div className="rounded-2xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur-md flex items-center gap-3 shadow-inner">
-              <Calendar size={20} className="text-blue-200" />
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+            <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1 shadow-sm sm:flex">
               <div>
-                <p className="text-[10px] text-blue-200 font-semibold tracking-wider">DATE</p>
-                <p className="text-sm font-bold">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                <p className="text-[8px] font-bold uppercase tracking-wide text-slate-500">Date</p>
+                <p className="text-[10px] font-black leading-tight text-slate-800">
+                  {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+              <div className="h-6 w-px bg-slate-200" />
+              <div className="text-right">
+                <p className="text-[8px] font-bold uppercase tracking-wide text-slate-500">Bill Total</p>
+                <p className="text-sm font-black leading-tight text-blue-700">₹{totalAmount.toFixed(2)}</p>
               </div>
             </div>
-            <QuickReceiptScan />
-            <div 
-              onClick={() => setShowStaffModal(true)} 
-              className="cursor-pointer rounded-2xl border border-white/10 bg-white/10 px-5 py-3 backdrop-blur-md transition hover:bg-white/15 flex items-center gap-3"
-              title="Click to switch staff login"
+
+            <div className="shrink-0">
+              <QuickReceiptScan />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowStaffModal(true)}
+              className="hidden rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-black text-slate-700 shadow-sm transition hover:bg-slate-50 sm:inline-flex"
+              title="Switch staff login"
             >
-              <User size={20} className="text-blue-200" />
-              <div>
-                <p className="text-[10px] text-blue-200 font-semibold tracking-wider flex items-center gap-1">STAFF <span className="text-[9px] underline">(Switch)</span></p>
-                <p className="text-sm font-bold">{currentStaff}</p>
-              </div>
+              <User size={13} className="mr-1 inline text-blue-600" />
+              Switch Staff
+            </button>
+            <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm">
+              <Palette size={12} className="text-indigo-600" />
+              <select
+                aria-label="Theme"
+                value={currentTheme}
+                onChange={(e) => setCurrentTheme(e.target.value)}
+                className="max-w-[110px] bg-transparent text-[10px] font-bold text-slate-700 outline-none"
+              >
+                <option value="slate">Light Slate</option>
+                <option value="green">Soft Green</option>
+                <option value="blue">Soft Blue</option>
+                <option value="purple">Soft Purple</option>
+                <option value="amber">Soft Amber</option>
+                <option value="rose">Soft Rose</option>
+              </select>
             </div>
           </div>
         </div>
 
-        <div className={`${activeTheme.cardBg} rounded-2xl p-6 shadow-sm border ${activeTheme.border}`}>
-          <h3 className="mb-4 flex items-center gap-2 border-b border-slate-200 pb-3 text-sm font-black text-slate-800">
-            <User size={16} className="text-slate-400" /> Customer Details
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <div className="relative">
-              <div className="border border-slate-200 rounded-2xl bg-white p-2.5 shadow-sm transition focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10">
-                <Phone size={18} className="text-slate-400 mx-3" />
-                <div className="w-full">
-                  <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500">Mobile Number (Type first 4 digits)</label>
+        <div className="grid grid-cols-1 gap-2">
+          <div className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2 shadow-sm">
+            <div className="mb-1.5 flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
+              <User size={14} className="text-blue-600" />
+              <h3 className="text-xs font-black text-slate-800">Customer</h3>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-2">
+              <div className="relative">
+                <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Mobile</label>
+                <div className="flex h-8 items-center rounded-lg border border-slate-200 bg-white px-2 shadow-sm focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-500/10">
+                  <Phone size={13} className="mr-1.5 shrink-0 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Enter mobile number"
-                    className="w-full pt-0.5 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400 font-medium"
+                    placeholder="Search mobile..."
+                    className="min-w-0 w-full bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400"
                     value={mobile}
                     onChange={(e) => {
                       setMobile(e.target.value);
@@ -1856,32 +1931,30 @@ function ServiceEntryForm() {
                     onFocus={() => setShowMobileDropdown(true)}
                   />
                 </div>
+                {showMobileDropdown && filteredByMobile.length > 0 && (
+                  <div className="absolute left-0 top-full z-30 mt-1 max-h-44 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl">
+                    {filteredByMobile.map((cust, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => handleSelectCustomer(cust)}
+                        className="cursor-pointer border-b border-slate-100 p-2 text-xs hover:bg-cyan-50 last:border-0"
+                      >
+                        <p className="font-semibold text-slate-700">{cust.name}</p>
+                        <p className="text-[10px] font-bold text-indigo-600">{cust.mobile}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {showMobileDropdown && filteredByMobile.length > 0 && (
-                <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
-                  {filteredByMobile.map((cust, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => handleSelectCustomer(cust)}
-                      className="p-3 text-sm font-medium transition hover:bg-cyan-50 cursor-pointer border-b border-slate-100 last:border-0"
-                    >
-                      <p className="font-semibold text-slate-700">{cust.name}</p>
-                      <p className="text-xs text-indigo-600 font-bold">{cust.mobile}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            <div className="relative">
-              <div className="border border-slate-200 rounded-2xl bg-white p-2.5 shadow-sm transition focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10">
-                <Search size={18} className="text-slate-400 mx-3" />
-                <div className="w-full">
-                  <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500">Customer Name (Type first 3 letters)</label>
+              <div className="relative">
+                <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Name</label>
+                <div className="flex h-8 items-center rounded-lg border border-slate-200 bg-white px-2 shadow-sm focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-500/10">
+                  <Search size={13} className="mr-1.5 shrink-0 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Search customer name..."
-                    className="w-full pt-0.5 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400 font-medium"
+                    placeholder="Customer name"
+                    className="min-w-0 w-full bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400"
                     value={customerName}
                     onChange={(e) => {
                       setCustomerName(e.target.value);
@@ -1890,40 +1963,42 @@ function ServiceEntryForm() {
                     onFocus={() => setShowNameDropdown(true)}
                   />
                 </div>
+                {showNameDropdown && filteredByName.length > 0 && (
+                  <div className="absolute left-0 top-full z-30 mt-1 max-h-44 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl">
+                    {filteredByName.map((cust, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => handleSelectCustomer(cust)}
+                        className="cursor-pointer border-b border-slate-100 p-2 text-xs hover:bg-cyan-50 last:border-0"
+                      >
+                        <p className="font-semibold text-slate-700">{cust.name}</p>
+                        <p className="text-[10px] font-bold text-indigo-600">{cust.mobile}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {showNameDropdown && filteredByName.length > 0 && (
-                <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
-                  {filteredByName.map((cust, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => handleSelectCustomer(cust)}
-                      className="p-3 text-sm font-medium transition hover:bg-cyan-50 cursor-pointer border-b border-slate-100 last:border-0"
-                    >
-                      <p className="font-semibold text-slate-700">{cust.name}</p>
-                      <p className="text-xs text-indigo-600 font-bold">{cust.mobile}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
+
+            </div>
           </div>
         </div>
 
-        <div className={`${activeTheme.cardBg} rounded-2xl p-6 shadow-sm border ${activeTheme.border} space-y-6`} ref={dropdownRef}>
-          <h3 className="flex items-center gap-2 border-b border-slate-200 pb-3 text-sm font-black text-slate-800">
-            <Plus size={16} className="text-slate-400" /> Add Service
-          </h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
-            <div className="lg:col-span-4 relative">
-              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Services</label>
-              <div className="border border-slate-200 rounded-2xl bg-white p-2.5 shadow-sm transition focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10">
+        <div className={`${activeTheme.cardBg} rounded-xl border ${activeTheme.border} px-3 py-2 shadow-sm`} ref={dropdownRef}>
+          <div className="mb-1.5 flex items-center gap-1.5 border-b border-slate-200 pb-1.5">
+            <Plus size={14} className="text-blue-600" />
+            <h3 className="text-xs font-black text-slate-800">Add Service</h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-6 lg:grid-cols-12 items-end">
+            <div className="relative md:col-span-2 lg:col-span-5">
+              <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Service *</label>
+              <div className="flex h-8 items-center rounded-lg border border-slate-200 bg-white px-2 shadow-sm focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-500/10">
                 <input
                   ref={serviceInputRef}
                   type="text"
-                  placeholder="Search service..."
-                  className="w-full bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400 font-medium"
+                  placeholder="Select / search service"
+                  className="w-full bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400"
                   value={searchService}
                   onChange={(e) => {
                     setSearchService(e.target.value);
@@ -1933,341 +2008,341 @@ function ServiceEntryForm() {
                 />
               </div>
               {showDropdown && (
-                <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
-                  {services.filter(s => s.name.toLowerCase().includes(searchService.toLowerCase())).map(srv => (
-                    <div 
-                      key={srv.id} 
-                      onClick={() => handleSelectService(srv)}
-                      className={`p-3 text-sm cursor-pointer border-b border-slate-100 last:border-0 transition-colors ${activeTheme.hoverColor}`}
-                    >
-                      <p className="font-semibold text-slate-900">{srv.name}</p>
-                      <p className="text-[11px] text-slate-600 font-medium">Srv: ₹{srv.srvChg} | Dept: ₹{srv.deptChg}</p>
-                    </div>
-                  ))}
+                <div className="absolute left-0 top-full z-30 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl">
+                  {services
+                    .filter(s => s.name.toLowerCase().includes(searchService.toLowerCase()))
+                    .map(srv => (
+                      <div
+                        key={srv.id}
+                        onClick={() => handleSelectService(srv)}
+                        className={`cursor-pointer border-b border-slate-100 p-2 text-xs last:border-0 ${activeTheme.hoverColor}`}
+                      >
+                        <p className="font-semibold text-slate-900">{srv.name}</p>
+                        <p className="text-[10px] font-medium text-slate-600">
+                          Srv: ₹{srv.srvChg} | Dept: ₹{srv.deptChg}
+                        </p>
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
 
-            <div className="lg:col-span-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Wallet Chg.</label>
-              <div className="border border-slate-200 rounded-2xl bg-white p-2.5 shadow-sm transition focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10">
-                <input
-                  type="number"
-                  className="w-full bg-transparent outline-none text-sm text-slate-800 font-medium"
-                  value={walletChg === 0 ? '' : walletChg}
-                  onChange={(e) => setWalletChg(e.target.value === '' ? 0 : Number(e.target.value))}
-                />
-              </div>
-            </div>
-
-            <div className="lg:col-span-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Wallet</label>
-              <div className="border border-slate-200 rounded-2xl bg-white p-2.5 shadow-sm transition focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10">
-                <select
-                  className="w-full bg-transparent outline-none text-sm text-slate-800 font-medium cursor-pointer"
-                  value={wallet}
-                  onChange={(e) => setWallet(e.target.value)}
-                >
-                  <option value="Select Wallet">Select Wallet</option>
-                  {availableWallets.map(w => (
-                    <option key={w.id} value={w.name}>{w.name} (₹{w.currentBalance})</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="lg:col-span-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Srv. Chg.</label>
-              <div className="border border-slate-200 rounded-2xl bg-white p-2.5 shadow-sm transition focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10">
-                <input
-                  type="number"
-                  className="w-full bg-transparent outline-none text-sm text-slate-800 font-medium"
-                  value={srvChg === 0 ? '' : srvChg}
-                  onChange={(e) => setSrvChg(e.target.value === '' ? 0 : Number(e.target.value))}
-                />
-              </div>
-            </div>
-
-            <div className="lg:col-span-1">
-              <label className="block text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">Qty</label>
-              <div className="border border-slate-200 rounded-2xl bg-white p-2.5 shadow-sm transition focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10">
-                <input
-                  type="number"
-                  className="w-full bg-transparent outline-none text-sm text-slate-800 font-medium"
-                  value={qty}
-                  min="1"
-                  onChange={(e) => setQty(Number(e.target.value))}
-                />
-              </div>
-            </div>
-
-            <div className="lg:col-span-1">
-              <button 
-                onClick={handleAddItem}
-                className="w-full rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 py-3 font-black text-white shadow-lg shadow-cyan-500/20 transition-all hover:-translate-y-0.5 hover:shadow-xl flex items-center justify-center gap-1 text-sm"
+            <div className="md:col-span-1 lg:col-span-2">
+              <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Wallet</label>
+              <select
+                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none focus:border-cyan-400"
+                value={wallet}
+                onChange={(e) => setWallet(e.target.value)}
               >
-                <Plus size={16} /> Add
+                <option value="Select Wallet">Select Wallet</option>
+                {availableWallets.map(w => (
+                  <option key={w.id} value={w.name}>{w.name} (₹{w.currentBalance})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-1 lg:col-span-1">
+              <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Dept Fee</label>
+              <input
+                type="number"
+                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none focus:border-cyan-400"
+                value={walletChg === 0 ? '' : walletChg}
+                onChange={(e) => setWalletChg(e.target.value === '' ? 0 : Number(e.target.value))}
+              />
+            </div>
+
+            <div className="md:col-span-1 lg:col-span-1">
+              <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Svc Charge</label>
+              <input
+                type="number"
+                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none focus:border-cyan-400"
+                value={srvChg === 0 ? '' : srvChg}
+                onChange={(e) => setSrvChg(e.target.value === '' ? 0 : Number(e.target.value))}
+              />
+            </div>
+
+            <div className="md:col-span-1 lg:col-span-1">
+              <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Qty</label>
+              <input
+                type="number"
+                min="1"
+                className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none focus:border-cyan-400"
+                value={qty}
+                onChange={(e) => setQty(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="md:col-span-1 lg:col-span-2">
+              <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Add</label>
+              <button
+                onClick={handleAddItem}
+                className="flex h-8 w-full items-center justify-center gap-1 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 text-xs font-black text-white shadow-md shadow-cyan-500/20 transition hover:-translate-y-0.5"
+              >
+                <Plus size={14} /> Add Service
               </button>
             </div>
           </div>
-
-          <div className="min-h-[140px] rounded-3xl border border-slate-200/80 bg-white/80 p-4 shadow-sm backdrop-blur-xl flex flex-col justify-center">
-            <div className="flex items-center justify-between mb-3 border-b border-slate-200/60 pb-2">
-              <h4 className="font-bold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-2">
-                <ReceiptText size={14} className="text-slate-400" /> Bill Items
-              </h4>
-            </div>
-            {items.length === 0 ? (
-              <div className="text-center py-6 text-slate-500">
-                <ReceiptText className="mx-auto mb-2 opacity-40" size={32} />
-                <p className="text-sm font-medium">{previousBalance > 0 ? "Settling previous credit balance" : "No items added to bill yet"}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto w-full">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
-                      <th className="py-2 px-2">#</th>
-                      <th className="py-2 px-2">Service Name</th>
-                      <th className="py-2 px-2">Status</th>
-                      <th className="py-2 px-2">Wallet Chg.</th>
-                      <th className="py-2 px-2">Wallet</th>
-                      <th className="py-2 px-2">Service Chg.</th>
-                      <th className="py-2 px-2 text-center">Qty</th>
-                      <th className="py-2 px-2 text-right">Total</th>
-                      <th className="py-2 px-2 text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200/80">
-                    {items.map((item, index) => (
-                      <tr key={item.id} className="text-slate-800 font-medium">
-                        <td className="py-3 px-2 text-xs text-slate-500">{index + 1}</td>
-                        <td className="py-3 px-2">{item.name}</td>
-                        <td className="py-3 px-2">
-                          <select
-                            value={item.status}
-                            onChange={(e) => handleItemChange(item.id, 'status', e.target.value)}
-                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold shadow-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/10 cursor-pointer"
-                          >
-                            <option value="Completed">Completed</option>
-                            <option value="In Progress">In Progress</option>
-                          </select>
-                        </td>
-                        <td className="py-3 px-2">
-                          <input
-                            type="number"
-                            className="w-20 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-medium shadow-sm outline-none focus:border-cyan-400"
-                            value={item.walletChg}
-                            onChange={(e) => handleItemChange(item.id, 'walletChg', Number(e.target.value))}
-                          />
-                        </td>
-                        <td className="py-3 px-2">
-                          <select
-                            value={item.wallet}
-                            onChange={(e) => handleItemChange(item.id, 'wallet', e.target.value)}
-                            className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-medium shadow-sm outline-none focus:border-cyan-400 cursor-pointer"
-                          >
-                            <option value="Select Wallet">Select Wallet</option>
-                            {availableWallets.map(w => (
-                              <option key={w.id} value={w.name}>{w.name} (₹{w.currentBalance})</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="py-3 px-2">
-                          <input
-                            type="number"
-                            className="w-20 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-medium shadow-sm outline-none focus:border-cyan-400"
-                            value={item.srvChg}
-                            onChange={(e) => handleItemChange(item.id, 'srvChg', Number(e.target.value))}
-                          />
-                        </td>
-                        <td className="py-3 px-2 text-center">
-                          <input
-                            type="number"
-                            className="w-14 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-medium shadow-sm outline-none focus:border-cyan-400 text-center"
-                            value={item.qty}
-                            min="1"
-                            onChange={(e) => handleItemChange(item.id, 'qty', Number(e.target.value))}
-                          />
-                        </td>
-                        <td className="py-3 px-2 text-right font-bold">₹{((Number(item.walletChg) + Number(item.srvChg)) * Number(item.qty)).toFixed(2)}</td>
-                        <td className="py-3 px-2 text-center">
-                          <button onClick={() => handleRemoveItem(item.id)} className="text-rose-500 hover:text-rose-700 transition">
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className={`lg:col-span-6 ${activeTheme.cardBg} rounded-2xl p-6 shadow-sm border ${activeTheme.border} space-y-5`}>
-            <h3 className="font-bold text-slate-700 text-sm border-b border-slate-200/60 pb-3 flex items-center gap-2">
-              <CreditCard size={16} className="text-slate-400" /> Payment & Summary
+        <div className={`${activeTheme.cardBg} rounded-xl border ${activeTheme.border} px-3 py-2 shadow-sm`}>
+          <div className="mb-1.5 flex items-center justify-between border-b border-slate-200 pb-1.5">
+            <h4 className="flex items-center gap-1.5 text-xs font-black text-slate-700">
+              <ReceiptText size={14} className="text-blue-600" /> Bill Items
+            </h4>
+            <span className="text-[10px] font-bold text-slate-500">{items.length} items</span>
+          </div>
+
+          {items.length === 0 ? (
+            <div className="flex min-h-[54px] items-center justify-center gap-2 text-center text-slate-500">
+              <ReceiptText className="opacity-40" size={20} />
+              <p className="text-xs font-medium">
+                {previousBalance > 0 ? "Settling previous credit balance" : "No services added"}
+              </p>
+            </div>
+          ) : (
+            <div className="w-full overflow-x-auto">
+              <table className="w-full table-fixed text-left text-[11px]">
+                <thead>
+                  <tr className="border-b border-slate-200 text-[9px] uppercase tracking-wide text-slate-500">
+                    <th className="w-[3%] px-1.5 py-1.5">#</th>
+                    <th className="w-[23%] px-1.5 py-1.5">Service</th>
+                    <th className="w-[10%] px-1.5 py-1.5">Dept Fee</th>
+                    <th className="w-[13%] px-1.5 py-1.5">Wallet</th>
+                    <th className="w-[10%] px-1.5 py-1.5">Svc Charge</th>
+                    <th className="w-[6%] px-1.5 py-1.5 text-center">Qty</th>
+                    <th className="w-[16%] px-1.5 py-1.5">Status</th>
+                    <th className="w-[12%] px-1.5 py-1.5 text-right">Total</th>
+                    <th className="w-[7%] px-1.5 py-1.5 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200/80">
+                  {items.map((item, index) => (
+                    <tr key={item.id} className="font-medium text-slate-800">
+                      <td className="px-1.5 py-1.5 text-[10px] text-slate-500">{index + 1}</td>
+                      <td className="truncate px-1.5 py-1.5" title={item.name}>{item.name}</td>
+                      <td className="px-1.5 py-1.5">
+                        <input
+                          type="number"
+                          className="h-7 w-full min-w-0 rounded-md border border-slate-200 bg-white px-1.5 text-[10px] outline-none focus:border-cyan-400"
+                          value={item.walletChg}
+                          onChange={(e) => handleItemChange(item.id, 'walletChg', Number(e.target.value))}
+                        />
+                      </td>
+                      <td className="px-1.5 py-1.5">
+                        <select
+                          value={item.wallet}
+                          onChange={(e) => handleItemChange(item.id, 'wallet', e.target.value)}
+                          className="h-7 w-full min-w-0 rounded-md border border-slate-200 bg-white px-1.5 text-[10px] outline-none focus:border-cyan-400"
+                        >
+                          <option value="Select Wallet">Select Wallet</option>
+                          {availableWallets.map(w => (
+                            <option key={w.id} value={w.name}>{w.name} (₹{w.currentBalance})</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-1.5 py-1.5">
+                        <input
+                          type="number"
+                          className="h-7 w-full min-w-0 rounded-md border border-slate-200 bg-white px-1.5 text-[10px] outline-none focus:border-cyan-400"
+                          value={item.srvChg}
+                          onChange={(e) => handleItemChange(item.id, 'srvChg', Number(e.target.value))}
+                        />
+                      </td>
+                      <td className="px-1.5 py-1.5 text-center">
+                        <input
+                          type="number"
+                          min="1"
+                          className="h-7 w-12 rounded-md border border-slate-200 bg-white px-1 text-center text-[10px] outline-none focus:border-cyan-400"
+                          value={item.qty}
+                          onChange={(e) => handleItemChange(item.id, 'qty', Number(e.target.value))}
+                        />
+                      </td>
+                      <td className="px-1.5 py-1.5">
+                        <select
+                          value={item.status}
+                          onChange={(e) => handleItemChange(item.id, 'status', e.target.value)}
+                          className="h-7 w-full rounded-md border border-slate-200 bg-white px-1.5 text-[10px] font-semibold outline-none focus:border-cyan-400"
+                        >
+                          <option value="Completed">Completed</option>
+                          <option value="In Progress">In Progress</option>
+                        </select>
+                      </td>
+                      <td className="px-1.5 py-1.5 text-right font-black">
+                        ₹{((Number(item.walletChg) + Number(item.srvChg)) * Number(item.qty)).toFixed(2)}
+                      </td>
+                      <td className="px-1.5 py-1.5 text-center">
+                        <button
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="rounded-md p-1 text-rose-500 transition hover:bg-rose-50 hover:text-rose-700"
+                          title="Remove item"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-12">
+          <div className={`lg:col-span-6 ${activeTheme.cardBg} rounded-xl border ${activeTheme.border} px-3 py-2 shadow-sm`}>
+            <h3 className="mb-2 flex items-center gap-1.5 border-b border-slate-200 pb-1.5 text-xs font-black text-slate-700">
+              <CreditCard size={14} className="text-blue-600" /> Payment & Summary
             </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="border border-slate-200/80 rounded-2xl p-3 bg-white/80">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">GPAY / UPI</label>
-                  <span className="text-[9px] bg-slate-200/60 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold">Alt+G</span>
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="rounded-lg border border-slate-200 bg-white/80 p-2">
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">GPay / UPI</label>
+                  <span className="rounded bg-slate-100 px-1 text-[8px] font-mono font-bold text-slate-600">Alt+G</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <input
                     type="number"
                     placeholder="0.00"
-                    className="w-full bg-transparent outline-none text-sm text-slate-800 font-medium"
+                    className="h-7 w-full bg-transparent text-xs font-medium text-slate-800 outline-none"
                     value={gpay === 0 ? '' : gpay}
                     onChange={(e) => setGpay(e.target.value === '' ? 0 : Number(e.target.value))}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPaymentQRModal(true)}
-                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 p-2 rounded-xl transition flex items-center justify-center border border-indigo-200 shadow-sm"
+                    className="rounded-md border border-indigo-200 bg-indigo-50 p-1.5 text-indigo-600 transition hover:bg-indigo-100"
                     title="Generate QR for entered amount"
                   >
-                    <QrCode size={18} />
+                    <QrCode size={14} />
                   </button>
                 </div>
               </div>
-            
-              <div className="border border-slate-200/80 rounded-2xl p-3 bg-white/80">
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">CASH</label>
-                  <span className="text-[9px] bg-slate-200/60 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold">Alt+C</span>
+
+              <div className="rounded-lg border border-slate-200 bg-white/80 p-2">
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Cash</label>
+                  <span className="rounded bg-slate-100 px-1 text-[8px] font-mono font-bold text-slate-600">Alt+C</span>
                 </div>
                 <input
                   type="number"
                   placeholder="0.00"
-                  className="w-full bg-transparent outline-none text-sm text-slate-800 font-medium"
+                  className="h-7 w-full bg-transparent text-xs font-medium text-slate-800 outline-none"
                   value={cash === 0 ? '' : cash}
                   onChange={(e) => setCash(e.target.value === '' ? 0 : Number(e.target.value))}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="border border-slate-200/80 rounded-2xl p-3 bg-white/80">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">TOTAL PAID</p>
-                <p className="text-lg font-bold mt-1 text-slate-800">₹{totalPaid.toFixed(2)}</p>
+              <div className="rounded-lg border border-slate-200 bg-white/80 p-2">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Total Paid</p>
+                <p className="text-sm font-black text-slate-800">₹{totalPaid.toFixed(2)}</p>
               </div>
-              <div className="border border-slate-200/80 rounded-2xl p-3 bg-white/80">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">BALANCE</p>
-                <p className={`text-lg font-bold mt-1 ${balance <= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-                  ₹{balance.toFixed(2)}
-                </p>
+
+              <div className="rounded-lg border border-slate-200 bg-white/80 p-2">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Balance</p>
+                <p className={`text-sm font-black ${balance <= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>₹{balance.toFixed(2)}</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-2">
-              <button 
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <button
                 onClick={handleSettleCash}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-3.5 rounded-2xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-1"
+                className="rounded-lg bg-emerald-600 px-2 py-2 text-[10px] font-black text-white shadow-sm transition hover:bg-emerald-700"
               >
-                <span>Settle Cash Balance</span>
-                <span className="bg-emerald-700 px-1.5 py-0.5 rounded text-[9px] font-mono">F7</span>
+                Settle Cash <span className="rounded bg-emerald-700 px-1 text-[8px] font-mono">F7</span>
               </button>
-              <button 
+              <button
                 onClick={() => { setCustomerPaidInput(''); setShowCalculator(true); }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-3.5 rounded-2xl shadow-md shadow-blue-600/20 transition flex items-center justify-center gap-1"
+                className="rounded-lg bg-blue-600 px-2 py-2 text-[10px] font-black text-white shadow-sm transition hover:bg-blue-700"
               >
-                <Calculator size={14} />
-                <span>Calc</span>
-                <span className="bg-blue-700 px-1.5 py-0.5 rounded text-[9px] font-mono">Alt+B</span>
+                <Calculator size={12} className="mr-1 inline" /> Calc
               </button>
-              <button 
+              <button
                 onClick={handleSaveBill}
                 disabled={hasCompletedItems}
-                className={`font-bold text-xs px-4 py-3.5 rounded-2xl shadow-md transition flex items-center justify-center gap-1 ${hasCompletedItems ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60 shadow-none' : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/25'}`}
+                className={`rounded-lg px-2 py-2 text-[10px] font-black shadow-sm transition ${hasCompletedItems ? 'cursor-not-allowed bg-slate-300 text-slate-500 shadow-none' : 'bg-amber-500 text-white hover:bg-amber-600'}`}
                 title={hasCompletedItems ? "Cannot save when status is Completed. Use Complete Bill." : "Save bill"}
               >
-                <span>Save</span>
-                <span className="bg-amber-600 px-1.5 py-0.5 rounded text-[9px] font-mono">F8</span>
+                Save <span className="rounded bg-amber-600 px-1 text-[8px] font-mono">F8</span>
               </button>
             </div>
           </div>
 
-          <div className={`lg:col-span-6 ${activeTheme.cardBg} rounded-2xl p-6 shadow-sm border ${activeTheme.border} flex flex-col justify-between`}>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm font-medium text-slate-700">
-                <span>Wallet Charge</span>
+          <div className={`lg:col-span-6 ${activeTheme.cardBg} rounded-xl border ${activeTheme.border} px-3 py-2 shadow-sm`}>
+            <h3 className="mb-2 flex items-center gap-1.5 border-b border-slate-200 pb-1.5 text-xs font-black text-slate-700">
+              <ReceiptText size={14} className="text-blue-600" /> Summary
+            </h3>
+
+            <div className="grid grid-cols-2 gap-x-5 gap-y-1 text-xs">
+              <div className="flex justify-between gap-2 font-medium text-slate-700">
+                <span>Department Fee</span>
                 <span>₹{totalWalletCharge.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm font-medium text-slate-700">
+              <div className="flex justify-between gap-2 font-medium text-slate-700">
                 <span>Service Charge</span>
                 <span>₹{totalServiceCharge.toFixed(2)}</span>
               </div>
-              <div className="border-t border-dashed border-slate-300 my-2 pt-2 flex justify-between text-sm font-bold text-slate-800">
+              <div className="flex justify-between gap-2 font-bold text-slate-800">
                 <span>Bill Total</span>
                 <span>₹{billTotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm font-medium text-slate-500">
+              <div className="flex justify-between gap-2 font-medium text-slate-500">
                 <span>Previous Balance</span>
                 <span>₹{Number(previousBalance).toFixed(2)}</span>
               </div>
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-slate-200/60 space-y-2">
-              <div className="flex justify-between text-lg font-black text-slate-900">
-                <span>Total Amount</span>
-                <span className="text-blue-700">₹{totalAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm font-bold text-slate-700">
+              <div className="flex justify-between gap-2 font-bold text-slate-700">
                 <span>Total Paid</span>
                 <span>₹{totalPaid.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-base font-black pt-2 border-t border-slate-200/60">
+              <div className="flex justify-between gap-2 font-bold text-slate-700">
                 <span>Balance</span>
                 <span className={balance > 0 ? "text-rose-500" : "text-emerald-600"}>₹{balance.toFixed(2)}</span>
               </div>
             </div>
+
+            <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2">
+              <span className="text-sm font-black text-slate-900">Total Amount</span>
+              <span className="text-xl font-black text-blue-700">₹{totalAmount.toFixed(2)}</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4">
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button 
-              onClick={handleClearForm}
-              className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3.5 text-xs font-black text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-100 flex items-center justify-center gap-2"
-            >
-              Clear Form <span className="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[9px]">F10</span>
-            </button>
-          </div>
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white/80 p-2 shadow-sm sm:flex-row sm:items-center sm:justify-end">
+          <button
+            onClick={handleCompleteBill}
+            disabled={hasInProgressItems}
+            className={`order-first rounded-lg px-4 py-2 text-[11px] font-black text-white shadow-sm transition sm:order-none ${hasInProgressItems ? 'cursor-not-allowed bg-slate-300 text-slate-500 shadow-none' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+            title={hasInProgressItems ? "Cannot complete bill while items are In Progress. Use Save instead." : "Complete bill"}
+          >
+            ✓ Complete <span className="rounded bg-emerald-700 px-1 text-[8px] font-mono">F9</span>
+          </button>
 
-          <div className="flex gap-3 w-full sm:w-auto flex-wrap">
-            <button 
-              onClick={handlePrint}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-xs font-black text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 flex items-center justify-center gap-2"
-            >
-              <Printer size={16} /> Print <span className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[9px]">Alt+P</span>
-            </button>
-            <button
-              onClick={() => { setIsModalGPayQr(true); setShowQRModal(true); }}
-              className="rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-3.5 text-xs font-black text-cyan-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-100 flex items-center justify-center gap-2"
-            >
-              <QrCode size={16} /> QR Code
-            </button>
-            <button
-              onClick={handleShare}
-              className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-xs font-black text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 flex items-center justify-center gap-2"
-            >
-              <Share2 size={16} /> Share <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[9px]">Alt+W</span>
-            </button>
-            <button 
-              onClick={handleCompleteBill}
-              disabled={hasInProgressItems}
-              className={`font-extrabold text-sm px-8 py-3.5 rounded-2xl transition flex items-center justify-center gap-2 ${hasInProgressItems ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-60 shadow-none' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20'}`}
-              title={hasInProgressItems ? "Cannot complete bill while items are In Progress. Use Save instead." : "Complete bill"}
-            >
-              <span>Complete Bill</span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${hasInProgressItems ? 'bg-slate-400 text-slate-700' : 'bg-blue-700 text-blue-100'}`}>F9</span>
-            </button>
-          </div>
+          <button
+            onClick={handlePrint}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-[11px] font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            <Printer size={13} className="mr-1 inline" /> Print
+          </button>
+
+          <button
+            onClick={() => { setIsModalGPayQr(true); setShowQRModal(true); }}
+            className="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-2 text-[11px] font-black text-cyan-700 shadow-sm transition hover:bg-cyan-100"
+          >
+            <QrCode size={13} className="mr-1 inline" /> QR
+          </button>
+
+          <button
+            onClick={handleShare}
+            className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-[11px] font-black text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+          >
+            <Share2 size={13} className="mr-1 inline" /> Share
+          </button>
+
+          <button
+            onClick={handleClearForm}
+            className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-[11px] font-black text-rose-600 shadow-sm transition hover:bg-rose-100"
+          >
+            <Trash2 size={13} className="mr-1 inline" /> Clear <span className="rounded bg-rose-100 px-1 text-[8px]">F10</span>
+          </button>
         </div>
       </div>
     </>
