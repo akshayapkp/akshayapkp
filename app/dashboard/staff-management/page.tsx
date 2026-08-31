@@ -24,7 +24,6 @@ const INITIAL_STAFF: Staff[] = [
   { id: '3', staffId: '#3', name: 'SUMAYYA', email: 'sumayya@gmail.com', phone: '7025400130', role: 'Staff', salary: 10000 },
   { id: '4', staffId: '#4', name: 'SHEEJA', email: 'sheeja@gmail.com', phone: '8907428080', role: 'Staff', salary: 10000 },
   { id: '5', staffId: '#5', name: 'SAHLA', email: 'sahla@gmail.com', phone: '9037977659', role: 'Staff', salary: 10000 },
-  { id: '6', staffId: '#6', name: 'test', email: 'test@gmail.com', phone: '9876543210', role: 'Staff', salary: 10000 },
 ];
 
 export default function StaffManagementPage() {

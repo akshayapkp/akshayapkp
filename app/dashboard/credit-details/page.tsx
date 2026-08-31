@@ -47,30 +47,7 @@ export default function CreditDetailsPage() {
       setBills(creditOnly);
     } else {
       const defaultData: CreditBill[] = [
-        {
-          id: '1',
-          billNumber: 'BILL-1001',
-          customerName: 'irfan',
-          mobileNumber: '8589868773',
-          date: '2026-07-10',
-          staffName: 'SAHLA',
-          status: 'Credit',
-          totalAmount: 2150,
-          paidAmount: 0,
-          owedAmount: 2150
-        },
-        {
-          id: '2',
-          billNumber: 'BILL-1002',
-          customerName: 'sajad yoosu',
-          mobileNumber: '5646546546',
-          date: '2026-07-09',
-          staffName: 'sajad staff',
-          status: 'Credit',
-          totalAmount: 500,
-          paidAmount: 400,
-          owedAmount: 100
-        }
+
       ];
 
       let filteredDefault = defaultData;
