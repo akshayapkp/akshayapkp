@@ -1085,7 +1085,9 @@ function ServiceEntryForm() {
         managedList[existingIndex].totalPaid = (Number(managedList[existingIndex].totalPaid) || 0) + totalPaid;
         managedList[existingIndex].gpayPaid = (Number(managedList[existingIndex].gpayPaid) || 0) + Number(gpay);
         managedList[existingIndex].cashPaid = (Number(managedList[existingIndex].cashPaid) || 0) + Number(cash);
-        managedList[existingIndex].balance = (Number(managedList[existingIndex].balance) || 0) + balance;
+        // Store the customer's latest outstanding balance instead of
+        // accumulating the same balance again.
+        managedList[existingIndex].balance = Number(balance) || 0;
       } else {
         managedList.push({
           id: "CUST-" + Date.now(),
@@ -1539,6 +1541,18 @@ function ServiceEntryForm() {
     ? savedCustomersList.filter(c => c.mobile && c.mobile.includes(mobile.trim()))
     : [];
 
+  // Display-only previous balance for the exact customer mobile number.
+  // This does not change the existing billing calculation or form state.
+  const normalizedMobile = mobile.replace(/\D/g, '');
+  const matchedMobileCustomer = normalizedMobile.length >= 10
+    ? savedCustomersList.find((c: any) =>
+        String(c?.mobile || '').replace(/\D/g, '') === normalizedMobile
+      )
+    : null;
+  const mobilePreviousBalance = matchedMobileCustomer
+    ? Math.abs(Number(matchedMobileCustomer.balance) || 0)
+    : 0;
+
   const filteredByName = customerName.trim().length >= 3 
     ? savedCustomersList.filter(c => c.name && c.name.toLowerCase().includes(customerName.trim().toLowerCase()))
     : [];
@@ -1931,6 +1945,11 @@ function ServiceEntryForm() {
                     onFocus={() => setShowMobileDropdown(true)}
                   />
                 </div>
+                {matchedMobileCustomer && (
+                  <div className="pointer-events-none absolute left-0 top-full z-20 mt-0.5 text-[10px] font-bold leading-4 text-slate-500">
+                    Previous Balance: <span className="font-black text-rose-500">₹{mobilePreviousBalance.toFixed(2)}</span>
+                  </div>
+                )}
                 {showMobileDropdown && filteredByMobile.length > 0 && (
                   <div className="absolute left-0 top-full z-30 mt-1 max-h-44 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl">
                     {filteredByMobile.map((cust, idx) => (

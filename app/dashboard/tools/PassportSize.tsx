@@ -233,9 +233,13 @@ export default function PassportSize({
                       </label>
                       <select
                         value={paperType}
-                        onChange={(e) =>
-                          setPaperType(e.target.value as "A4" | "6x4")
-                        }
+                        onChange={(e) => {
+                          const nextPaperType = e.target.value as "A4" | "6x4";
+                          setPaperType(nextPaperType);
+
+                          const maxCopies = nextPaperType === "6x4" ? 8 : 30;
+                          setCopies((current) => Math.min(current, maxCopies));
+                        }}
                         className="mt-2 h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm font-semibold outline-none transition focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-500/10"
                       >
                         <option value="A4">A4 Paper</option>
@@ -263,10 +267,27 @@ export default function PassportSize({
                       </label>
                       <input
                         type="number"
-                        min={1}
-                        max={24}
-                        value={copies}
-                        onChange={(e) => setCopies(Number(e.target.value))}
+                        min={0}
+                        max={paperType === "6x4" ? 8 : 30}
+                        value={copies === 0 ? "" : copies}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+
+                          if (rawValue === "") {
+                            setCopies(0);
+                            return;
+                          }
+
+                          const value = Number(rawValue);
+                          const maxCopies = paperType === "6x4" ? 8 : 30;
+
+                          setCopies(
+                            Math.max(
+                              0,
+                              Math.min(maxCopies, Number.isFinite(value) ? value : 0)
+                            )
+                          );
+                        }}
                         className="mt-2 h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 font-semibold outline-none transition focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-500/10"
                       />
                     </div>
@@ -279,8 +300,27 @@ export default function PassportSize({
                         type="number"
                         min={0}
                         max={20}
-                        value={borderSize}
-                        onChange={(e) => setBorderSize(Number(e.target.value))}
+                        value={borderSize === 0 ? "" : borderSize}
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+
+                          if (rawValue === "") {
+                            setBorderSize(0);
+                            return;
+                          }
+
+                          const value = Number(rawValue);
+
+                          setBorderSize(
+                            Math.max(
+                              0,
+                              Math.min(
+                                20,
+                                Number.isFinite(value) ? value : 0
+                              )
+                            )
+                          );
+                        }}
                         className="mt-2 h-10 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 font-semibold outline-none transition focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-500/10"
                       />
                     </div>

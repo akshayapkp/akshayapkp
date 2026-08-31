@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import {
   Upload,
@@ -10,7 +10,7 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
-
+import { useEffect, useState } from "react";
 import { useCropResize } from "../hooks/useCropResize";
 
 interface CropResizeToolProps {
@@ -27,6 +27,66 @@ export default function CropResizeTool({
 
   const previewAspect = previewWidth / (previewHeight || 1);
 
+  const [naturalImageSize, setNaturalImageSize] = useState({
+    width: 1,
+    height: 1,
+  });
+
+  useEffect(() => {
+    if (!crop.selectedImage) {
+      setNaturalImageSize({ width: 1, height: 1 });
+      return;
+    }
+
+    const img = new Image();
+
+    img.onload = () => {
+      if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+        setNaturalImageSize({
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        });
+      }
+    };
+
+    img.src = crop.selectedImage;
+  }, [crop.selectedImage]);
+
+  const previewBoxSize = 300;
+
+  const previewScale =
+    previewWidth > 0 && previewHeight > 0
+      ? Math.min(
+          previewBoxSize / previewWidth,
+          previewBoxSize / previewHeight
+        )
+      : 1;
+
+  const coverScale =
+    Math.max(
+      previewWidth / naturalImageSize.width,
+      previewHeight / naturalImageSize.height
+    ) * (crop.zoomLevel / 100);
+
+  const previewImageWidth =
+    naturalImageSize.width * coverScale * previewScale;
+
+  const previewImageHeight =
+    naturalImageSize.height * coverScale * previewScale;
+
+  const previewPositionX =
+    crop.imagePosition.x * coverScale * previewScale;
+
+  const previewPositionY =
+    crop.imagePosition.y * coverScale * previewScale;
+
+  const unitLabel: Record<string, string> = {
+    px: "px",
+    mm: "mm",
+    cm: "cm",
+    inch: "in",
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5">
       <div className="my-4 flex max-h-[95vh] w-full max-w-6xl flex-col overflow-y-auto rounded-[30px] border border-white/80 bg-white/95 shadow-[0_30px_100px_rgba(15,23,42,0.28)] backdrop-blur-2xl">
@@ -37,7 +97,7 @@ export default function CropResizeTool({
               Crop & Resize Image
             </h3>
             <p className="text-xs font-medium text-blue-50/90">
-              Resize image with exact dimensions & file size
+              Resize image with exact dimensions & high-quality output
             </p>
           </div>
 
@@ -125,7 +185,6 @@ export default function CropResizeTool({
                 {!crop.selectedImage ? (
                   <label className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-white text-slate-400 transition-colors hover:text-blue-500">
                     <Upload size={32} />
-
                     <span className="mt-3 text-xs font-bold">
                       Click to Upload Image
                     </span>
@@ -139,9 +198,9 @@ export default function CropResizeTool({
                   </label>
                 ) : crop.removeBackground ? (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    {crop.processedImage ? (
+                    {crop.processedImage && crop.displayImage ? (
                       <img
-                        src={crop.displayImage ?? ""}
+                        src={crop.displayImage}
                         alt="Background removed preview"
                         draggable={false}
                         className="h-full w-full select-none object-fill"
@@ -159,10 +218,8 @@ export default function CropResizeTool({
                     className="absolute inset-0 flex items-center justify-center"
                     style={{
                       transform: `
-                        translate(${crop.imagePosition.x}px,
-                        ${crop.imagePosition.y}px)
+                        translate(${previewPositionX}px, ${previewPositionY}px)
                         rotate(${crop.fineRotation}deg)
-                        scale(${crop.zoomLevel / 100})
                       `,
                     }}
                   >
@@ -171,7 +228,11 @@ export default function CropResizeTool({
                       alt="Preview"
                       draggable={false}
                       className="pointer-events-none max-w-none select-none"
-                      style={{ width: 220 }}
+                      style={{
+                        width: previewImageWidth,
+                        height: previewImageHeight,
+                        maxWidth: "none",
+                      }}
                     />
                   </div>
                 )}
@@ -191,7 +252,7 @@ export default function CropResizeTool({
                   Crop Settings
                 </h3>
                 <p className="mt-1 text-xs font-medium text-slate-500">
-                  Configure output size
+                  Configure exact output size
                 </p>
               </div>
 
@@ -231,6 +292,7 @@ export default function CropResizeTool({
                   <input
                     value={crop.targetWidth}
                     onChange={(e) => crop.setTargetWidth(e.target.value)}
+                    inputMode="decimal"
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-semibold outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                   />
                 </label>
@@ -242,6 +304,7 @@ export default function CropResizeTool({
                   <input
                     value={crop.targetHeight}
                     onChange={(e) => crop.setTargetHeight(e.target.value)}
+                    inputMode="decimal"
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-semibold outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                   />
                 </label>
@@ -257,11 +320,17 @@ export default function CropResizeTool({
                   onChange={(e) => crop.setSelectedUnit(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-semibold outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                 >
-                  <option value="px">Pixels</option>
-                  <option value="cm">Centimeter</option>
-                  <option value="inch">Inch</option>
+                  <option value="px">Pixels (PX)</option>
+                  <option value="mm">Millimeter (MM)</option>
+                  <option value="cm">Centimeter (CM)</option>
+                  <option value="inch">Inch (IN)</option>
                 </select>
               </label>
+
+              <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-[10px] font-semibold leading-4 text-blue-700">
+                Physical units use 300 DPI for sharp output:
+                1 inch = 25.4 mm = 2.54 cm = 300 pixels.
+              </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <label>
@@ -271,6 +340,7 @@ export default function CropResizeTool({
                   <input
                     value={crop.minKb}
                     onChange={(e) => crop.setMinKb(e.target.value)}
+                    inputMode="numeric"
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-semibold outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                   />
                 </label>
@@ -282,10 +352,17 @@ export default function CropResizeTool({
                   <input
                     value={crop.maxKb}
                     onChange={(e) => crop.setMaxKb(e.target.value)}
+                    inputMode="numeric"
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-semibold outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                   />
                 </label>
               </div>
+
+              <p className="mt-2 text-[10px] leading-4 text-slate-400">
+                Quality is prioritized during download. If the maximum KB is
+                too low to keep the image clear, the tool stops compressing
+                instead of making the photo excessively blurry.
+              </p>
 
               <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                 <div className="flex items-center gap-2 text-sm font-black text-slate-700">
@@ -334,9 +411,8 @@ export default function CropResizeTool({
                 </div>
 
                 <p className="mt-2 text-[10px] leading-4 text-slate-400">
-                  Click Remove Background to see the result directly in the
-                  preview. The selected colour is also included in the
-                  downloaded file.
+                  Background removal is rendered again at the exact requested
+                  output dimensions before download.
                 </p>
               </div>
 
@@ -360,18 +436,20 @@ export default function CropResizeTool({
 
               <button
                 type="button"
-                disabled={!crop.selectedImage}
+                disabled={!crop.selectedImage || crop.isProcessingBackground}
                 onClick={crop.handleProcessAndDownloadImage}
                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 py-3.5 font-black text-white shadow-[0_14px_32px_rgba(37,99,235,0.22)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(37,99,235,0.3)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Download size={17} />
-                Download Image
+                {crop.isProcessingBackground
+                  ? "Processing…"
+                  : "Download Clear Image"}
               </button>
 
               <button
                 type="button"
                 onClick={crop.reset}
-                className="mt-3 w-full rounded-xl border border-slate-300 bg-white py-3 font-black text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
+                className="mt-3 w-full rounded-xl border border-slate-300 bg-white py-3 font-black text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50"
               >
                 Reset
               </button>
@@ -387,14 +465,22 @@ export default function CropResizeTool({
                 <div className="flex justify-between">
                   <span className="text-slate-300">Width</span>
                   <span>
-                    {crop.targetWidth} {crop.selectedUnit}
+                    {crop.targetWidth} {unitLabel[crop.selectedUnit] ?? crop.selectedUnit}
                   </span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-slate-300">Height</span>
                   <span>
-                    {crop.targetHeight} {crop.selectedUnit}
+                    {crop.targetHeight} {unitLabel[crop.selectedUnit] ?? crop.selectedUnit}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-300">Output Pixels</span>
+                  <span>
+                    {crop.getComputedDimensions().width} ×{" "}
+                    {crop.getComputedDimensions().height}px
                   </span>
                 </div>
 

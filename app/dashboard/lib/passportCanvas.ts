@@ -9,30 +9,58 @@ export interface PassportCanvasOptions {
   saturation: number;
   hue: number;
   backgroundColor: string;
-  borderSize: number; // ഇനി ഇത് ബോർഡറിന്റെ കട്ടിയായി (LineWidth) ഉപയോഗിക്കാം
+  borderSize: number;
   imagePosition: {
     x: number;
     y: number;
   };
 }
 
-const MM_TO_PX = 3.7795275591;
+const LEGACY_MM_TO_PX = 3.7795275591;
+const PRINT_DPI = 300;
+const PRINT_MM_TO_PX = PRINT_DPI / 25.4;
 
-export const PASSPORT_WIDTH = 35 * MM_TO_PX;
+export const PASSPORT_WIDTH = 31 * PRINT_MM_TO_PX;
+export const PASSPORT_HEIGHT = 41 * PRINT_MM_TO_PX;
 
-export const PASSPORT_HEIGHT = 45 * MM_TO_PX;
+export const A4_WIDTH = Math.round(210 * PRINT_MM_TO_PX);
+export const A4_HEIGHT = Math.round(297 * PRINT_MM_TO_PX);
 
-export const A4_WIDTH = 210 * MM_TO_PX;
+export const PAPER_6X4_WIDTH = Math.round(152.4 * PRINT_MM_TO_PX);
+export const PAPER_6X4_HEIGHT = Math.round(101.6 * PRINT_MM_TO_PX);
 
-export const A4_HEIGHT = 297 * MM_TO_PX;
+const PAGE_MARGIN = 60;
 
-export const PAPER_6X4_WIDTH = 152.4 * MM_TO_PX;
+/*
+ * A4-ൽ photo page edge-നോട് തട്ടിക്കിടക്കാതിരിക്കാൻ
+ * ചെറിയ safe margin.
+ *
+ * 20px ≈ 1.7mm @ 300 DPI
+ */
+const A4_PAGE_MARGIN = 70;
 
-export const PAPER_6X4_HEIGHT = 101.6 * MM_TO_PX;
+/*
+ * 6×4-ന്റെ നിലവിലുള്ള margin മാറ്റുന്നില്ല.
+ */
+const PHOTO_GAP = 60;
 
-const PAGE_MARGIN = 10;
+/*
+ * A4 passport photo:
+ * 35mm × 45mm @ 300 DPI
+ */
+const A4_PHOTO_WIDTH = 31 * PRINT_MM_TO_PX;
+const A4_PHOTO_HEIGHT = 41 * PRINT_MM_TO_PX;
 
-const PHOTO_GAP = 10;
+/*
+ * A4 photos തമ്മിലുള്ള gap.
+ */
+const A4_PHOTO_GAP = 5 * PRINT_MM_TO_PX;
+
+/*
+ * Maximum copies.
+ */
+const MAX_A4_COPIES = 30;
+const MAX_6X4_COPIES = 8;
 
 export function createPassportCanvas(
   options: PassportCanvasOptions
@@ -55,7 +83,12 @@ export function createPassportCanvas(
   if (!ctx) return null;
 
   ctx.fillStyle = options.backgroundColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
   return {
     canvas,
@@ -67,35 +100,95 @@ function calculateLayout(
   canvas: HTMLCanvasElement,
   options: PassportCanvasOptions
 ) {
-  const photoWidth = PASSPORT_WIDTH;
-  const photoHeight = PASSPORT_HEIGHT;
+  const isA4 = options.paperType === "A4";
 
-  let cols = 1;
-  let rows = 1;
-  let startX = PAGE_MARGIN;
-  let startY = PAGE_MARGIN;
+  const photoWidth = isA4
+    ? A4_PHOTO_WIDTH
+    : PASSPORT_WIDTH;
 
-  if (options.paperType === "6x4") {
-    // 6x4 പേപ്പറിനായി ഫോട്ടോകൾ വൈറ്റ് ബോക്സിനുള്ളിൽ കൃത്യമായി ഫിറ്റ് ചെയ്യാൻ 2 നിരകളായി (Rows) ക്രമീകരിക്കുന്നു
-    cols = Math.ceil(options.copies / 2); // കോപ്പികൾക്ക് അനുസരിച്ച് കോളങ്ങൾ ക്രമീകരിക്കും (ഉദാഹരണത്തിന് 8 കോപ്പിക്ക് 4 കോളങ്ങൾ വീതം 2 നിരകൾ)
-    rows = 2; // മുകളിലും താഴെയുമായി 2 നിരകൾ
+  const photoHeight = isA4
+    ? A4_PHOTO_HEIGHT
+    : PASSPORT_HEIGHT;
 
-    const totalWidth = cols * photoWidth + (cols - 1) * PHOTO_GAP;
-    const totalHeight = rows * photoHeight + (rows - 1) * PHOTO_GAP;
+  const photoGap = isA4
+    ? A4_PHOTO_GAP
+    : PHOTO_GAP;
 
-    startX = (canvas.width - totalWidth) / 2; // പേപ്പറിന്റെ കൃത്യം നടുവിലായി സെറ്റ് ചെയ്യാൻ
-    startY = (canvas.height - totalHeight) / 2;
+  const maxCopies = isA4
+    ? MAX_A4_COPIES
+    : MAX_6X4_COPIES;
+
+  /*
+   * Never allow more than the paper-specific maximum.
+   */
+  const copies = Math.max(
+    1,
+    Math.min(
+      Math.floor(options.copies || 1),
+      maxCopies
+    )
+  );
+
+  let cols: number;
+  let rows: number;
+
+  if (!isA4) {
+    /*
+     * 6 × 4
+     *
+     * 1 photo  → 1
+     * 2 photos → 2
+     * 3 photos → 2 + 1
+     * 4 photos → 2 × 2
+     * 5–8      → 4 per row
+     *
+     * Maximum = 8
+     */
+    if (copies <= 1) {
+      cols = 1;
+    } else if (copies <= 4) {
+      cols = 2;
+    } else {
+      cols = 4;
+    }
+
+    rows = Math.ceil(copies / cols);
   } else {
-    // A4 പേപ്പറിനുള്ള പഴയ കോഡ് അതുപോലെ തുടരുന്നു
-    cols = 5;
-    rows = Math.ceil(options.copies / cols);
+    /*
+     * A4
+     *
+     * Maximum 5 photos in one row.
+     *
+     * 1–5    → 1 row
+     * 6–10   → 2 rows
+     * 11–15  → 3 rows
+     * ...
+     * 26–30  → 6 rows
+     */
+    cols = Math.min(5, copies);
 
-    const totalWidth = cols * photoWidth + (cols - 1) * PHOTO_GAP;
-    const totalHeight = rows * photoHeight + (rows - 1) * PHOTO_GAP;
-
-    startX = (canvas.width - totalWidth) / 2;
-    startY = PAGE_MARGIN + 20;
+    rows = Math.ceil(copies / cols);
   }
+
+  /*
+   * IMPORTANT:
+   *
+   * Photos are NOT centered.
+   *
+   * They start from the top-left area of the sheet.
+   *
+   * A4 gets a slightly larger margin so that the
+   * first photo does not touch the page edge.
+   *
+   * 6×4 keeps the previous margin unchanged.
+   */
+  const startX = isA4
+    ? A4_PAGE_MARGIN
+    : PAGE_MARGIN;
+
+  const startY = isA4
+    ? A4_PAGE_MARGIN
+    : PAGE_MARGIN;
 
   return {
     photoWidth,
@@ -104,7 +197,9 @@ function calculateLayout(
     rows,
     startX,
     startY,
-    maxCopies: 30,
+    photoGap,
+    copies,
+    maxCopies,
   };
 }
 
@@ -121,16 +216,20 @@ export function drawPassportSheet(
     photoWidth,
     photoHeight,
     cols,
-    rows,
     startX,
     startY,
-    maxCopies,
-  } = calculateLayout(canvas, options);
-
-  const copies = Math.min(options.copies, maxCopies);
+    photoGap,
+    copies,
+  } = calculateLayout(
+    canvas,
+    options
+  );
 
   ctx.save();
 
+  /*
+   * Image adjustments.
+   */
   ctx.filter = `
     brightness(${options.brightness}%)
     contrast(${options.contrast}%)
@@ -139,29 +238,78 @@ export function drawPassportSheet(
   `;
 
   for (let i = 0; i < copies; i++) {
+    /*
+     * Row / column calculation.
+     *
+     * A4 example:
+     *
+     * 1  2  3  4  5
+     * 6  7  8  9  10
+     * 11 12 13 14 15
+     *
+     * 6×4 with 4:
+     *
+     * 1  2
+     * 3  4
+     */
     const col = i % cols;
     const row = Math.floor(i / cols);
 
-    const x = startX + col * (photoWidth + PHOTO_GAP);
-    const y = startY + row * (photoHeight + PHOTO_GAP);
+    const x =
+      startX +
+      col * (photoWidth + photoGap);
 
+    const y =
+      startY +
+      row * (photoHeight + photoGap);
+
+    /*
+     * Fill photo frame.
+     */
     ctx.fillStyle = options.backgroundColor;
-    ctx.fillRect(x, y, photoWidth, photoHeight);
+
+    ctx.fillRect(
+      x,
+      y,
+      photoWidth,
+      photoHeight
+    );
 
     ctx.save();
 
-    // ഫോട്ടോയുടെ കൃത്യം നടുത്തേക്ക് മാറ്റി ക്ലിപ്പ് ചെയ്യുക
+    /*
+     * Move to the exact center of the photo frame.
+     */
     ctx.translate(
       x + photoWidth / 2,
       y + photoHeight / 2
     );
 
-    ctx.rotate((options.rotation * Math.PI) / 180);
+    /*
+     * Rotation.
+     */
+    ctx.rotate(
+      (options.rotation * Math.PI) / 180
+    );
 
-    const currentScale = options.zoom <= 5 ? options.zoom : options.zoom / 100;
-    ctx.scale(currentScale, currentScale);
+    /*
+     * Zoom.
+     */
+    const currentScale =
+      options.zoom <= 5
+        ? options.zoom
+        : options.zoom / 100;
 
+    ctx.scale(
+      currentScale,
+      currentScale
+    );
+
+    /*
+     * Clip image to exact photo frame.
+     */
     ctx.beginPath();
+
     ctx.rect(
       -photoWidth / 2,
       -photoHeight / 2,
@@ -171,34 +319,80 @@ export function drawPassportSheet(
 
     ctx.clip();
 
-    const imageRatio = options.image.width / options.image.height;
-    const frameRatio = photoWidth / photoHeight;
+    /*
+     * Image aspect ratio.
+     */
+    const imageRatio =
+      options.image.width /
+      options.image.height;
+
+    const frameRatio =
+      photoWidth / photoHeight;
 
     let drawWidth = photoWidth;
     let drawHeight = photoHeight;
 
+    /*
+     * Cover the complete frame without stretching.
+     */
     if (imageRatio > frameRatio) {
-      drawWidth = photoHeight * imageRatio;
+      drawWidth =
+        photoHeight * imageRatio;
+
       drawHeight = photoHeight;
     } else {
       drawWidth = photoWidth;
-      drawHeight = photoWidth / imageRatio;
+
+      drawHeight =
+        photoWidth / imageRatio;
     }
 
+    /*
+     * High-quality rendering.
+     */
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    /*
+     * Draw image.
+     */
     ctx.drawImage(
       options.image,
-      -drawWidth / 2 + options.imagePosition.x,
-      -drawHeight / 2 + options.imagePosition.y,
+      -drawWidth / 2 +
+        options.imagePosition.x,
+      -drawHeight / 2 +
+        options.imagePosition.y,
       drawWidth,
       drawHeight
     );
 
     ctx.restore();
 
-    // ഫോട്ടോയുടെ കൃത്യം അതിരുകളിലൂടെ (Edges) തന്നെ കറുത്ത ബോർഡർ വരയ്ക്കുന്നു (വൈറ്റ് ഗ്യാപ്പ് ഉണ്ടാകില്ല)
+    /*
+     * ------------------------------------------------
+     * BORDER
+     * ------------------------------------------------
+     *
+     * Border is ALWAYS visible.
+     *
+     * Existing Border Size control is preserved.
+     *
+     * 1, 2, 3, 4, 5 etc. will continue to control
+     * the border thickness.
+     */
     ctx.strokeStyle = "#000000";
-    ctx.lineWidth = options.borderSize > 0 ? options.borderSize * 0.2 : 1; // ബോർഡർ സൈസ് അനുസരിച്ച് കട്ടി വ്യത്യാസപ്പെടും
-    ctx.strokeRect(x, y, photoWidth, photoHeight);
+
+    ctx.lineWidth = Math.max(
+      1,
+      Number(options.borderSize) ||0
+    );
+
+    ctx.strokeRect(
+      x,
+      y,
+      photoWidth,
+      photoHeight
+    );
   }
 
   ctx.restore();

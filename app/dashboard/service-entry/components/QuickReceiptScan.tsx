@@ -12,6 +12,10 @@ export default function QuickReceiptScan() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // =========================================================
+  // PASTE IMAGE FROM CLIPBOARD
+  // =========================================================
+
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -41,11 +45,8 @@ export default function QuickReceiptScan() {
   // IMAGE PREPROCESSING
   // =========================================================
 
-  const preprocessImage = async (
-    file: File
-  ): Promise<Blob> => {
+  const preprocessImage = async (file: File): Promise<Blob> => {
     const image = new Image();
-
     const objectUrl = URL.createObjectURL(file);
 
     try {
@@ -97,9 +98,12 @@ export default function QuickReceiptScan() {
           0.114 * b;
 
         // Increase contrast
-        gray = ((gray - 128) * 1.35) + 128;
+        gray = (gray - 128) * 1.35 + 128;
 
-        gray = Math.max(0, Math.min(255, gray));
+        gray = Math.max(
+          0,
+          Math.min(255, gray)
+        );
 
         data[i] = gray;
         data[i + 1] = gray;
@@ -108,21 +112,25 @@ export default function QuickReceiptScan() {
 
       ctx.putImageData(imageData, 0, 0);
 
-      return await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(
-                new Error("Unable to create processed image")
-              );
-            }
-          },
-          "image/png",
-          1
-        );
-      });
+      return await new Promise<Blob>(
+        (resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(
+                  new Error(
+                    "Unable to create processed image"
+                  )
+                );
+              }
+            },
+            "image/png",
+            1
+          );
+        }
+      );
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
@@ -196,14 +204,15 @@ export default function QuickReceiptScan() {
   };
 
   // =========================================================
-  // EXTRA NUMBER OCR USING MULTIPLE IMAGE PASSES
+  // EXTRA NUMBER OCR
   // =========================================================
 
   const runExtraNumberOCR = async (
     file: File
   ): Promise<string> => {
     try {
-      const processed = await preprocessImage(file);
+      const processed =
+        await preprocessImage(file);
 
       const numericText =
         await runNumericOCR(processed);
@@ -232,6 +241,8 @@ export default function QuickReceiptScan() {
   // =========================================================
 
   const handleFile = async (file: File) => {
+    if (loading) return;
+
     setLoading(true);
     setMessage("");
 
@@ -341,11 +352,11 @@ export default function QuickReceiptScan() {
         );
 
         setMessage(
-          "✅ Saved to Work Status"
+          "Saved to Work Status"
         );
       } else {
         setMessage(
-          "⚠️ Required fields not detected."
+          "Required fields not detected."
         );
       }
     } catch (err) {
@@ -355,7 +366,7 @@ export default function QuickReceiptScan() {
       );
 
       setMessage(
-        "❌ Failed to scan document."
+        "Failed to scan document."
       );
     } finally {
       setLoading(false);
@@ -367,36 +378,132 @@ export default function QuickReceiptScan() {
   // =========================================================
 
   return (
-    <div className="w-[300px] min-h-[68px] rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-cyan-950/90 px-3.5 py-2.5 flex items-center shadow-[0_14px_35px_rgba(6,182,212,0.16)] backdrop-blur-xl">
-      <div className="flex items-center justify-between w-full gap-2">
+    <div
+      className="
+        flex
+        w-[280px]
+        max-w-full
+        shrink-0
+        items-center
+        rounded-xl
+        border
+        border-cyan-400/20
+        bg-gradient-to-r
+        from-slate-900/95
+        via-slate-800/95
+        to-cyan-950/90
+        px-2
+        py-1.5
+        shadow-[0_10px_25px_rgba(6,182,212,0.14)]
+        backdrop-blur-xl
+      "
+    >
+      <div className="flex w-full min-w-0 items-center gap-2">
 
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-400/15 text-cyan-200 shadow-inner">
-          <ScanText size={20} />
+        {/* ICON */}
+        <div
+          className="
+            flex
+            h-8
+            w-8
+            shrink-0
+            items-center
+            justify-center
+            rounded-lg
+            border
+            border-cyan-300/20
+            bg-cyan-400/15
+            text-cyan-200
+          "
+        >
+          <ScanText size={17} />
         </div>
 
-        <div className="flex-1 overflow-hidden">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200/75">
+        {/* TEXT */}
+        <div className="min-w-0 flex-1">
+          <p
+            className="
+              text-[8px]
+              font-bold
+              uppercase
+              tracking-[0.16em]
+              text-cyan-200/75
+            "
+          >
             QUICK SCAN
           </p>
 
-          <p className="truncate text-sm font-black text-white">
-            Paste Image
+          <p
+            className="
+              truncate
+              text-[11px]
+              font-black
+              leading-tight
+              text-white
+            "
+          >
+            {loading
+              ? "Scanning..."
+              : "Paste Image"}
           </p>
+
+          {message && (
+            <p
+              className={`
+                mt-0.5
+                truncate
+                text-[8px]
+                font-bold
+                ${
+                  message ===
+                  "Saved to Work Status"
+                    ? "text-emerald-300"
+                    : message ===
+                      "Required fields not detected."
+                    ? "text-yellow-300"
+                    : "text-red-300"
+                }
+              `}
+            >
+              {message}
+            </p>
+          )}
         </div>
 
+        {/* BROWSE BUTTON */}
         <button
           type="button"
           onClick={() =>
             fileInputRef.current?.click()
           }
           disabled={loading}
-          className="whitespace-nowrap rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-3 py-2 text-[11px] font-black text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5"
+          className="
+            shrink-0
+            whitespace-nowrap
+            rounded-lg
+            bg-gradient-to-r
+            from-cyan-400
+            to-blue-500
+            px-2.5
+            py-1.5
+            text-[10px]
+            font-black
+            text-slate-950
+            shadow-lg
+            shadow-cyan-500/20
+            transition
+            hover:-translate-y-0.5
+            hover:shadow-cyan-500/30
+            disabled:cursor-not-allowed
+            disabled:opacity-60
+          "
         >
           {loading
             ? "Scanning..."
             : "Browse Image"}
         </button>
 
+        {/* FILE INPUT */}
         <input
           ref={fileInputRef}
           type="file"
@@ -413,21 +520,6 @@ export default function QuickReceiptScan() {
             e.target.value = "";
           }}
         />
-
-        {message && (
-          <div
-            className={`mt-2 text-[11px] font-bold ${
-              message.startsWith("✅")
-                ? "text-emerald-200"
-                : message.startsWith("⚠️")
-                ? "text-yellow-200"
-                : "text-red-200"
-            }`}
-          >
-            {message}
-          </div>
-        )}
-
       </div>
     </div>
   );

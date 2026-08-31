@@ -5,12 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume Builder</title>
     <link href="assets/css2_0gtt.css" rel="stylesheet">
-    <link href="assets/all.min_0gtt.css" rel="stylesheet">
+   <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  crossorigin="anonymous"
+/>
 
     <link href="assets/cropper.min_0gtt.css" rel="stylesheet">
     <script src="assets/cropper.min_0gtt.js"></script>
 
     <link rel="stylesheet" href="assets/resume_style_0gtt.css">
+    <style>
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .header,
+  .editor-panel,
+  .toast,
+  .modal {
+    display: none !important;
+  }
+
+  .app-container {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .preview-panel {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  .preview-scale-wrapper {
+    display: block !important;
+    transform: none !important;
+    margin: 0 !important;
+  }
+
+  #resumePreview {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+}
+</style>
+<style>
+  #resumePreview .fa-star {
+    color: #fbbf24;
+    font-size: 0.8em;
+  }
+
+  #resumePreview .contact-info i,
+  #resumePreview #prev-contact-list i {
+    width: 16px;
+    text-align: center;
+  }
+</style>
 </head>
 <body>
 
@@ -513,6 +581,12 @@
         })();
     </script>
     <script src="assets/resume_script_0gtt.js"></script>
+    <script src="assets/resume-enhancements.js"></script>
+    <script>
+  document.querySelectorAll(".signature-line").forEach((element) => {
+    element.remove();
+  });
+</script>
     <script>
         // Print is the browser-native way to save the finished resume as a PDF.
         document.addEventListener('click', event => {

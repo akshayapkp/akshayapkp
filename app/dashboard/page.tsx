@@ -9,7 +9,7 @@ import PDFToolkitTool from "./tools/PDFTool";
 import LandAreaConverterTool from "./tools/ConverterTool";
 import ImageToTextTool from "./tools/ImageToText";
 import CalculatorTool from "./tools/calculatol";
-import ResumeStudio from "./tools/ResumeStudio";
+import ResumeBuilder from "./tools/ResumeBuilder";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -136,6 +136,11 @@ export default function DashboardPage() {
   const [todayDate, setTodayDate] = useState("");
   const [showUpdateBubble, setShowUpdateBubble] = useState(false);
 
+  // Pending credit summary shown inside the attendance popup for the
+  // currently logged-in staff/accountant.
+  const [pendingCreditBills, setPendingCreditBills] = useState<any[]>([]);
+  const [showAllPendingCredits, setShowAllPendingCredits] = useState(false);
+
   // Popup States for Tools
   const [showCashCounterModal, setShowCashCounterModal] = useState(false);
   const [showSslcModal, setShowSslcModal] = useState(false);
@@ -146,8 +151,7 @@ export default function DashboardPage() {
   const [showConverterModal, setShowConverterModal] = useState(false);
   const [showImageToTextModal, setShowImageToTextModal] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
-  const [showResumeStudioModal, setShowResumeStudioModal] = useState(false);
-
+  const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const draggedItemIndex = useRef<number | null>(null);
@@ -163,17 +167,20 @@ export default function DashboardPage() {
   const [latestEntryStaffList, setLatestEntryStaffList] = useState<string[]>([]);
   const [latestEntryLoading, setLatestEntryLoading] = useState(false);
   const latestEntryRef = useRef<HTMLDivElement>(null);
+  const latestEntryButtonRef = useRef<HTMLButtonElement>(null);
+  const [latestEntryPopupPosition, setLatestEntryPopupPosition] = useState({ top: 0, left: 0 });
+
+  // Latest Billed Entry visibility follows the Feature Permissions page.
+  // The two permissions are independent: Accountant Access controls Accountant/
+  // Account Staff users, while Staff Access controls Staff users.
+  const [latestEntryPermission, setLatestEntryPermission] = useState({
+    accountantAccess: true,
+    staffAccess: true,
+  });
 
   const [quickLinks, setQuickLinks] = useState<QuickLinkItem[]>([
     {
       id: 1,
-      name: "Resume Studio",
-      url: "resume-studio-modal",
-      bgColor: "from-blue-500 to-blue-600",
-      isInternal: true,
-    },
-    {
-      id: 2,
       name: "SSLC Percentage",
       url: "sslc-modal",
       bgColor: "from-purple-500 to-purple-600",
@@ -235,6 +242,13 @@ export default function DashboardPage() {
       bgColor: "from-orange-500 to-red-600",
       isInternal: true,
     },
+    {
+  id: 11,
+  name: "Resume Builder",
+  url: "resume-builder-modal",
+  bgColor: "from-cyan-500 to-blue-600",
+  isInternal: true,
+},
   ]);
 
   const [announcements, setAnnouncements] = useState<any[]>([]);
@@ -367,6 +381,84 @@ setServiceDirectory(filteredWithUrls);
           role: parsed.role || "staff",
         });
 
+        // Restore the attendance-time credit overview. Only pending credit
+        // bills belonging to the logged-in user are shown. Different versions
+        // of the billing data used different staff identity field names, so
+        // compare all known identity fields without changing the stored data.
+        try {
+          const savedCreditBills = JSON.parse(
+            localStorage.getItem("smart_akshaya_bills") || "[]"
+          );
+
+          const normalizeStaffValue = (value: unknown) =>
+            String(value ?? "")
+              .trim()
+              .replace(/\s+/g, " ")
+              .toLowerCase();
+
+          const loggedInUserValues = [
+            parsed.username,
+            parsed.name,
+            parsed.fullName,
+            parsed.displayName,
+            parsed.staffName,
+          ]
+            .map(normalizeStaffValue)
+            .filter(Boolean);
+
+          if (Array.isArray(savedCreditBills)) {
+            const ownPendingCredits = savedCreditBills
+              .filter((bill: any) => {
+                if (Number(bill?.owedAmount || 0) <= 0) return false;
+
+                const billStaffValues = [
+                  bill?.staffName,
+                  bill?.staff,
+                  bill?.staffUsername,
+                  bill?.username,
+                  bill?.createdBy,
+                  bill?.employeeName,
+                ]
+                  .map((value) => {
+                    if (value && typeof value === "object") {
+                      return [
+                        value.username,
+                        value.name,
+                        value.fullName,
+                        value.displayName,
+                        value.staffName,
+                      ]
+                        .map(normalizeStaffValue)
+                        .filter(Boolean);
+                    }
+                    return [normalizeStaffValue(value)].filter(Boolean);
+                  })
+                  .flat();
+
+                return billStaffValues.some((billStaff: string) =>
+                  loggedInUserValues.includes(billStaff)
+                );
+              })
+              .sort((a: any, b: any) => {
+                const aTime = new Date(
+                  a?.dateTime || a?.date || a?.createdAt || 0
+                ).getTime();
+                const bTime = new Date(
+                  b?.dateTime || b?.date || b?.createdAt || 0
+                ).getTime();
+                return Number.isFinite(aTime) && Number.isFinite(bTime)
+                  ? bTime - aTime
+                  : 0;
+              });
+
+            setPendingCreditBills(ownPendingCredits);
+          } else {
+            setPendingCreditBills([]);
+          }
+        } catch {
+          setPendingCreditBills([]);
+        }
+
         const logs = JSON.parse(localStorage.getItem("staff_attendance_logs") || "[]");
         const today = new Date().toISOString().split("T")[0];
         const alreadyMarked = logs.some(
@@ -403,8 +495,8 @@ setServiceDirectory(filteredWithUrls);
       }
 
       if (latestEntryRef.current && !latestEntryRef.current.contains(target)) {
-        const insideLatestModal = (target as HTMLElement)?.closest?.("[data-latest-entry-overlay]");
-        if (!insideLatestModal) setIsLatestEntryOpen(false);
+        const insideLatestPopup = (target as HTMLElement)?.closest?.("[data-latest-entry-popup]");
+        if (!insideLatestPopup) setIsLatestEntryOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -416,45 +508,34 @@ setServiceDirectory(filteredWithUrls);
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!isLatestEntryOpen) return;
 
-    const loadLatestEntryPermission = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("feature_permissions")
-          .select("permissions")
-          .eq("id", 1)
-          .maybeSingle();
+    const updateLatestEntryPopupPosition = () => {
+      const button = latestEntryButtonRef.current;
+      if (!button) return;
 
-        if (error || !data?.permissions || cancelled) return;
+      const rect = button.getBoundingClientRect();
+      const popupWidth = Math.min(416, window.innerWidth - 24);
+      const gap = 8;
+      const sidePadding = 12;
 
-        const permissions = Array.isArray(data.permissions)
-          ? data.permissions
-          : [];
+      let left = rect.right - popupWidth;
+      left = Math.max(sidePadding, Math.min(left, window.innerWidth - popupWidth - sidePadding));
 
-        const latestPermission = permissions.find(
-          (item: any) =>
-            item?.featureName === "Latest Billed Entry" ||
-            String(item?.id) === "17"
-        );
-
-        if (latestPermission) {
-          setLatestEntryPermission({
-            accountantAccess: latestPermission.accountantAccess !== false,
-            staffAccess: latestPermission.staffAccess !== false,
-          });
-        }
-      } catch {
-        // Keep the existing default access if permissions cannot be read.
-      }
+      const top = rect.bottom + gap;
+      setLatestEntryPopupPosition({ top, left });
     };
 
-    loadLatestEntryPermission();
+    const frame = window.requestAnimationFrame(updateLatestEntryPopupPosition);
+    window.addEventListener("resize", updateLatestEntryPopupPosition);
+    window.addEventListener("scroll", updateLatestEntryPopupPosition, true);
 
     return () => {
-      cancelled = true;
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateLatestEntryPopupPosition);
+      window.removeEventListener("scroll", updateLatestEntryPopupPosition, true);
     };
-  }, []);
+  }, [isLatestEntryOpen]);
 
   const refreshLatestEntry = async (requestedStaff = latestEntryStaff) => {
     setLatestEntryLoading(true);
@@ -622,32 +703,71 @@ setServiceDirectory(filteredWithUrls);
     }
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLatestEntryPermission = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("feature_permissions")
+          .select("permissions")
+          .eq("id", 1)
+          .maybeSingle();
+
+        if (error || !data?.permissions || cancelled) return;
+
+        const permissions = Array.isArray(data.permissions)
+          ? data.permissions
+          : [];
+
+        const latestPermission = permissions.find(
+          (item: any) =>
+            item?.featureName === "Latest Billed Entry" ||
+            String(item?.id) === "17"
+        );
+
+        if (latestPermission) {
+          setLatestEntryPermission({
+            accountantAccess: latestPermission.accountantAccess !== false,
+            staffAccess: latestPermission.staffAccess !== false,
+          });
+        }
+      } catch {
+        // Keep the existing default access if permissions cannot be read.
+      }
+    };
+
+    loadLatestEntryPermission();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSaveLayout = () => {
     localStorage.setItem("dashboard_quick_links_order", JSON.stringify(quickLinks));
     setIsCustomizing(false);
   };
 
   const netWalletBalance = wallets.reduce((acc, curr) => acc + curr.currentBalance, 0);
-  const isAdmin = currentUser.role.toLowerCase() === "admin";
+  const isAdmin = currentUser.role.toLowerCase().trim() === "admin";
   const normalizedRole = currentUser.role.toLowerCase().trim();
-
-  // Latest Billed Entry visibility is controlled by Feature Permissions.
-  // Admin always has access; Accountant/Staff follow the centrally saved
-  // permission values. Existing Latest Entry loading and UI are unchanged.
-  const [latestEntryPermission, setLatestEntryPermission] = useState({
-    accountantAccess: true,
-    staffAccess: true,
-  });
+  const isAccountantRole =
+    normalizedRole === "accountant" ||
+    normalizedRole === "account" ||
+    normalizedRole === "accounts" ||
+    normalizedRole === "account staff" ||
+    normalizedRole === "accounts staff" ||
+    normalizedRole.includes("accountant") ||
+    normalizedRole.includes("account staff") ||
+    normalizedRole.includes("accounts staff");
 
   const canViewLatestEntry =
     isAdmin ||
-    (normalizedRole === "accountant" ||
-      normalizedRole === "account" ||
-      normalizedRole === "accounts" ||
-      normalizedRole === "account staff" ||
-      normalizedRole === "accounts staff"
+    (isAccountantRole
       ? latestEntryPermission.accountantAccess
       : latestEntryPermission.staffAccess);
+
   const displayRoleTitle = isAdmin ? "Admin User" : `${currentUser.username} User`;
 
   const filteredServices = serviceDirectory.filter(
@@ -677,28 +797,31 @@ setServiceDirectory(filteredWithUrls);
             <CalculatorTool onClose={() => setShowCalculatorModal(false)} />
           </div>
         )}
-        {showResumeStudioModal && (
-          <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[6px] sm:p-5"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setShowResumeStudioModal(false);
-            }}
-          >
-            <div className="relative h-[94vh] w-full max-w-[1450px] overflow-hidden rounded-3xl bg-slate-100 shadow-2xl dark:bg-slate-950">
-              <button
-                type="button"
-                aria-label="Close Resume Studio"
-                onClick={() => setShowResumeStudioModal(false)}
-                className="absolute right-4 top-4 z-[100] flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-xl font-bold text-slate-600 shadow-lg backdrop-blur transition hover:scale-105 hover:bg-white dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-200"
-              >
-                ×
-              </button>
-              <div className="h-full overflow-y-auto">
-                <ResumeStudio onClose={() => setShowResumeStudioModal(false)} />
-              </div>
-            </div>
-          </div>
-        )}
+        {showResumeBuilderModal && (
+  <div
+    className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[6px] sm:p-5"
+    onMouseDown={(e) => {
+      if (e.target === e.currentTarget) {
+        setShowResumeBuilderModal(false);
+      }
+    }}
+  >
+    <div className="relative h-[94vh] w-full max-w-[1450px] overflow-hidden rounded-3xl bg-slate-100 shadow-2xl dark:bg-slate-950">
+      <button
+        type="button"
+        aria-label="Close Resume Builder"
+        onClick={() => setShowResumeBuilderModal(false)}
+        className="absolute right-4 top-4 z-[100] flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-xl font-bold text-slate-600 shadow-lg"
+      >
+        ×
+      </button>
+
+      <div className="h-full overflow-y-auto">
+        <ResumeBuilder />
+      </div>
+    </div>
+  </div>
+)}
       </div>
 
       {showAttendancePopup && (
@@ -720,6 +843,72 @@ setServiceDirectory(filteredWithUrls);
                 <p className="text-2xl font-bold text-blue-600">{currentTime}</p>
               </div>
             </div>
+
+            {pendingCreditBills.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-left">
+                <button
+                  type="button"
+                  onClick={() => setShowAllPendingCredits((open) => !open)}
+                  className="flex w-full items-start justify-between gap-3 text-left"
+                >
+                  <div>
+                    <p className="text-xs font-extrabold uppercase tracking-wider text-red-500">
+                      Pending Credits
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-slate-800">
+                      {pendingCreditBills.length} customer{pendingCreditBills.length === 1 ? "" : "s"} • ₹
+                      {pendingCreditBills
+                        .reduce((sum, bill) => sum + Number(bill?.owedAmount || 0), 0)
+                        .toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                      pending
+                    </p>
+                  </div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-red-600 shadow-sm">
+                    {showAllPendingCredits ? <ChevronUp size={19} /> : <ChevronDown size={19} />}
+                  </span>
+                </button>
+
+                {showAllPendingCredits && (
+                  <div className="mt-3 max-h-[32vh] space-y-2 overflow-y-auto border-t border-red-200/70 pt-3">
+                    {pendingCreditBills.map((bill) => (
+                      <div
+                        key={String(bill?.id || bill?.billNumber || bill?.mobileNumber)}
+                        className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 shadow-sm"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-slate-800">
+                            {bill?.customerName || "Customer"}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {bill?.mobileNumber || bill?.customerPhone || ""}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-sm font-black text-red-600">
+                          ₹{Number(bill?.owedAmount || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {pendingCreditBills.length === 0 && (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left">
+                <p className="text-xs font-extrabold uppercase tracking-wider text-emerald-600">
+                  Pending Credits
+                </p>
+                <p className="mt-1 text-sm font-bold text-emerald-700">
+                  No pending customer credit.
+                </p>
+              </div>
+            )}
 
             {attendanceSaved ? (
               <div className="mt-8 flex flex-col items-center">
@@ -845,6 +1034,7 @@ setServiceDirectory(filteredWithUrls);
             {canViewLatestEntry && (
             <div className="relative" ref={latestEntryRef}>
               <button
+                ref={latestEntryButtonRef}
                 onClick={handleLatestEntryToggle}
                 className="relative rounded-2xl border border-slate-200/80 bg-white/70 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
                 aria-label="Latest billed entry"
@@ -976,8 +1166,7 @@ setServiceDirectory(filteredWithUrls);
               const isConverterTool = tool.name.toLowerCase().includes("converter") || tool.url === "converter-modal";
               const isImageToTextTool = tool.name.toLowerCase().includes("image") || tool.url === "image-to-text-modal";
               const isCalculatorTool = tool.name.toLowerCase().includes("calculator") || tool.url === "calculator-modal";
-              const isResumeStudioTool = tool.name.toLowerCase().includes("resume") || tool.url === "resume-studio-modal";
-
+              const isResumeBuilderTool = tool.url === "resume-builder-modal";
               return (
                 <div
                   key={`${tool.id}-${index}`}
@@ -990,7 +1179,17 @@ setServiceDirectory(filteredWithUrls);
                 >
                   <a
                     href={
-                      isCustomizing || isCashCounter || isSslc || isCropResize || isPsc || isPassport || isPdfTool || isConverterTool || isImageToTextTool || isCalculatorTool || isResumeStudioTool
+                      isCustomizing ||
+                      isCashCounter ||
+                      isSslc ||
+                      isCropResize ||
+                      isPsc ||
+                      isPassport ||
+                      isPdfTool ||
+                      isConverterTool ||
+                      isImageToTextTool ||
+                      isCalculatorTool ||
+                      isResumeBuilderTool
                         ? undefined
                         : tool.url
                     }
@@ -1026,9 +1225,9 @@ setServiceDirectory(filteredWithUrls);
                       } else if (isCalculatorTool) {
                         e.preventDefault();
                         setShowCalculatorModal(true);
-                      } else if (isResumeStudioTool) {
+                      } else if (isResumeBuilderTool) {
                         e.preventDefault();
-                        setShowResumeStudioModal(true);
+                        setShowResumeBuilderModal(true);
                       }
                     }}
                     target={tool.isInternal ? "_self" : "_blank"}
@@ -1049,11 +1248,23 @@ setServiceDirectory(filteredWithUrls);
                     </div>
                     <div>
                       <span className="text-sm font-bold block truncate">{tool.name}</span>
-                      <span className="text-xs opacity-80">
-                        {(tool.isInternal || isCashCounter || isSslc || isCropResize || isPsc || isPassport || isPdfTool || isConverterTool || isImageToTextTool || isCalculatorTool)
-                          ? "Internal Tool"
-                          : "External Link"}
-                      </span>
+      <span className="text-xs opacity-80">
+  {(
+    tool.isInternal ||
+    isCashCounter ||
+    isSslc ||
+    isCropResize ||
+    isPsc ||
+    isPassport ||
+    isPdfTool ||
+    isConverterTool ||
+    isImageToTextTool ||
+    isCalculatorTool ||
+    isResumeBuilderTool
+  )
+    ? "Internal Tool"
+    : "External Link"}
+</span>
                     </div>
                   </a>
                 </div>
@@ -1119,92 +1330,92 @@ setServiceDirectory(filteredWithUrls);
       {canViewLatestEntry && isLatestEntryOpen && typeof document !== "undefined" &&
         createPortal(
           <div
-            data-latest-entry-overlay
-            className="fixed inset-0 z-[999999] flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 pt-6 backdrop-blur-[3px] sm:pt-10"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setIsLatestEntryOpen(false);
+            data-latest-entry-popup
+            className="fixed z-[999999] w-[min(26rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] overflow-y-auto rounded-2xl border border-slate-100 bg-white shadow-2xl animate-in fade-in slide-in-from-top-2"
+            style={{
+              top: latestEntryPopupPosition.top,
+              left: latestEntryPopupPosition.left,
             }}
+            onMouseDown={(e) => e.stopPropagation()}
           >
-            <div className="relative w-full max-w-[30rem] max-h-[calc(100vh-3rem)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.35)] animate-in fade-in slide-in-from-top-3 sm:max-h-[calc(100vh-5rem)]">
-              <div className="border-b border-slate-100 bg-slate-50/60 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-800">Latest Billed Entry</h4>
-                    <p className="mt-0.5 text-xs text-slate-500">Latest bill from all staff</p>
-                  </div>
-                  <History size={18} className="shrink-0 text-blue-600" />
+            <div className="border-b border-slate-100 bg-slate-50/60 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">Latest Billed Entry</h4>
+                  <p className="mt-0.5 text-xs text-slate-500">Latest bill from all staff</p>
                 </div>
-
-                <select
-                  value={latestEntryStaff}
-                  onChange={(e) => void handleLatestEntryStaffChange(e.target.value)}
-                  className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                >
-                  <option value="ALL">All Staff — Latest Entry</option>
-                  {latestEntryStaffList.map((staff) => (
-                    <option key={staff} value={staff}>
-                      {staff}
-                    </option>
-                  ))}
-                </select>
+                <History size={18} className="shrink-0 text-blue-600" />
               </div>
 
-              {latestEntryLoading ? (
-                <div className="p-8 text-center text-sm text-slate-400">
-                  Loading latest entry...
-                </div>
-              ) : latestEntry ? (
-                <div className="p-4">
-                  <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Staff</p>
-                        <p className="truncate text-sm font-bold text-slate-800">{latestEntry.staffName}</p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p>
-                        <p className="text-lg font-black text-blue-700">₹{latestEntry.totalAmount.toFixed(2)}</p>
-                      </div>
+              <select
+                value={latestEntryStaff}
+                onChange={(e) => void handleLatestEntryStaffChange(e.target.value)}
+                className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="ALL">All Staff — Latest Entry</option>
+                {latestEntryStaffList.map((staff) => (
+                  <option key={staff} value={staff}>
+                    {staff}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {latestEntryLoading ? (
+              <div className="p-8 text-center text-sm text-slate-400">
+                Loading latest entry...
+              </div>
+            ) : latestEntry ? (
+              <div className="p-4">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Staff</p>
+                      <p className="truncate text-sm font-bold text-slate-800">{latestEntry.staffName}</p>
                     </div>
-
-                    <div className="mt-4 space-y-2.5">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Service</p>
-                        <p className="text-sm font-semibold text-slate-700">{latestEntry.serviceName}</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Customer</p>
-                          <p className="truncate text-xs font-semibold text-slate-700">{latestEntry.customerName}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Mobile</p>
-                          <p className="truncate text-xs font-semibold text-slate-700">{latestEntry.phone}</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="rounded-xl border border-slate-100 bg-white p-2.5">
-                          <p className="text-[10px] text-slate-400">Paid</p>
-                          <p className="text-sm font-bold text-emerald-600">₹{latestEntry.totalPaid.toFixed(2)}</p>
-                        </div>
-                        <div className="rounded-xl border border-slate-100 bg-white p-2.5">
-                          <p className="text-[10px] text-slate-400">Balance</p>
-                          <p className={`text-sm font-bold ${latestEntry.balance > 0 ? "text-rose-600" : "text-emerald-600"}`}>
-                            ₹{latestEntry.balance.toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="pt-1 text-[10px] text-slate-400">{latestEntry.dateTime}</div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p>
+                      <p className="text-lg font-black text-blue-700">₹{latestEntry.totalAmount.toFixed(2)}</p>
                     </div>
                   </div>
+
+                  <div className="mt-4 space-y-2.5">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Service</p>
+                      <p className="text-sm font-semibold text-slate-700">{latestEntry.serviceName}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Customer</p>
+                        <p className="truncate text-xs font-semibold text-slate-700">{latestEntry.customerName}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Mobile</p>
+                        <p className="truncate text-xs font-semibold text-slate-700">{latestEntry.phone}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-slate-100 bg-white p-2.5">
+                        <p className="text-[10px] text-slate-400">Paid</p>
+                        <p className="text-sm font-bold text-emerald-600">₹{latestEntry.totalPaid.toFixed(2)}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-100 bg-white p-2.5">
+                        <p className="text-[10px] text-slate-400">Balance</p>
+                        <p className={`text-sm font-bold ${latestEntry.balance > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                          ₹{latestEntry.balance.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-1 text-[10px] text-slate-400">{latestEntry.dateTime}</div>
+                  </div>
                 </div>
-              ) : (
-                <div className="p-8 text-center text-sm text-slate-400">No billed entries found.</div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-sm text-slate-400">No billed entries found.</div>
+            )}
           </div>,
           document.body
         )}

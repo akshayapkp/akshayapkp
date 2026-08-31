@@ -64,38 +64,66 @@ const mergeSharedArraysForRead = (remote: any[] = [], local: any[] = [], key: Sh
 
 const loadCentralSharedStoreForBilledServices = async (): Promise<SharedStorage | null> => {
   try {
+    // Supabase is only the shared-sync layer. Billed Services must continue
+    // working from localStorage when the central row is unavailable, blocked
+    // by RLS, or temporarily unreachable.
     const { data, error } = await supabase
       .from('feature_permissions')
-      .select('permissions')
+      .select('id, permissions')
       .eq('id', CENTRAL_STORAGE_ROW_ID)
-      .maybeSingle();
-    if (error) throw error;
-    const payload = data?.permissions;
-    if (!payload || payload.storageKey !== CENTRAL_STORAGE_KEY) return null;
-    return payload.data && typeof payload.data === 'object' ? payload.data as SharedStorage : null;
-  } catch (error) {
-    console.error('Billed Services central storage read failed:', error);
+      .limit(1);
+
+    if (error) {
+      console.warn('Billed Services central storage is unavailable; using local data.');
+      return null;
+    }
+
+    const row = Array.isArray(data) && data.length > 0 ? data[0] : null;
+    if (!row) return null;
+
+    const payload = row.permissions as any;
+    if (!payload || typeof payload !== 'object') return null;
+    if (payload.storageKey && payload.storageKey !== CENTRAL_STORAGE_KEY) return null;
+
+    const remoteStore = payload.data as SharedStorage | undefined;
+    return remoteStore && typeof remoteStore === 'object' ? remoteStore : null;
+  } catch {
+    // Never let central-storage failure break the Billed Services page.
     return null;
   }
 };
 
 const saveCentralSharedStoreForBilledServices = async (store: SharedStorage): Promise<boolean> => {
   try {
-    const { error } = await supabase
+    const payload = {
+      storageKey: CENTRAL_STORAGE_KEY,
+      version: CENTRAL_STORAGE_VERSION,
+      data: store,
+    };
+
+    // Prefer updating the existing central row.
+    const { error: updateError } = await supabase
       .from('feature_permissions')
-      .upsert({
-        id: CENTRAL_STORAGE_ROW_ID,
-        permissions: {
-          storageKey: CENTRAL_STORAGE_KEY,
-          version: CENTRAL_STORAGE_VERSION,
-          data: store,
-        },
+      .update({
+        permissions: payload,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' });
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('Billed Services central storage write failed:', error);
+      })
+      .eq('id', CENTRAL_STORAGE_ROW_ID);
+
+    if (!updateError) return true;
+
+    // If the row does not exist, try creating it. Any RLS/network failure is
+    // intentionally silent because localStorage remains the safe fallback.
+    const { error: insertError } = await supabase
+      .from('feature_permissions')
+      .insert({
+        id: CENTRAL_STORAGE_ROW_ID,
+        permissions: payload,
+        updated_at: new Date().toISOString(),
+      });
+
+    return !insertError;
+  } catch {
     return false;
   }
 };

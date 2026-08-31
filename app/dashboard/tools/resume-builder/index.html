@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Builder</title>
+    <link href="assets/css2_0gtt.css" rel="stylesheet">
+   <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  crossorigin="anonymous"
+/>
+
+    <link href="assets/cropper.min_0gtt.css" rel="stylesheet">
+    <script src="assets/cropper.min_0gtt.js"></script>
+
+    <link rel="stylesheet" href="assets/resume_style_0gtt.css">
+    <style>
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .header,
+  .editor-panel,
+  .toast,
+  .modal {
+    display: none !important;
+  }
+
+  .app-container {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .preview-panel {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  .preview-scale-wrapper {
+    display: block !important;
+    transform: none !important;
+    margin: 0 !important;
+  }
+
+  #resumePreview {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+}
+</style>
+<style>
+  #resumePreview .fa-star {
+    color: #fbbf24;
+    font-size: 0.8em;
+  }
+
+  #resumePreview .contact-info i,
+  #resumePreview #prev-contact-list i {
+    width: 16px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h1><i class="fas fa-file-alt" style="font-size:1rem;margin-right:6px;"></i> Resume Builder</h1>
+                <div class="center-badge"><i class="fas fa-briefcase"></i> Create your resume</div>
+            </div>
+
+            <div class="header-actions"><span class="btn-text">Your resumes stay in this browser</span></div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- LEFT PANEL: EDITOR -->
+        <div class="editor-panel">
+            <div class="editor-controls">
+                <select id="templateSelector">
+                    <option value="template-1" selected="selected">Template 1 (Dark Sidebar)</option>
+                    <option value="template-2">Template 2 (Light Sidebar)</option>
+                    <option value="template-3">Template 3 (Clean Top / 2-Col Data)</option>
+                    <option value="template-4">Template 4 (Pastel Blue Header / 2-Col Data)</option>
+                    <option value="template-5">Template 5 (Soft Mint Modern)</option>
+                    <option value="template-6">Template 6 (Elegant Lavender)</option>
+                    <option value="template-7">Template 7 (Royal Purple)</option>
+                    <option value="template-8">Template 8 (Emerald Teal)</option>
+                    <option value="template-9">Template 9 (Sunset Orange)</option>
+                    <option value="template-10">Template 10 (Minimal Slate)</option>
+                    <option value="template-11">Template 11 (Minimal Emerald Line)</option>
+                    <option value="template-12">Template 12 (Minimal Gold Charcoal)</option>
+                </select>
+                <div class="editor-btn-group">
+                    <button type="button" id="historyBtn" class="secondary-btn" title="View Saved Resumes">
+                        <i class="fas fa-history"></i> History
+                    </button>
+                    <button type="button" id="saveResumeBtn" class="secondary-btn" title="Save Resume">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                    <button type="button" id="newResumeBtn" class="secondary-btn" title="Reset Form">
+                        <i class="fas fa-plus"></i> New
+                    </button>
+                    <button type="button" id="downloadPdfBtn" class="primary-btn">
+                        <span class="btn-label"><i class="fas fa-download"></i> Download PDF</span>
+                        <span class="btn-spinner"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- History Modal -->
+            <div id="historyModal" class="modal">
+                <div class="modal-content" style="width: 780px; max-width: 95%;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                        <h3 style="margin:0;"><i class="fas fa-folder-open"></i> Resume History</h3>
+                        <button type="button" id="closeHistoryModal" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#64748b;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <input type="text" id="historySearchInput" placeholder="Search by candidate name, mobile, or email..." style="width: 100%;">
+                    </div>
+                    <div id="historyListContainer" style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <form id="bioDataForm">
+                <!-- Personal Info -->
+                <div class="form-section">
+                    <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
+
+                    <div class="photo-upload-group">
+                        <label>Profile Photo</label>
+                        <input type="file" id="photoInput" accept="image/*">
+                        <small>Upload to adjust and crop your photo</small>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group"><label>Full Name</label><input type="text" data-preview="prev-name" placeholder="Arjun Nair"></div>
+                        <div class="form-group"><label>Job Title</label><input type="text" data-preview="prev-title" placeholder="Software Engineer"></div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" data-preview="prev-email" placeholder="arjun.nair@gmail.com">
+                            <span class="field-error" id="err-email" style="display:none;"></span>
+                        </div>
+                        <div class="form-group"><label>Address / Location</label><input type="text" data-preview="prev-address" placeholder="Kochi, Kerala, India"></div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select data-preview="prev-gender" id="genderSelect">
+                                <option value="" selected="selected">Select...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Marital Status</label><input type="text" data-preview="prev-marital" placeholder="Single"></div>
+                        <div class="form-group"><label>Nationality</label><input type="text" data-preview="prev-nationality" placeholder="Indian"></div>
+                        
+                        <!-- Guardian Details -->
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Guardian Details</label>
+                            <div id="guardianList">
+        <div class="dynamic-item">
+            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('guardian')"><i class="fas fa-trash"></i></button>
+            <div class="form-grid">
+                <input type="text" class="g-rel" placeholder="Relationship (e.g. Father)" oninput="updateDynamicPreview('guardian')">
+                <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
+            </div>
+        </div></div>
+                            <button type="button" class="add-btn" onclick="addGuardian()"><i class="fas fa-plus"></i> Add Guardian</button>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Contact Numbers (Mobile / WhatsApp)</label>
+                            <div id="contactList">
+        <div class="dynamic-item" style="flex-direction: row; gap: 0.5rem; align-items: center; padding: 0.8rem; flex-wrap: wrap;">
+            <button class="remove-btn" type="button" style="top: 0.8rem;" onclick="this.parentElement.remove(); updateDynamicPreview('contact')"><i class="fas fa-trash"></i></button>
+            <select class="contact-type" onchange="updateDynamicPreview('contact')" style="padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                <option value="fas fa-phone" selected="selected">Mobile</option>
+                <option value="fab fa-whatsapp">WhatsApp</option>
+            </select>
+            <div class="phone-input-group" style="flex-grow: 1;">
+                <span class="phone-prefix">+91</span>
+                <input type="tel" class="contact-num" maxlength="10" inputmode="numeric" placeholder="98765 43210" oninput="validateIndianMobile(this); updateDynamicPreview('contact')" style="flex-grow: 1; padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px;">
+            </div>
+            <span class="field-error contact-error" style="display:none; width:100%;"></span>
+        </div></div>
+                            <button type="button" class="add-btn" onclick="addContact()"><i class="fas fa-plus"></i> Add Contact</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ID Cards Section -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-id-badge"></i> ID Details</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-idcards-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div id="idCardsList">
+        <div class="dynamic-item">
+            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('idcard')"><i class="fas fa-trash"></i></button>
+            <div class="form-grid">
+                <input type="text" class="id-type" placeholder="ID Name (e.g. Passport)" oninput="updateDynamicPreview('idcard')">
+                <input type="text" class="id-number" placeholder="ID Number" oninput="updateDynamicPreview('idcard')">
+                <input type="text" class="id-expiry" placeholder="Expiry Date (e.g. 12/2030)" style="grid-column: span 2;" oninput="updateDynamicPreview('idcard')">
+            </div>
+        </div></div>
+                    <button type="button" class="add-btn" onclick="addIDCard()"><i class="fas fa-plus"></i> Add ID Card</button>
+                </div>
+
+                <!-- Professional Summary -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-id-card"></i> Professional Summary</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked="checked" data-toggle="prev-summary-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Enabled</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="summaryInput" data-preview="prev-summary" rows="4">Driven and enthusiastic professional with a strong passion for delivering high-quality results.</textarea>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-cog"></i> Skills</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-skills-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="skills" data-preview="prev-skills" placeholder="HTML, CSS, PHP (Comma separated)">
+                    </div>
+                </div>
+
+                <!-- Languages -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-language"></i> Languages</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-languages-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div id="languagesList">
+        <div class="dynamic-item">
+            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('lang')"><i class="fas fa-trash"></i></button>
+            <div class="form-grid">
+                <input type="text" class="lang-name" placeholder="Language (e.g. English)" oninput="updateDynamicPreview('lang')">
+                <select class="lang-prof" onchange="updateDynamicPreview('lang')">
+                    <option value="5" selected="selected">Native (5 Stars)</option>
+                    <option value="4">Fluent (4 Stars)</option>
+                    <option value="3">Intermediate (3 Stars)</option>
+                    <option value="2">Basic (2 Stars)</option>
+                    <option value="1">Beginner (1 Star)</option>
+                </select>
+            </div>
+        </div></div>
+                    <button type="button" class="add-btn" onclick="addLanguage()"><i class="fas fa-plus"></i> Add Language</button>
+                </div>
+
+                <!-- Hobbies -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-heart"></i> Hobbies &amp; Interests</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-hobbies-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="hobbies" data-preview="prev-hobbies" placeholder="Reading, Traveling, Coding (Comma separated)">
+                    </div>
+                </div>
+
+                <!-- Education Section -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-graduation-cap"></i> Education</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-education-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div id="educationList">
+        <div class="dynamic-item">
+            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('edu')"><i class="fas fa-trash"></i></button>
+            <div class="form-grid">
+                <input type="text" class="edu-degree" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-school" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-date" placeholder="e.g. 2016 - 2020" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
+            </div>
+        </div></div>
+                    <button type="button" class="add-btn" onclick="addEducation()"><i class="fas fa-plus"></i> Add Education</button>
+                </div>
+
+                <!-- Experience Section -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-briefcase"></i> Professional Experience</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-experience-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div id="experienceList">
+        <div class="dynamic-item">
+            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('exp')"><i class="fas fa-trash"></i></button>
+            <div class="form-grid">
+                <input type="text" class="exp-title" placeholder="Job Title" oninput="updateDynamicPreview('exp')">
+                <input type="text" class="exp-company" placeholder="Company Name" oninput="updateDynamicPreview('exp')">
+                <input type="text" class="exp-date" placeholder="e.g. 2020 - Present" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')">
+                <textarea class="exp-desc" placeholder="Responsibilities &amp; Achievements..." rows="3" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')"></textarea>
+            </div>
+        </div></div>
+                    <button type="button" class="add-btn" onclick="addExperience()"><i class="fas fa-plus"></i> Add Experience</button>
+                </div>
+
+                <!-- Projects Section -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-project-diagram"></i> Projects</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-projects-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div id="projectsList">
+        <div class="dynamic-item">
+            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('proj')"><i class="fas fa-trash"></i></button>
+            <div class="form-grid">
+                <input type="text" class="proj-name" placeholder="Project Name" oninput="updateDynamicPreview('proj')">
+                <input type="text" class="proj-tech" placeholder="Tech Used (e.g. React)" oninput="updateDynamicPreview('proj')">
+                <textarea class="proj-desc" placeholder="Project Description..." rows="2" style="grid-column: span 2;" oninput="updateDynamicPreview('proj')"></textarea>
+            </div>
+        </div></div>
+                    <button type="button" class="add-btn" onclick="addProject()"><i class="fas fa-plus"></i> Add Project</button>
+                </div>
+
+                <!-- References Section -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-users"></i> References</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-references-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div id="referencesList">
+        <div class="dynamic-item">
+            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('ref')"><i class="fas fa-trash"></i></button>
+            <div class="form-grid">
+                <input type="text" class="ref-name" placeholder="Reference Name" oninput="updateDynamicPreview('ref')">
+                <input type="text" class="ref-desig" placeholder="Designation" oninput="updateDynamicPreview('ref')">
+                <input type="text" class="ref-comp" placeholder="Company Name" style="grid-column: span 2;" oninput="updateDynamicPreview('ref')">
+                <input type="text" class="ref-mob" placeholder="Mobile No" oninput="updateDynamicPreview('ref')">
+                <input type="email" class="ref-email" placeholder="Email ID" oninput="updateDynamicPreview('ref')">
+            </div>
+        </div></div>
+                    <button type="button" class="add-btn" onclick="addReference()"><i class="fas fa-plus"></i> Add Reference</button>
+                </div>
+
+                <!-- Declaration -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-file-signature"></i> Declaration</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked="checked" data-toggle="prev-declaration-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Enabled</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="declarationInput" data-preview="prev-declaration-text" rows="2">I hereby declare that all the information provided above is true to the best of my knowledge and belief.</textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Place</label><input type="text" data-preview="prev-place" placeholder="Kochi"></div>
+                        <div class="form-group"><label>Date</label><input type="date" id="dateInput"></div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- RIGHT PANEL: LIVE PREVIEW -->
+        <div class="preview-panel">
+            <div class="preview-scale-wrapper">
+                <div id="resumePreview" class="resume-document template-1">
+
+                    <!-- Sidebar -->
+                    <div class="resume-sidebar">
+                        <div class="profile-pic-container" id="wrap-photo" style="display: none;">
+                            <img id="prev-photo" src="" alt="Profile">
+                        </div>
+
+                        <div class="contact-info">
+                            <p id="wrap-email" style="display: none;"><i class="fas fa-envelope"></i> <span id="prev-email"></span></p>
+                            <div id="prev-contact-list"></div>
+                            <p id="wrap-address" style="display: none;"><i class="fas fa-map-marker-alt"></i> <span id="prev-address"></span></p>
+
+                            <div class="personal-details-info" id="personal-details-block" style="">
+                                <p id="wrap-gender" style="display: none;"><strong>Gender:</strong> <span id="prev-gender"></span></p>
+                                <p id="wrap-marital" style="display: none;"><strong>Marital Status:</strong> <span id="prev-marital"></span></p>
+                                <p id="wrap-nationality" style="display: none;"><strong>Nationality:</strong> <span id="prev-nationality"></span></p>
+                                
+                                <div id="prev-guardian-list" style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 4px;"></div>
+
+                                
+                            <div id="prev-idcards-container" style="width: 100%; margin-top: 15px; display: none;"><h4 style="display: none;">ID DETAILS</h4>
+                                    <div id="prev-idcards-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                                </div></div>
+                        </div>
+
+                        
+
+                        
+
+                        
+                    <div class="sidebar-section" id="prev-skills-container" style="display: none; margin-top: 2rem;">
+                            <h4>SKILLS</h4>
+                            <div id="prev-skills-list" class="tag-list"></div>
+                        </div><div class="sidebar-section" id="prev-languages-container" style="margin-top: 1.5rem; display: none;">
+                            <h4>LANGUAGES</h4>
+                            <div id="prev-languages-list" class="lang-star-list-main"></div>
+                        </div><div class="sidebar-section" id="prev-hobbies-container" style="display: none; margin-top: 1.5rem;">
+                            <h4>HOBBIES</h4>
+                            <div id="prev-hobbies-list" class="tag-list"></div>
+                        </div></div>
+
+                    <!-- Main Content -->
+                    <div class="resume-main">
+                        <div class="header-section">
+                            <h1 id="prev-name" style="display: none;"></h1>
+                            <h2 id="prev-title" style="display: none;"></h2>
+                        </div>
+
+                        <div class="content-section" id="prev-summary-container" style="display: block;">
+                            <h4>SUMMARY</h4>
+                            <p id="prev-summary">Driven and enthusiastic professional with a strong passion for delivering high-quality results.</p>
+                        </div>
+
+                        <div class="content-section" id="prev-education-container" style="display: none;">
+                            <h4>EDUCATION</h4>
+                            <div id="prev-education-list"></div>
+                        </div>
+
+                        <div class="content-section" id="prev-experience-container" style="display: none;">
+                            <h4>PROFESSIONAL EXPERIENCE</h4>
+                            <div id="prev-experience-list"></div>
+                        </div>
+
+                        <div class="content-section" id="prev-projects-container" style="display: none;">
+                            <h4>PROJECTS</h4>
+                            <div id="prev-projects-list"></div>
+                        </div>
+
+                        <div class="content-section" id="prev-references-container" style="display: none;">
+                            <h4>REFERENCES</h4>
+                            <div id="prev-references-list"></div>
+                        </div>
+
+                        <div class="content-section declaration-section" id="prev-declaration-container" style="display: block;">
+                            <h4>DECLARATION</h4>
+                            <p id="prev-declaration-text">I hereby declare that all the information provided above is true to the best of my knowledge and belief.</p>
+                            <div class="dec-footer">
+                                <div>
+                                    <p><strong>Place:</strong> <span id="prev-place"></span></p>
+                                    <p id="wrap-date" style="display: none;"><strong>Date:</strong> <span id="prev-date"></span></p>
+                                </div>
+                                <div class="signature-line">
+                                    <hr>
+                                    <p>Signature</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Cropper Modal -->
+    <div id="cropperModal" class="modal">
+        <div class="modal-content">
+            <h3>Adjust Photo</h3>
+            <div class="img-container">
+                <img id="imageToCrop" src="">
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="cancelCrop" class="secondary-btn">Cancel</button>
+                <button type="button" id="applyCrop" class="primary-btn">Apply Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><i class="fas fa-circle-check"></i> <span id="toastMsg"></span></div>
+
+    <script>
+        const CSRF_TOKEN = '';
+        const PDF_ENDPOINT = 'browser-print';
+
+        // Local-only storage adapter: no PHP API or database is required.
+        (() => {
+            const storageKey = 'resume-builder-resumes-v1';
+            const read = () => JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const write = items => localStorage.setItem(storageKey, JSON.stringify(items));
+            const json = body => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = async (input, init = {}) => {
+                const url = String(input);
+                if (!url.includes('resume_api.php')) return originalFetch(input, init);
+                const requestUrl = new URL(url, location.href);
+                const action = requestUrl.searchParams.get('action');
+                const payload = init.body ? JSON.parse(init.body) : {};
+                let items = read();
+                if (action === 'save') {
+                    const id = payload.id || Date.now();
+                    const data = payload.data || {};
+                    const entry = { id, data, updatedAt: new Date().toISOString() };
+                    items = [entry, ...items.filter(item => item.id !== id)];
+                    write(items);
+                    return json({ success: true, id, message: 'Resume saved on this device' });
+                }
+                if (action === 'list') {
+                    const term = (requestUrl.searchParams.get('search') || '').toLowerCase();
+                    const data = items.map(({ id, data, updatedAt }) => ({
+                        id,
+                        name: data.personal?.name || '',
+                        mobile: data.contacts?.[0]?.number || '',
+                        email: data.personal?.email || '',
+                        formatted_date: new Date(updatedAt).toLocaleString()
+                    })).filter(item => !term || Object.values(item).join(' ').toLowerCase().includes(term));
+                    return json({ success: true, data });
+                }
+                if (action === 'get') {
+                    const item = items.find(entry => String(entry.id) === requestUrl.searchParams.get('id'));
+                    return json(item ? { success: true, id: item.id, data: item.data } : { success: false, message: 'Resume not found' });
+                }
+                if (action === 'delete') {
+                    write(items.filter(item => String(item.id) !== String(payload.id)));
+                    return json({ success: true });
+                }
+                return json({ success: false, message: 'Unsupported request' });
+            };
+        })();
+    </script>
+    <script src="assets/resume_script_0gtt.js"></script>
+    <script src="assets/resume-enhancements.js"></script>
+    <script>
+  document.querySelectorAll(".signature-line").forEach((element) => {
+    element.remove();
+  });
+</script>
+    <script>
+        // Print is the browser-native way to save the finished resume as a PDF.
+        document.addEventListener('click', event => {
+            if (!event.target.closest('#downloadPdfBtn')) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            window.print();
+        }, true);
+    </script>
+
+</body></html>
