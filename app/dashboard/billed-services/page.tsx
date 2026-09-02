@@ -243,6 +243,9 @@ export default function BilledServicesPage() {
       const billedServicesDataRaw = JSON.parse(
         localStorage.getItem('billedServicesData') || '[]'
       );
+      const performanceRecordsRaw = JSON.parse(
+        localStorage.getItem('performanceRecords') || '[]'
+      );
       const savedBillsList = JSON.parse(
         localStorage.getItem('savedBillsList') || '[]'
       );
@@ -253,8 +256,48 @@ export default function BilledServicesPage() {
       const billedServicesData = Array.isArray(billedServicesDataRaw)
         ? billedServicesDataRaw
         : [];
+      const performanceRecords = Array.isArray(performanceRecordsRaw)
+        ? performanceRecordsRaw
+        : [];
 
-      // Merge the two billed-entry stores without double-counting the same
+      // Staff Performance is fed from performanceRecords and can contain older
+      // completed bills that are no longer present in the local billed-entry
+      // stores. Use it as a fallback source, not as a replacement, so the
+      // existing service-entry/edit/delete data remains authoritative.
+      const existingBillKeys = new Set(
+        [...serviceEntries, ...billedServicesData]
+          .map((item: any) =>
+            String(item?.billId || item?.billID || item?.invoiceId || '').trim()
+          )
+          .filter(Boolean)
+      );
+
+      const performanceFallbackEntries = performanceRecords
+        .map((record: any) => ({
+          id: record?.id,
+          billId: record?.billId || record?.billID || record?.invoiceId || record?.id,
+          dateTime: record?.timestamp || record?.dateTime || record?.date || '',
+          createdAt: record?.timestamp || record?.createdAt || '',
+          customerName: record?.customerName || record?.name || 'Customer',
+          customerPhone: record?.customerPhone || record?.mobile || record?.phone || 'N/A',
+          serviceName: record?.serviceName || record?.service || 'Service',
+          quantity: Number(record?.quantity ?? record?.qty ?? 1) || 1,
+          totalAmount: Number(record?.totalAmount ?? record?.total ?? 0) || 0,
+          receivedAmount: Number(record?.receivedAmount ?? record?.received ?? record?.totalAmount ?? record?.total ?? 0) || 0,
+          cashReceived: Number(record?.cashReceived ?? record?.cash ?? 0) || 0,
+          gpayAmount: Number(record?.gpayAmount ?? record?.gpay ?? 0) || 0,
+          pendingAmount: Number(record?.pendingAmount ?? record?.balance ?? 0) || 0,
+          staffName: record?.staffName || record?.staff || 'Admin',
+          status: record?.status || 'completed',
+        }))
+        .filter((entry: any) => {
+          const key = String(entry.billId || entry.id || '').trim();
+          return key && !existingBillKeys.has(key);
+        });
+
+      // Merge all known sources. performanceRecords is only used when a whole
+      // bill is missing from both billed-entry stores, preventing duplicates.
+      // Merge the billed-entry stores without double-counting the same
       // service line. This is important when central sync has copied a bill
       // into both keys.
       const getEntrySignature = (item: any) => {
@@ -300,7 +343,7 @@ export default function BilledServicesPage() {
       const mergedSourceEntries: any[] = [];
       const seenEntrySignatures = new Set<string>();
 
-      [...serviceEntries, ...billedServicesData].forEach((item: any) => {
+      [...serviceEntries, ...billedServicesData, ...performanceFallbackEntries].forEach((item: any) => {
         if (!item || typeof item !== 'object') return;
 
         const signature = getEntrySignature(item);
