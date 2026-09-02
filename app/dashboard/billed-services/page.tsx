@@ -231,10 +231,84 @@ export default function BilledServicesPage() {
 
     try {
       await refreshBilledServicesFromCentral();
-      // serviceEntries is the source for actual billed/credit entries.
-      // savedBillsList is used only to identify a bill that is still a draft.
-      const serviceEntries = JSON.parse(localStorage.getItem('serviceEntries') || '[]');
-      const savedBillsList = JSON.parse(localStorage.getItem('savedBillsList') || '[]');
+
+      // Billed Services can receive the same completed bill through more than
+      // one shared storage key depending on which version of Service Entry
+      // created/updated it. Read both stores and merge them for display.
+      // serviceEntries remains the preferred source; billedServicesData fills
+      // in bills that are missing from serviceEntries.
+      const serviceEntriesRaw = JSON.parse(
+        localStorage.getItem('serviceEntries') || '[]'
+      );
+      const billedServicesDataRaw = JSON.parse(
+        localStorage.getItem('billedServicesData') || '[]'
+      );
+      const savedBillsList = JSON.parse(
+        localStorage.getItem('savedBillsList') || '[]'
+      );
+
+      const serviceEntries = Array.isArray(serviceEntriesRaw)
+        ? serviceEntriesRaw
+        : [];
+      const billedServicesData = Array.isArray(billedServicesDataRaw)
+        ? billedServicesDataRaw
+        : [];
+
+      // Merge the two billed-entry stores without double-counting the same
+      // service line. This is important when central sync has copied a bill
+      // into both keys.
+      const getEntrySignature = (item: any) => {
+        const billKey = String(
+          item?.billId ||
+            item?.billID ||
+            item?.invoiceId ||
+            item?.id ||
+            ''
+        ).trim();
+
+        const serviceName = String(
+          item?.serviceName || item?.service || ''
+        )
+          .trim()
+          .toLowerCase();
+
+        return [
+          billKey,
+          serviceName,
+          Number(item?.quantity ?? item?.qty ?? 1) || 1,
+          Number(item?.totalAmount ?? item?.total ?? 0) || 0,
+          Number(item?.srvChg ?? item?.srvCharge ?? item?.serviceCharge ?? 0) || 0,
+          Number(item?.walletChg ?? item?.deptChg ?? item?.deptFee ?? 0) || 0,
+          String(
+            item?.dateTime ||
+              item?.date ||
+              item?.createdAt ||
+              ''
+          ).trim(),
+          String(
+            item?.customerName ||
+              item?.name ||
+              item?.customerPhone ||
+              item?.mobile ||
+              ''
+          )
+            .trim()
+            .toLowerCase(),
+        ].join('|');
+      };
+
+      const mergedSourceEntries: any[] = [];
+      const seenEntrySignatures = new Set<string>();
+
+      [...serviceEntries, ...billedServicesData].forEach((item: any) => {
+        if (!item || typeof item !== 'object') return;
+
+        const signature = getEntrySignature(item);
+        if (seenEntrySignatures.has(signature)) return;
+
+        seenEntrySignatures.add(signature);
+        mergedSourceEntries.push(item);
+      });
 
       const savedBillsById = new Map<string, any>();
       if (Array.isArray(savedBillsList)) {
@@ -244,12 +318,12 @@ export default function BilledServicesPage() {
         });
       }
 
-      if (!Array.isArray(serviceEntries)) {
+      if (!mergedSourceEntries.length) {
         setServices([]);
         return;
       }
 
-      const billedEntries = serviceEntries.filter((item: any) => {
+      const billedEntries = mergedSourceEntries.filter((item: any) => {
         const billKey = String(
           item.billId || item.billID || item.invoiceId || item.id || ''
         ).trim();
@@ -405,9 +479,11 @@ export default function BilledServicesPage() {
         }
       );
 
-      // Do not sort by browser-parsed locale dates here. serviceEntries is
-      // intentionally stored newest-first, so grouping already gives the
-      // correct Billed Services order and avoids date-format reversals.
+      // Do not sort by browser-parsed locale dates here. The primary
+      // serviceEntries source is intentionally newest-first; fallback
+      // billedServicesData entries are appended only when they are missing.
+      // Grouping therefore keeps the normal bill order without date-format
+      // reversals.
       setServices(formattedEntries);
     } catch (e) {
       console.error('Error loading billed services', e);
