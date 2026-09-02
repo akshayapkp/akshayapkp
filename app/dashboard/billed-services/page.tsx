@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
   Search, Download, Briefcase, ChevronDown, ChevronUp, 
-  Pencil, Trash2, Calendar, RefreshCw
+  Pencil, Trash2, RefreshCw
 } from "lucide-react";
 
 const CENTRAL_STORAGE_ROW_ID = 999999;
@@ -204,16 +204,28 @@ export default function BilledServicesPage() {
   const router = useRouter();
   const [services, setServices] = useState<BilledServiceItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [appliedStartDate, setAppliedStartDate] = useState('');
-  const [appliedEndDate, setAppliedEndDate] = useState('');
-  const [dateFilterError, setDateFilterError] = useState('');
+  const [todayDateKey, setTodayDateKey] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [currentStaff, setCurrentStaff] = useState('');
   const [currentRole, setCurrentRole] = useState('');
   const [selectedStaff, setSelectedStaff] = useState('ALL');
   const [staffList, setStaffList] = useState<string[]>([]);
+
+  // Keep the page automatically on today's local date, including across midnight.
+  useEffect(() => {
+    const updateToday = () => {
+      const now = new Date();
+      const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      setTodayDateKey(key);
+    };
+
+    updateToday();
+    const interval = window.setInterval(updateToday, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   // localStorage-ൽ നിന്ന് ലൈവ് ഡാറ്റ വായിക്കുന്നു
   const loadBilledData = async () => {
@@ -742,56 +754,28 @@ export default function BilledServicesPage() {
 
  const effectiveStaffFilter = isAdmin ? selectedStaff : currentStaff;
 
-  const handleDateSearch = () => {
-    setDateFilterError('');
-
-    if (startDate && endDate && startDate > endDate) {
-      setDateFilterError('From Date cannot be after To Date.');
-      return;
-    }
-
-    setAppliedStartDate(startDate);
-    setAppliedEndDate(endDate);
-  };
-
-  const handleClearDateFilter = () => {
-    setStartDate('');
-    setEndDate('');
-    setAppliedStartDate('');
-    setAppliedEndDate('');
-    setDateFilterError('');
-  };
-
   const getBillDateKey = (value: unknown): string => {
     const raw = String(value ?? '').trim();
-
     if (!raw) return '';
 
     const isoDateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
     if (isoDateOnly) {
       return `${isoDateOnly[1]}-${isoDateOnly[2]}-${isoDateOnly[3]}`;
     }
 
-    const indianDate = raw.match(
-      /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/
-    );
-
+    const indianDate = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
     if (indianDate) {
       const day = String(Number(indianDate[1])).padStart(2, '0');
       const month = String(Number(indianDate[2])).padStart(2, '0');
       const year = indianDate[3];
-
       return `${year}-${month}-${day}`;
     }
 
     const parsed = new Date(raw);
-
     if (!Number.isNaN(parsed.getTime())) {
       const year = parsed.getFullYear();
       const month = String(parsed.getMonth() + 1).padStart(2, '0');
       const day = String(parsed.getDate()).padStart(2, '0');
-
       return `${year}-${month}-${day}`;
     }
 
@@ -799,13 +783,8 @@ export default function BilledServicesPage() {
   };
 
   const filteredServices = services.filter((s) => {
-    const billStaff = String(s.staffName || '')
-      .trim()
-      .toLowerCase();
-
-    const selectedStaffName = String(effectiveStaffFilter || '')
-      .trim()
-      .toLowerCase();
+    const billStaff = String(s.staffName || '').trim().toLowerCase();
+    const selectedStaffName = String(effectiveStaffFilter || '').trim().toLowerCase();
 
     const matchesStaff =
       selectedStaffName === 'all'
@@ -814,28 +793,14 @@ export default function BilledServicesPage() {
 
     if (!matchesStaff) return false;
 
-    const storedDate =
-      s.dateTime ||
-      s.createdAt ||
-      '';
-
+    const storedDate = s.dateTime || s.createdAt || '';
     const billDateKey = getBillDateKey(storedDate);
 
-    if (!billDateKey) return false;
-
-    if (appliedStartDate && billDateKey < appliedStartDate) {
-      return false;
-    }
-
-    if (appliedEndDate && billDateKey > appliedEndDate) {
-      return false;
-    }
+    // Billed Services always shows today's bills only.
+    if (billDateKey !== todayDateKey) return false;
 
     const search = searchTerm.trim().toLowerCase();
-
-    if (!search) {
-      return true;
-    }
+    if (!search) return true;
 
     const customerName = String(s.customerName || '').toLowerCase();
     const customerPhone = String(s.customerPhone || '').toLowerCase();
@@ -918,49 +883,6 @@ export default function BilledServicesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-xs text-slate-500 shadow-xs">
-            <Calendar size={14} className="text-slate-400" />
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => {
-                setStartDate(e.target.value);
-                setDateFilterError('');
-              }}
-              className="outline-none bg-transparent"
-              aria-label="From Date"
-            />
-            <span>→</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => {
-                setEndDate(e.target.value);
-                setDateFilterError('');
-              }}
-              className="outline-none bg-transparent"
-              aria-label="To Date"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleDateSearch}
-            className="border border-blue-600 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-xs"
-          >
-            <Search size={14} /> Search
-          </button>
-
-          {(appliedStartDate || appliedEndDate || dateFilterError) && (
-            <button
-              type="button"
-              onClick={handleClearDateFilter}
-              className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs px-4 py-2 rounded-xl transition shadow-xs"
-            >
-              Clear
-            </button>
-          )}
 
           <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs shadow-xs">
             <span className="font-semibold text-blue-500">Staff</span>
