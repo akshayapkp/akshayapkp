@@ -206,6 +206,9 @@ export default function BilledServicesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [appliedStartDate, setAppliedStartDate] = useState('');
+  const [appliedEndDate, setAppliedEndDate] = useState('');
+  const [dateFilterError, setDateFilterError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [currentStaff, setCurrentStaff] = useState('');
   const [currentRole, setCurrentRole] = useState('');
@@ -739,134 +742,120 @@ export default function BilledServicesPage() {
 
  const effectiveStaffFilter = isAdmin ? selectedStaff : currentStaff;
 
-const getTodayDateKey = () => {
-  const now = new Date();
+  const handleDateSearch = () => {
+    setDateFilterError('');
 
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
+    if (startDate && endDate && startDate > endDate) {
+      setDateFilterError('From Date cannot be after To Date.');
+      return;
+    }
 
-  return `${year}-${month}-${day}`;
-};
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+  };
 
-const getBillDateKey = (value: unknown): string => {
-  const raw = String(value ?? '').trim();
+  const handleClearDateFilter = () => {
+    setStartDate('');
+    setEndDate('');
+    setAppliedStartDate('');
+    setAppliedEndDate('');
+    setDateFilterError('');
+  };
 
-  if (!raw) return '';
+  const getBillDateKey = (value: unknown): string => {
+    const raw = String(value ?? '').trim();
 
-  // YYYY-MM-DD
-  const isoDateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!raw) return '';
 
-  if (isoDateOnly) {
-    return `${isoDateOnly[1]}-${isoDateOnly[2]}-${isoDateOnly[3]}`;
-  }
+    const isoDateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
-  // DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
-  const indianDate = raw.match(
-    /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/
-  );
+    if (isoDateOnly) {
+      return `${isoDateOnly[1]}-${isoDateOnly[2]}-${isoDateOnly[3]}`;
+    }
 
-  if (indianDate) {
-    const day = String(Number(indianDate[1])).padStart(2, '0');
-    const month = String(Number(indianDate[2])).padStart(2, '0');
-    const year = indianDate[3];
-
-    return `${year}-${month}-${day}`;
-  }
-
-  // ISO timestamp / normal date
-  const parsed = new Date(raw);
-
-  if (!Number.isNaN(parsed.getTime())) {
-    const year = parsed.getFullYear();
-    const month = String(parsed.getMonth() + 1).padStart(2, '0');
-    const day = String(parsed.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  }
-
-  return '';
-};
-
-const todayDateKey = getTodayDateKey();
-
-const filteredServices = services.filter((s) => {
-  // -----------------------------
-  // STAFF FILTER
-  // -----------------------------
-const billStaff = String(
-  s.staffName || ''
-)
-    .trim()
-    .toLowerCase();
-
-  const selectedStaffName = String(
-    effectiveStaffFilter || ''
-  )
-    .trim()
-    .toLowerCase();
-
-  const matchesStaff =
-    selectedStaffName === 'all'
-      ? true
-      : billStaff === selectedStaffName;
-
-  if (!matchesStaff) return false;
-
-  // -----------------------------
-  // TODAY ONLY
-  // -----------------------------
-const storedDate =
-  s.dateTime ||
-  s.createdAt ||
-  '';
-
-  const billDateKey = getBillDateKey(storedDate);
-
-  if (billDateKey !== todayDateKey) {
-    return false;
-  }
-
-  // -----------------------------
-  // SEARCH
-  // -----------------------------
-  const search = searchTerm.trim().toLowerCase();
-
-  if (!search) {
-    return true;
-  }
-
-  const customerName = String(
-    s.customerName || ''
-  ).toLowerCase();
-
-  const customerPhone = String(
-    s.customerPhone || ''
-  ).toLowerCase();
-
-  const serviceName = String(
-    s.serviceName || ''
-  ).toLowerCase();
-
-  const matchesOriginalService =
-    Array.isArray(s.originalData) &&
-    s.originalData.some((entry: any) =>
-      String(
-        entry?.serviceName ||
-        entry?.service ||
-        ''
-      )
-        .toLowerCase()
-        .includes(search)
+    const indianDate = raw.match(
+      /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/
     );
 
-  return (
-    customerName.includes(search) ||
-    customerPhone.includes(search) ||
-    serviceName.includes(search) ||
-    matchesOriginalService
-  );
-});
+    if (indianDate) {
+      const day = String(Number(indianDate[1])).padStart(2, '0');
+      const month = String(Number(indianDate[2])).padStart(2, '0');
+      const year = indianDate[3];
+
+      return `${year}-${month}-${day}`;
+    }
+
+    const parsed = new Date(raw);
+
+    if (!Number.isNaN(parsed.getTime())) {
+      const year = parsed.getFullYear();
+      const month = String(parsed.getMonth() + 1).padStart(2, '0');
+      const day = String(parsed.getDate()).padStart(2, '0');
+
+      return `${year}-${month}-${day}`;
+    }
+
+    return '';
+  };
+
+  const filteredServices = services.filter((s) => {
+    const billStaff = String(s.staffName || '')
+      .trim()
+      .toLowerCase();
+
+    const selectedStaffName = String(effectiveStaffFilter || '')
+      .trim()
+      .toLowerCase();
+
+    const matchesStaff =
+      selectedStaffName === 'all'
+        ? true
+        : billStaff === selectedStaffName;
+
+    if (!matchesStaff) return false;
+
+    const storedDate =
+      s.dateTime ||
+      s.createdAt ||
+      '';
+
+    const billDateKey = getBillDateKey(storedDate);
+
+    if (!billDateKey) return false;
+
+    if (appliedStartDate && billDateKey < appliedStartDate) {
+      return false;
+    }
+
+    if (appliedEndDate && billDateKey > appliedEndDate) {
+      return false;
+    }
+
+    const search = searchTerm.trim().toLowerCase();
+
+    if (!search) {
+      return true;
+    }
+
+    const customerName = String(s.customerName || '').toLowerCase();
+    const customerPhone = String(s.customerPhone || '').toLowerCase();
+    const serviceName = String(s.serviceName || '').toLowerCase();
+
+    const matchesOriginalService =
+      Array.isArray(s.originalData) &&
+      s.originalData.some((entry: any) =>
+        String(entry?.serviceName || entry?.service || '')
+          .toLowerCase()
+          .includes(search)
+      );
+
+    return (
+      customerName.includes(search) ||
+      customerPhone.includes(search) ||
+      serviceName.includes(search) ||
+      matchesOriginalService
+    );
+  });
 
   // Summary Calculations
   const totalRevenue = filteredServices.reduce((sum, s) => sum + s.totalAmount, 0);
@@ -932,10 +921,46 @@ const storedDate =
 
           <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-xs text-slate-500 shadow-xs">
             <Calendar size={14} className="text-slate-400" />
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="outline-none bg-transparent" />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setDateFilterError('');
+              }}
+              className="outline-none bg-transparent"
+              aria-label="From Date"
+            />
             <span>→</span>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="outline-none bg-transparent" />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setDateFilterError('');
+              }}
+              className="outline-none bg-transparent"
+              aria-label="To Date"
+            />
           </div>
+
+          <button
+            type="button"
+            onClick={handleDateSearch}
+            className="border border-blue-600 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-xs"
+          >
+            <Search size={14} /> Search
+          </button>
+
+          {(appliedStartDate || appliedEndDate || dateFilterError) && (
+            <button
+              type="button"
+              onClick={handleClearDateFilter}
+              className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs px-4 py-2 rounded-xl transition shadow-xs"
+            >
+              Clear
+            </button>
+          )}
 
           <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs shadow-xs">
             <span className="font-semibold text-blue-500">Staff</span>
