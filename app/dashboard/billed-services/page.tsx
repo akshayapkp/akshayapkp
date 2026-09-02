@@ -794,9 +794,9 @@ const filteredServices = services.filter((s) => {
   // -----------------------------
   // STAFF FILTER
   // -----------------------------
-  const billStaff = String(
-    s.staffName || s.staff || ''
-  )
+const billStaff = String(
+  s.staffName || ''
+)
     .trim()
     .toLowerCase();
 
@@ -816,12 +816,10 @@ const filteredServices = services.filter((s) => {
   // -----------------------------
   // TODAY ONLY
   // -----------------------------
-  const storedDate =
-    s.dateTime ||
-    s.createdAt ||
-    s.date ||
-    s.billDate ||
-    '';
+const storedDate =
+  s.dateTime ||
+  s.createdAt ||
+  '';
 
   const billDateKey = getBillDateKey(storedDate);
 
