@@ -737,38 +737,138 @@ export default function BilledServicesPage() {
     URL.revokeObjectURL(url);
   };
 
-  const effectiveStaffFilter = isAdmin ? selectedStaff : currentStaff;
+ const effectiveStaffFilter = isAdmin ? selectedStaff : currentStaff;
 
-  const filteredServices = services.filter(s => {
-    const matchesStaff =
-      effectiveStaffFilter === 'ALL'
-        ? true
-        : String(s.staffName || '').trim().toLowerCase() ===
-          String(effectiveStaffFilter || '').trim().toLowerCase();
+const getTodayDateKey = () => {
+  const now = new Date();
 
-    if (!matchesStaff) return false;
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
 
-    const matchesSearch =
-      s.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.customerPhone.includes(searchTerm) ||
-      s.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (Array.isArray(s.originalData) && s.originalData.some((entry: any) =>
-        String(entry.serviceName || entry.service || '').toLowerCase().includes(searchTerm.toLowerCase())
-      ));
+  return `${year}-${month}-${day}`;
+};
 
-    const serviceDate = parseStoredDate(s.createdAt) || parseStoredDate(s.dateTime);
-    const matchesStart =
-      !startDate ||
-      (Number.isFinite(serviceDate) &&
-        serviceDate >= new Date(`${startDate}T00:00:00`).getTime());
+const getBillDateKey = (value: unknown): string => {
+  const raw = String(value ?? '').trim();
 
-    const matchesEnd =
-      !endDate ||
-      (Number.isFinite(serviceDate) &&
-        serviceDate <= new Date(`${endDate}T23:59:59.999`).getTime());
+  if (!raw) return '';
 
-    return matchesSearch && matchesStart && matchesEnd;
-  });
+  // YYYY-MM-DD
+  const isoDateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (isoDateOnly) {
+    return `${isoDateOnly[1]}-${isoDateOnly[2]}-${isoDateOnly[3]}`;
+  }
+
+  // DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
+  const indianDate = raw.match(
+    /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/
+  );
+
+  if (indianDate) {
+    const day = String(Number(indianDate[1])).padStart(2, '0');
+    const month = String(Number(indianDate[2])).padStart(2, '0');
+    const year = indianDate[3];
+
+    return `${year}-${month}-${day}`;
+  }
+
+  // ISO timestamp / normal date
+  const parsed = new Date(raw);
+
+  if (!Number.isNaN(parsed.getTime())) {
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  return '';
+};
+
+const todayDateKey = getTodayDateKey();
+
+const filteredServices = services.filter((s) => {
+  // -----------------------------
+  // STAFF FILTER
+  // -----------------------------
+  const billStaff = String(
+    s.staffName || s.staff || ''
+  )
+    .trim()
+    .toLowerCase();
+
+  const selectedStaffName = String(
+    effectiveStaffFilter || ''
+  )
+    .trim()
+    .toLowerCase();
+
+  const matchesStaff =
+    selectedStaffName === 'all'
+      ? true
+      : billStaff === selectedStaffName;
+
+  if (!matchesStaff) return false;
+
+  // -----------------------------
+  // TODAY ONLY
+  // -----------------------------
+  const storedDate =
+    s.dateTime ||
+    s.createdAt ||
+    s.date ||
+    s.billDate ||
+    '';
+
+  const billDateKey = getBillDateKey(storedDate);
+
+  if (billDateKey !== todayDateKey) {
+    return false;
+  }
+
+  // -----------------------------
+  // SEARCH
+  // -----------------------------
+  const search = searchTerm.trim().toLowerCase();
+
+  if (!search) {
+    return true;
+  }
+
+  const customerName = String(
+    s.customerName || ''
+  ).toLowerCase();
+
+  const customerPhone = String(
+    s.customerPhone || ''
+  ).toLowerCase();
+
+  const serviceName = String(
+    s.serviceName || ''
+  ).toLowerCase();
+
+  const matchesOriginalService =
+    Array.isArray(s.originalData) &&
+    s.originalData.some((entry: any) =>
+      String(
+        entry?.serviceName ||
+        entry?.service ||
+        ''
+      )
+        .toLowerCase()
+        .includes(search)
+    );
+
+  return (
+    customerName.includes(search) ||
+    customerPhone.includes(search) ||
+    serviceName.includes(search) ||
+    matchesOriginalService
+  );
+});
 
   // Summary Calculations
   const totalRevenue = filteredServices.reduce((sum, s) => sum + s.totalAmount, 0);
