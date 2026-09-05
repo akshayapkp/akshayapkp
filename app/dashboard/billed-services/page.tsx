@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
   Search, Download, Briefcase, ChevronDown, ChevronUp, 
-  Pencil, Trash2, Calendar, RefreshCw
+  Pencil, Trash2, Calendar, RefreshCw, Phone
 } from "lucide-react";
 
 const CENTRAL_STORAGE_ROW_ID = 999999;
@@ -260,95 +260,184 @@ export default function BilledServicesPage() {
         ? performanceRecordsRaw
         : [];
 
-      // Staff Performance is fed from performanceRecords and can contain older
-      // completed bills that are no longer present in the local billed-entry
-      // stores. Use it as a fallback source, not as a replacement, so the
-      // existing service-entry/edit/delete data remains authoritative.
-      const existingBillKeys = new Set(
-        [...serviceEntries, ...billedServicesData]
-          .map((item: any) =>
-            String(item?.billId || item?.billID || item?.invoiceId || '').trim()
-          )
+      // Staff Performance uses performanceRecords as a live source for billed
+      // records. Some older bills can exist there even when they are no longer
+      // present in serviceEntries/billedServicesData. Therefore performanceRecords
+      // must always participate in the display merge; it cannot be excluded just
+      // because another store contains the same billId.
+      //
+      // The merge below removes duplicate service lines by signature while still
+      // keeping additional service lines belonging to the same bill.
+      const getBillKey = (item: any) => String(
+        item?.billId || item?.billID || item?.invoiceId || item?.id || ''
+      ).trim();
+
+      const performanceEntries = performanceRecords.map((record: any) => ({
+        id: record?.id,
+        billId: record?.billId || record?.billID || record?.invoiceId || record?.id,
+        dateTime: record?.timestamp || record?.dateTime || record?.date || '',
+        createdAt: record?.timestamp || record?.createdAt || '',
+        customerName: record?.customerName || record?.name || 'Customer',
+        customerPhone:
+          record?.customerPhone ||
+          record?.mobileNumber ||
+          record?.mobile ||
+          record?.phone ||
+          'N/A',
+        serviceName: record?.serviceName || record?.service || '',
+        quantity: Number(record?.quantity ?? record?.qty ?? 1) || 1,
+        totalAmount: Number(record?.totalAmount ?? record?.total ?? 0) || 0,
+        receivedAmount: Number(
+          record?.receivedAmount ??
+            record?.received ??
+            record?.totalPaid ??
+            record?.totalAmount ??
+            record?.total ??
+            0
+        ) || 0,
+        cashReceived: Number(record?.cashReceived ?? record?.cash ?? 0) || 0,
+        gpayAmount: Number(record?.gpayAmount ?? record?.gpay ?? record?.upi ?? 0) || 0,
+        pendingAmount: Number(
+          record?.pendingAmount ??
+            record?.balance ??
+            record?.owedAmount ??
+            0
+        ) || 0,
+        staffName: record?.staffName || record?.staff || 'Admin',
+        status: record?.status || 'completed',
+      }));
+
+      // IMPORTANT: do not combine performanceRecords with the same bill from
+      // serviceEntries/billedServicesData. Those stores contain the actual
+      // service lines, while performanceRecords may also contain a bill-level
+      // summary row. Combining both makes a fake extra "Service" line and can
+      // double the bill total (for example ₹1 becomes ₹2).
+      //
+      // Source priority per bill:
+      //   1) serviceEntries + billedServicesData
+      //   2) performanceRecords only when the bill is absent above
+      // This still recovers old bills that exist only in Staff Performance.
+      const primarySourceEntries = [...serviceEntries, ...billedServicesData];
+      const primaryBillKeys = new Set(
+        primarySourceEntries
+          .map(getBillKey)
           .filter(Boolean)
       );
 
-      const performanceFallbackEntries = performanceRecords
-        .map((record: any) => ({
-          id: record?.id,
-          billId: record?.billId || record?.billID || record?.invoiceId || record?.id,
-          dateTime: record?.timestamp || record?.dateTime || record?.date || '',
-          createdAt: record?.timestamp || record?.createdAt || '',
-          customerName: record?.customerName || record?.name || 'Customer',
-          customerPhone: record?.customerPhone || record?.mobile || record?.phone || 'N/A',
-          serviceName: record?.serviceName || record?.service || 'Service',
-          quantity: Number(record?.quantity ?? record?.qty ?? 1) || 1,
-          totalAmount: Number(record?.totalAmount ?? record?.total ?? 0) || 0,
-          receivedAmount: Number(record?.receivedAmount ?? record?.received ?? record?.totalAmount ?? record?.total ?? 0) || 0,
-          cashReceived: Number(record?.cashReceived ?? record?.cash ?? 0) || 0,
-          gpayAmount: Number(record?.gpayAmount ?? record?.gpay ?? 0) || 0,
-          pendingAmount: Number(record?.pendingAmount ?? record?.balance ?? 0) || 0,
-          staffName: record?.staffName || record?.staff || 'Admin',
-          status: record?.status || 'completed',
-        }))
-        .filter((entry: any) => {
-          const key = String(entry.billId || entry.id || '').trim();
-          return key && !existingBillKeys.has(key);
+      const performanceByBill = new Map<string, any[]>();
+      performanceEntries.forEach((entry: any) => {
+        const key = getBillKey(entry);
+        if (!key || primaryBillKeys.has(key)) return;
+        const group = performanceByBill.get(key) || [];
+        group.push(entry);
+        performanceByBill.set(key, group);
+      });
+
+      const cleanedPerformanceEntries: any[] = [];
+
+      // Some older Performance records contain an automatic zero-value
+      // placeholder immediately beside the real bill (for example Walk-in
+      // ₹0.00). That placeholder is not a second bill and must never create a
+      // second Billed Services row. Remove it only when a real, non-zero
+      // performance record for the same staff/customer is present at nearly
+      // the same timestamp. This keeps genuine old bills intact.
+      const normalizedPerformanceKey = (entry: any) => [
+        String(entry?.staffName || '').trim().toLowerCase(),
+        String(entry?.customerName || '').trim().toLowerCase(),
+        String(entry?.customerPhone || '').trim().toLowerCase(),
+      ].join('|');
+
+      const performanceTimestamp = (entry: any) =>
+        parseBillDateTime(entry?.dateTime) || parseStoredDate(entry?.createdAt) || 0;
+
+      const isZeroPlaceholder = (entry: any) => {
+        const name = String(entry?.serviceName || '').trim().toLowerCase();
+        const total = Number(entry?.totalAmount ?? 0) || 0;
+        const received = Number(entry?.receivedAmount ?? 0) || 0;
+        const cash = Number(entry?.cashReceived ?? 0) || 0;
+        const gpay = Number(entry?.gpayAmount ?? 0) || 0;
+        const pending = Number(entry?.pendingAmount ?? 0) || 0;
+        const serviceCharge = Number(entry?.srvChg ?? entry?.srvCharge ?? entry?.serviceCharge ?? 0) || 0;
+        const departmentFee = Number(entry?.walletChg ?? entry?.deptChg ?? entry?.deptFee ?? entry?.departmentFee ?? 0) || 0;
+        const genericName = [
+          'walk-in',
+          'walk in',
+          'service',
+          'select service',
+          'select a service',
+        ].includes(name);
+
+        return genericName &&
+          total === 0 &&
+          received === 0 &&
+          cash === 0 &&
+          gpay === 0 &&
+          pending === 0 &&
+          serviceCharge === 0 &&
+          departmentFee === 0;
+      };
+
+      const allPerformanceEntries = performanceRecords.map((record: any) => {
+        const matching = performanceEntries.find((entry: any) => entry.id === record?.id);
+        return matching || record;
+      });
+
+      const hasRealNearbyPerformanceEntry = (entry: any) => {
+        if (!isZeroPlaceholder(entry)) return false;
+        const key = normalizedPerformanceKey(entry);
+        const time = performanceTimestamp(entry);
+        return allPerformanceEntries.some((candidate: any) => {
+          if (!candidate || candidate === entry || isZeroPlaceholder(candidate)) return false;
+          const candidateTime = performanceTimestamp(candidate);
+          if (!time || !candidateTime || Math.abs(candidateTime - time) > 5 * 60 * 1000) return false;
+          return normalizedPerformanceKey(candidate) === key && Number(candidate?.totalAmount ?? 0) > 0;
+        });
+      };
+
+      performanceByBill.forEach((entries) => {
+        const meaningful = entries.filter((entry: any) => {
+          const name = String(entry?.serviceName || '').trim().toLowerCase();
+          if (!name) return false;
+          if (hasRealNearbyPerformanceEntry(entry)) return false;
+          return !['service', 'select service', 'select a service'].includes(name);
         });
 
-      // Merge all known sources. performanceRecords is only used when a whole
-      // bill is missing from both billed-entry stores, preventing duplicates.
-      // Merge the billed-entry stores without double-counting the same
-      // service line. This is important when central sync has copied a bill
-      // into both keys.
-      const getEntrySignature = (item: any) => {
-        const billKey = String(
-          item?.billId ||
-            item?.billID ||
-            item?.invoiceId ||
-            item?.id ||
-            ''
-        ).trim();
+        // If every entry in an old performance bill was a zero placeholder,
+        // retain one entry so the historical bill is not silently lost.
+        if (meaningful.length > 0) {
+          cleanedPerformanceEntries.push(...meaningful);
+        } else {
+          const fallback = entries.find((entry: any) => !hasRealNearbyPerformanceEntry(entry));
+          if (fallback) cleanedPerformanceEntries.push(fallback);
+        }
+      });
 
-        const serviceName = String(
-          item?.serviceName || item?.service || ''
-        )
-          .trim()
-          .toLowerCase();
+      const sourceEntries = [
+        ...primarySourceEntries,
+        ...cleanedPerformanceEntries,
+      ];
 
-        return [
-          billKey,
-          serviceName,
-          Number(item?.quantity ?? item?.qty ?? 1) || 1,
-          Number(item?.totalAmount ?? item?.total ?? 0) || 0,
-          Number(item?.srvChg ?? item?.srvCharge ?? item?.serviceCharge ?? 0) || 0,
-          Number(item?.walletChg ?? item?.deptChg ?? item?.deptFee ?? 0) || 0,
-          String(
-            item?.dateTime ||
-              item?.date ||
-              item?.createdAt ||
-              ''
-          ).trim(),
-          String(
-            item?.customerName ||
-              item?.name ||
-              item?.customerPhone ||
-              item?.mobile ||
-              ''
-          )
-            .trim()
-            .toLowerCase(),
-        ].join('|');
-      };
+      // Remove exact duplicate service lines without merging legitimate
+      // different services from the same bill.
+      const getEntrySignature = (item: any) => [
+        getBillKey(item),
+        String(item?.serviceName || item?.service || '').trim().toLowerCase(),
+        Number(item?.quantity ?? item?.qty ?? 1) || 1,
+        Number(item?.totalAmount ?? item?.total ?? 0) || 0,
+        Number(item?.srvChg ?? item?.srvCharge ?? item?.serviceCharge ?? 0) || 0,
+        Number(item?.walletChg ?? item?.deptChg ?? item?.deptFee ?? item?.departmentFee ?? 0) || 0,
+        String(item?.staffName || item?.staff || '').trim().toLowerCase(),
+        String(item?.dateTime || item?.date || item?.createdAt || item?.timestamp || '').trim(),
+        String(item?.customerName || item?.name || item?.customerPhone || item?.mobile || '').trim().toLowerCase(),
+      ].join('|');
 
       const mergedSourceEntries: any[] = [];
       const seenEntrySignatures = new Set<string>();
 
-      [...serviceEntries, ...billedServicesData, ...performanceFallbackEntries].forEach((item: any) => {
+      sourceEntries.forEach((item: any) => {
         if (!item || typeof item !== 'object') return;
-
         const signature = getEntrySignature(item);
         if (seenEntrySignatures.has(signature)) return;
-
         seenEntrySignatures.add(signature);
         mergedSourceEntries.push(item);
       });
@@ -522,12 +611,15 @@ export default function BilledServicesPage() {
         }
       );
 
-      // Do not sort by browser-parsed locale dates here. The primary
-      // serviceEntries source is intentionally newest-first; fallback
-      // billedServicesData entries are appended only when they are missing.
-      // Grouping therefore keeps the normal bill order without date-format
-      // reversals.
-      setServices(formattedEntries);
+      // Always show the most recently entered bill first. Use the stored bill
+      // timestamp, including Indian DD/MM/YYYY locale strings and ISO values.
+      const orderedEntries = [...formattedEntries].sort((a, b) => {
+        const aTime = parseBillDateTime(a.dateTime) || parseStoredDate(a.createdAt) || 0;
+        const bTime = parseBillDateTime(b.dateTime) || parseStoredDate(b.createdAt) || 0;
+        return bTime - aTime;
+      });
+
+      setServices(orderedEntries);
     } catch (e) {
       console.error('Error loading billed services', e);
       setServices([]);
@@ -705,6 +797,29 @@ export default function BilledServicesPage() {
 
     const date = new Date(Number(year), Number(month) - 1, Number(day), hour, minute, second);
     return Number.isNaN(date.getTime()) ? NaN : date.getTime();
+  };
+
+  const formatDisplayDateTime = (value: unknown) => {
+    const raw = String(value ?? '').trim();
+    const timeValue = parseBillDateTime(raw);
+    if (!Number.isFinite(timeValue)) {
+      return { date: raw, time: '' };
+    }
+
+    const date = new Date(timeValue);
+    return {
+      date: date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }),
+      time: date.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      }),
+    };
   };
 
   const canModifyService = (item: BilledServiceItem) => {
@@ -1147,14 +1262,15 @@ export default function BilledServicesPage() {
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* TABLE — Staff Performance style */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="hidden md:grid grid-cols-12 bg-slate-50/80 border-b border-slate-200 py-3 px-6 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
           <div className="col-span-2">DATE / TIME</div>
-          <div className="col-span-2">CUSTOMER</div>
-          <div className="col-span-2">SERVICES</div>
-          <div className="col-span-1">STAFF</div>
-          <div className="col-span-1 text-right">TOTAL</div>
+          <div className="col-span-2">CUSTOMER DETAILS</div>
+          <div className="col-span-1">STAFF NAME</div>
+          <div className="col-span-1 text-right">SERVICE CHG.</div>
+          <div className="col-span-1 text-right">DEPT FEE</div>
+          <div className="col-span-1 text-right">TOTAL AMOUNT</div>
           <div className="col-span-1 text-right">RECEIVED</div>
           <div className="col-span-1 text-center">STATUS</div>
           <div className="col-span-2 text-right">ACTIONS</div>
@@ -1166,105 +1282,196 @@ export default function BilledServicesPage() {
           <div className="divide-y divide-slate-100">
             {filteredServices.map((item) => {
               const isExpanded = expandedId === item.id;
+              const originalEntries = Array.isArray(item.originalData) ? item.originalData : [];
+              const serviceCharge = originalEntries.reduce(
+                (sum: number, entry: any) =>
+                  sum + Number(entry?.srvChg ?? entry?.srvCharge ?? entry?.serviceCharge ?? 0),
+                0
+              );
+              const departmentFee = originalEntries.reduce(
+                (sum: number, entry: any) =>
+                  sum + Number(entry?.walletChg ?? entry?.deptChg ?? entry?.deptFee ?? 0),
+                0
+              );
 
               return (
                 <div key={item.id} className="transition">
-                  <div className="grid grid-cols-1 md:grid-cols-12 items-center py-4 px-6 text-xs text-slate-700 gap-2 md:gap-0">
-                    <div className="col-span-2 text-slate-500 font-medium">{item.dateTime}</div>
-                    <div className="col-span-2">
-                      <p className="font-bold text-slate-800">{item.customerName}</p>
-                      <p className="text-[11px] text-slate-400">📞 {item.customerPhone}</p>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setExpandedId(isExpanded ? null : item.id);
+                      }
+                    }}
+                    className={`grid grid-cols-1 md:grid-cols-12 items-center py-3.5 px-6 text-xs text-slate-700 gap-2 md:gap-0 cursor-pointer transition ${
+                      isExpanded ? 'bg-blue-50/50' : 'hover:bg-slate-50'
+                    }`}
+                    title="Click this bill to view details"
+                  >
+                    <div className="col-span-2 text-slate-500 font-medium flex items-center gap-2">
+                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${isExpanded ? 'border-blue-200 bg-blue-100 text-blue-600' : 'border-transparent text-slate-300'}`}>
+                        {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      </span>
+                      <span className="flex flex-col leading-tight">
+                        <span>{formatDisplayDateTime(item.dateTime).date}</span>
+                        <span className="text-[10px] text-slate-400">{formatDisplayDateTime(item.dateTime).time}</span>
+                      </span>
                     </div>
-                    <div className="col-span-2 font-medium text-slate-700">
-                      {item.quantity}x {item.serviceName}
-                      {Number(item.serviceCount || 1) > 1 && (
-                        <span className="ml-1 text-[10px] font-bold text-slate-400">
-                          +{Number(item.serviceCount) - 1} more
-                        </span>
-                      )}
+
+                    <div className="col-span-2 min-w-0">
+                      <p className="font-bold text-slate-800 truncate">{item.customerName}</p>
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                        <Phone size={11} className="text-blue-500 shrink-0" />
+                        <span className="truncate">{item.customerPhone || 'N/A'}</span>
+                      </div>
                     </div>
-                    <div className="col-span-1">
+
+                    <div className="col-span-1 min-w-0">
                       <span
-                        className="inline-flex max-w-full truncate rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700"
+                        className="inline-flex max-w-full truncate rounded-full border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-bold text-indigo-700"
                         title={item.staffName || 'Not Assigned'}
                       >
                         {item.staffName || 'Not Assigned'}
                       </span>
                     </div>
-                    <div className="col-span-1 text-right font-bold text-slate-800">₹{item.totalAmount.toFixed(2)}</div>
-                    <div className="col-span-1 text-right font-bold text-emerald-600">₹{item.receivedAmount.toFixed(2)}</div>
+
+                    <div className="col-span-1 text-right font-bold text-emerald-600">
+                      ₹{serviceCharge.toFixed(2)}
+                    </div>
+
+                    <div className="col-span-1 text-right font-bold text-orange-500">
+                      ₹{departmentFee.toFixed(2)}
+                    </div>
+
+                    <div className="col-span-1 text-right font-black text-slate-800">
+                      ₹{item.totalAmount.toFixed(2)}
+                    </div>
+
+                    <div className="col-span-1 text-right font-bold text-emerald-600">
+                      ₹{item.receivedAmount.toFixed(2)}
+                    </div>
+
                     <div className="col-span-1 text-center">
                       {Number(item.pendingAmount) > 0 || String(item.status).toLowerCase() === 'credit' ? (
-                        <span className="inline-flex items-center justify-center gap-1 text-[10px] font-black uppercase text-rose-700 bg-rose-50 px-2 py-1 rounded-full border border-rose-200 whitespace-nowrap">
+                        <span className="inline-flex items-center justify-center text-[10px] font-black uppercase text-rose-700 bg-rose-50 px-2 py-1 rounded-full border border-rose-200 whitespace-nowrap">
                           CREDIT
                         </span>
                       ) : (
-                        <span className="inline-flex items-center justify-center gap-1 text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200 whitespace-nowrap">
+                        <span className="inline-flex items-center justify-center text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200 whitespace-nowrap">
                           PAID
                         </span>
                       )}
                     </div>
-                    <div className="col-span-2 flex items-center justify-end gap-1.5">
-                      <button onClick={() => setExpandedId(isExpanded ? null : item.id)} className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-2.5 py-1 rounded-lg transition flex items-center gap-1 text-[11px]">
-                        {isExpanded ? <>Hide <ChevronUp size={12} /></> : <>View <ChevronDown size={12} /></>}
-                      </button>
+
+                    <div className="col-span-2 flex items-center justify-end gap-2">
                       <button
-                        onClick={() => handleOpenEdit(item)}
-                        title={isAdmin ? "Edit (Admin)" : canModifyService(item) ? "Edit (available for 5 minutes)" : "Edit time expired - Admin only"}
-                        className={`p-1.5 rounded-lg transition ${
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEdit(item);
+                        }}
+                        title={isAdmin ? 'Edit (Admin)' : canModifyService(item) ? 'Edit (available for 5 minutes)' : 'Edit time expired - Admin only'}
+                        className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
                           isAdmin || canModifyService(item)
-                            ? "text-blue-500 hover:bg-blue-50"
-                            : "text-slate-300 cursor-not-allowed"
+                            ? 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'
+                            : 'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed'
                         }`}
                       >
-                        <Pencil size={14} />
+                        <Pencil size={13} />
+                        <span className="hidden xl:inline">Edit</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
-                        title={isAdmin ? "Delete (Admin)" : canModifyService(item) ? "Delete (available for 5 minutes)" : "Delete time expired - Admin only"}
-                        className={`p-1.5 rounded-lg transition ${
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(item.id);
+                        }}
+                        title={isAdmin ? 'Delete (Admin)' : canModifyService(item) ? 'Delete (available for 5 minutes)' : 'Delete time expired - Admin only'}
+                        className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
                           isAdmin || canModifyService(item)
-                            ? "text-rose-500 hover:bg-rose-50"
-                            : "text-slate-300 cursor-not-allowed"
+                            ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-100'
+                            : 'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed'
                         }`}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
+                        <span className="hidden xl:inline">Delete</span>
                       </button>
                     </div>
                   </div>
 
                   {isExpanded && (
-                    <div className="bg-slate-50/50 border-t border-b border-slate-100 p-5 mx-4 my-2 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-                      <div className="space-y-2 border-r-0 md:border-r border-slate-200 pr-0 md:pr-6">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">TRANSACTION DETAILS</p>
-                        <div className="flex justify-between items-center py-1">
-                          <span className="text-slate-500">Cash Received:</span>
-                          <span className="font-bold text-slate-800">₹{item.cashReceived.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-1">
-                          <span className="text-slate-500">GPay/UPI:</span>
-                          <span className="font-bold text-slate-800">₹{item.gpayAmount.toFixed(2)}</span>
-                        </div>
-                        <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
-                          <span className="text-slate-500">Pending / Credit:</span>
-                          <span className={`font-black ${item.pendingAmount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                            ₹{item.pendingAmount.toFixed(2)}
-                          </span>
+                    <div className="bg-slate-50/70 border-t border-b border-blue-100 p-4 mx-4 my-2 rounded-xl grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
+                      {/* Bill information */}
+                      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-3">BILL INFORMATION</p>
+                        <div className="space-y-2">
+                          <div className="flex justify-between gap-3">
+                            <span className="text-slate-500">Bill No</span>
+                            <strong className="text-slate-800 text-right">{item.billId || item.id}</strong>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <span className="text-slate-500">Date &amp; Time</span>
+                            <strong className="text-slate-800 text-right">{item.dateTime}</strong>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <span className="text-slate-500">Customer</span>
+                            <strong className="text-slate-800 text-right">{item.customerName} ({item.customerPhone || 'N/A'})</strong>
+                          </div>
+                          <div className="flex justify-between gap-3">
+                            <span className="text-slate-500">Staff</span>
+                            <strong className="text-indigo-600 text-right">{item.staffName}</strong>
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-3">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SERVICE DESCRIPTION</p>
-                        <div className="space-y-2">
-                          {(Array.isArray(item.originalData) ? item.originalData : []).map((entry: any, serviceIndex: number) => (
-                            <div key={`${item.id}-service-${serviceIndex}`} className="bg-slate-100/70 rounded-lg p-3 text-slate-700 font-medium flex items-center justify-between gap-3">
-                              <span>{Number(entry.quantity) || 1}x {entry.serviceName || entry.service || 'Service'}</span>
-                              <span className="text-slate-500 whitespace-nowrap">₹{Number(entry.totalAmount || entry.total || 0).toFixed(2)}</span>
-                            </div>
-                          ))}
+
+                      {/* Services */}
+                      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-3">SERVICES</p>
+                        <div className="overflow-hidden rounded-lg border border-slate-100">
+                          <div className="grid grid-cols-12 bg-slate-50 px-3 py-2 text-[10px] font-bold text-slate-400 uppercase">
+                            <span className="col-span-1">#</span>
+                            <span className="col-span-6">SERVICE NAME</span>
+                            <span className="col-span-2 text-right">QTY</span>
+                            <span className="col-span-3 text-right">AMOUNT</span>
+                          </div>
+                          {originalEntries.length > 0 ? (
+                            originalEntries.map((entry: any, serviceIndex: number) => (
+                              <div key={`${item.id}-service-${serviceIndex}`} className="grid grid-cols-12 px-3 py-2 border-t border-slate-100 text-[11px] text-slate-700">
+                                <span className="col-span-1 text-slate-400">{serviceIndex + 1}</span>
+                                <span className="col-span-6 font-medium">{entry.serviceName || entry.service || 'Service'}</span>
+                                <span className="col-span-2 text-right">{Number(entry.quantity ?? entry.qty ?? 1) || 1}</span>
+                                <span className="col-span-3 text-right font-bold">₹{Number(entry.totalAmount ?? entry.total ?? 0).toFixed(2)}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-3 py-3 text-slate-400">No service details available.</div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-6 text-slate-500 text-[11px] pt-1">
-                          <span>Staff: <strong className="text-slate-700">{item.staffName}</strong></span>
-                          <span>Services: <strong className="text-slate-700">{item.serviceCount || 1}</strong></span>
+                        <div className="mt-3 space-y-1.5 text-[11px]">
+                          <div className="flex justify-between"><span className="text-slate-500">Service Charge</span><strong className="text-emerald-600">₹{serviceCharge.toFixed(2)}</strong></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Dept Fee</span><strong className="text-orange-500">₹{departmentFee.toFixed(2)}</strong></div>
+                          <div className="border-t border-slate-200 pt-2 flex justify-between"><span className="font-bold text-slate-700">Total Amount</span><strong className="text-blue-600">₹{item.totalAmount.toFixed(2)}</strong></div>
+                        </div>
+                      </div>
+
+                      {/* Transaction details */}
+                      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-3">TRANSACTION DETAILS</p>
+                        <div className="space-y-2.5">
+                          <div className="flex justify-between"><span className="text-slate-500">Cash Received</span><strong className="text-slate-800">₹{item.cashReceived.toFixed(2)}</strong></div>
+                          <div className="flex justify-between"><span className="text-slate-500">GPay/UPI</span><strong className="text-slate-800">₹{item.gpayAmount.toFixed(2)}</strong></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Pending / Credit</span><strong className={item.pendingAmount > 0 ? 'text-rose-600' : 'text-emerald-600'}>₹{item.pendingAmount.toFixed(2)}</strong></div>
+                          <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
+                            <span className="font-bold text-slate-700">Payment Status</span>
+                            {Number(item.pendingAmount) > 0 || String(item.status).toLowerCase() === 'credit' ? (
+                              <span className="rounded-full bg-rose-50 border border-rose-200 px-2.5 py-1 text-[10px] font-black text-rose-700">CREDIT</span>
+                            ) : (
+                              <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[10px] font-black text-emerald-700">PAID</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
