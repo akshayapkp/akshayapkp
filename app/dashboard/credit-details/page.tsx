@@ -26,11 +26,13 @@ export default function CreditDetailsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Role-based filtering ഉൾപ്പെടുത്തിയ useEffect
   useEffect(() => {
     const storedUser = localStorage.getItem('loggedInUser');
     const currentUser = storedUser ? JSON.parse(storedUser) : { username: 'Admin User', role: 'admin' };
+    setIsAdmin(String(currentUser?.role || '').trim().toLowerCase() === 'admin');
 
     const savedBills = localStorage.getItem('smart_akshaya_bills');
     if (savedBills) {
@@ -82,6 +84,28 @@ export default function CreditDetailsPage() {
 
   const handleSettleBill = (bill: CreditBill) => {
     router.push(`/dashboard/service-entry?resume=${bill.id}`);
+  };
+
+  const handleDeleteBill = (bill: CreditBill) => {
+    const confirmed = window.confirm(
+      `Delete this credit bill for ${bill.customerName} (₹${bill.owedAmount.toFixed(2)} owed)?\n\nThis action will remove only this credit bill.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const savedBills = localStorage.getItem('smart_akshaya_bills');
+      if (!savedBills) return;
+
+      const parsed = JSON.parse(savedBills);
+      if (!Array.isArray(parsed)) return;
+
+      const updatedBills = parsed.filter((item: any) => String(item?.id ?? '') !== String(bill.id));
+      localStorage.setItem('smart_akshaya_bills', JSON.stringify(updatedBills));
+      setBills((current) => current.filter((item) => String(item.id) !== String(bill.id)));
+    } catch (error) {
+      console.error('Failed to delete credit bill:', error);
+      window.alert('Could not delete this credit bill. Please try again.');
+    }
   };
 
   return (
@@ -252,6 +276,16 @@ export default function CreditDetailsPage() {
                     Settle Bill
                     <ChevronDown size={14} />
                   </button>
+
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleDeleteBill(bill)}
+                      className="flex items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-black text-red-600 transition-all hover:-translate-y-0.5 hover:bg-red-100 hover:shadow-md"
+                      title="Delete credit bill"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             ))
