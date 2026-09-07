@@ -29,6 +29,9 @@ import {
   Settings,
   GripHorizontal,
   Save,
+  ClipboardCheck,
+  ScrollText,
+  ArrowLeft,
 } from "lucide-react";
 
 interface WalletItem {
@@ -117,6 +120,1026 @@ const loadCentralDashboardStore = async (): Promise<Record<string, any[]> | null
   }
 };
 
+
+/* Status Center embedded tools: no iframe, no nested Dashboard/sidebar. */
+type CertificateOption = {
+  name: string;
+  code: string;
+};
+
+type Result = {
+  applicationNumber: string;
+  applicantName: string;
+  serviceName: string;
+  office: string;
+  status: string;
+};
+
+const CERTIFICATES: CertificateOption[] = [
+  { name: "Caste", code: "2" },
+  { name: "Community", code: "1" },
+  { name: "Domicile", code: "11" },
+  { name: "Family Membership", code: "22" },
+  { name: "Income", code: "4" },
+  { name: "Legal Heir", code: "10" },
+  { name: "Minority", code: "93" },
+  { name: "Nativity", code: "6" },
+  { name: "Non-Creamy Layer", code: "36" },
+  { name: "Non-ReMarriage", code: "25" },
+  { name: "One and the Same", code: "26" },
+  { name: "Possession", code: "13" },
+  { name: "Possession and Non-Attachment", code: "27" },
+  { name: "Relationship", code: "8" },
+];
+
+function StatusEdistrictTool() {
+  const [certificateCode, setCertificateCode] = useState("4");
+  const [applicationNumber, setApplicationNumber] = useState("");
+  const [result, setResult] = useState<Result | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const selectedCertificate = React.useMemo(
+    () => CERTIFICATES.find((item) => item.code === certificateCode)?.name ?? "",
+    [certificateCode]
+  );
+
+  async function trackApplication(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const applNo = applicationNumber.trim();
+    if (!applNo) {
+      setError("Please enter an application number.");
+      setResult(null);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setResult(null);
+
+    try {
+      const response = await fetch("/api/edistrict-certificate/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          applicationNumber: applNo,
+          serviceCode: certificateCode,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Unable to fetch application status.");
+      }
+
+      if (!data.data) {
+        setError(`No application was found for ${applNo}.`);
+        return;
+      }
+
+      setResult(data.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to fetch application status.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function clearSearch() {
+    setApplicationNumber("");
+    setResult(null);
+    setError("");
+  }
+
+  function printResult() {
+    if (!result) return;
+
+    // Submit the same POST form used by the official Kerala e-District
+    // Print button. This lets the browser use its existing e-District
+    // session/cookies instead of trying to recreate that session server-side.
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "https://edistrict.kerala.gov.in/openSearch.pdf";
+    form.target = "_blank";
+    form.style.display = "none";
+
+    const fields: Record<string, string> = {
+      searchService: "qrPrint",
+      applNo: result.applicationNumber,
+      serviceCode: "",
+      hiddenval: "",
+      hiddenServiceType: "",
+      srvceType: "RC",
+      scode: "",
+      applicationNo: "",
+      token: "",
+      ctypecheck: certificateCode,
+    };
+
+    Object.entries(fields).forEach(([name, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+  }
+
+  return (
+    <main className="edistrict-page">
+      <style jsx global>{`
+        .edistrict-page {
+          min-height: 0;
+          padding: 22px;
+          background: #f3f9ff;
+          color: #16324f;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .edistrict-shell {
+          max-width: 1050px;
+          margin: 0 auto;
+        }
+        .edistrict-header {
+          margin-bottom: 14px;
+        }
+        .edistrict-title {
+          margin: 0;
+          font-size: 24px;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+        }
+        .edistrict-subtitle {
+          margin: 6px 0 0;
+          color: #64748b;
+          font-size: 14px;
+        }
+        .edistrict-card {
+          background: #fff;
+          border: 1px solid #dbeafe;
+          border-radius: 16px;
+          box-shadow: 0 8px 28px rgba(30, 64, 175, 0.08);
+        }
+        .edistrict-form {
+          padding: 16px;
+        }
+        .edistrict-grid {
+          display: grid;
+          grid-template-columns: minmax(220px, 0.9fr) minmax(280px, 1.4fr) auto;
+          gap: 14px;
+          align-items: end;
+        }
+        .edistrict-label {
+          display: block;
+          margin-bottom: 7px;
+          font-size: 12px;
+          font-weight: 700;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .edistrict-input,
+        .edistrict-select {
+          width: 100%;
+          height: 44px;
+          box-sizing: border-box;
+          border: 1px solid #cbd5e1;
+          border-radius: 9px;
+          padding: 0 12px;
+          background: #fff;
+          color: #0f172a;
+          font-size: 14px;
+          outline: none;
+        }
+        .edistrict-input:focus,
+        .edistrict-select:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .edistrict-actions {
+          display: flex;
+          gap: 8px;
+        }
+        .edistrict-button {
+          height: 44px;
+          border: 0;
+          border-radius: 9px;
+          padding: 0 18px;
+          font-weight: 700;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+        .edistrict-track {
+          background: #2563eb;
+          color: white;
+        }
+        .edistrict-track:disabled {
+          opacity: 0.65;
+          cursor: wait;
+        }
+        .edistrict-clear {
+          background: #e2e8f0;
+          color: #334155;
+        }
+        .edistrict-source {
+          margin-top: 10px;
+          font-size: 12px;
+          color: #64748b;
+        }
+        .edistrict-error {
+          margin-top: 16px;
+          padding: 12px 14px;
+          border-radius: 10px;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #b91c1c;
+          font-size: 14px;
+        }
+        .edistrict-result {
+          margin-top: 18px;
+          overflow: hidden;
+        }
+        .edistrict-result-top {
+          padding: 18px 20px;
+          border-bottom: 1px solid #e2e8f0;
+          display: flex;
+          justify-content: space-between;
+          gap: 14px;
+          align-items: center;
+        }
+        .edistrict-name {
+          margin: 0;
+          font-size: 22px;
+          font-weight: 800;
+          color: #0f172a;
+        }
+        .edistrict-badge {
+          display: inline-flex;
+          margin-top: 7px;
+          padding: 5px 9px;
+          border-radius: 999px;
+          background: #eff6ff;
+          color: #1d4ed8;
+          font-size: 12px;
+          font-weight: 800;
+        }
+        .edistrict-status {
+          padding: 10px 14px;
+          border-radius: 10px;
+          background: #ecfdf5;
+          color: #047857;
+          font-size: 14px;
+          font-weight: 800;
+          text-align: right;
+        }
+        .edistrict-meta {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1px;
+          background: #e2e8f0;
+        }
+        .edistrict-meta-item {
+          background: #fff;
+          padding: 16px 20px;
+        }
+        .edistrict-meta-label {
+          font-size: 11px;
+          color: #64748b;
+          text-transform: uppercase;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+        }
+        .edistrict-meta-value {
+          margin-top: 5px;
+          font-size: 14px;
+          font-weight: 700;
+          color: #0f172a;
+        }
+        .edistrict-print-button {
+          margin: 16px 20px 20px;
+          height: 40px;
+          border: 0;
+          border-radius: 8px;
+          padding: 0 16px;
+          background: #0f766e;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .edistrict-print-button:hover {
+          background: #115e59;
+        }
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          .edistrict-print-area,
+          .edistrict-print-area * {
+            visibility: visible !important;
+          }
+          .edistrict-print-area {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: 1px solid #cbd5e1 !important;
+          }
+          .edistrict-print-button {
+            display: none !important;
+          }
+        }
+        @media (max-width: 800px) {
+          .edistrict-page { padding: 14px; }
+          .edistrict-grid { grid-template-columns: 1fr; }
+          .edistrict-actions { width: 100%; }
+          .edistrict-button { flex: 1; }
+          .edistrict-result-top { align-items: flex-start; flex-direction: column; }
+          .edistrict-status { text-align: left; }
+          .edistrict-meta { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 520px) {
+          .edistrict-meta { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className="edistrict-shell">
+        <header className="edistrict-header">
+          <h1 className="edistrict-title">Kerala e-District</h1>
+          <p className="edistrict-subtitle">
+            Certificate application status tracker
+          </p>
+        </header>
+
+        <section className="edistrict-card edistrict-form">
+          <form onSubmit={trackApplication}>
+            <div className="edistrict-grid">
+              <div>
+                <label className="edistrict-label" htmlFor="certificateType">
+                  Certificate Type
+                </label>
+                <select
+                  id="certificateType"
+                  className="edistrict-select"
+                  value={certificateCode}
+                  onChange={(event) => setCertificateCode(event.target.value)}
+                >
+                  {CERTIFICATES.map((certificate) => (
+                    <option key={certificate.code} value={certificate.code}>
+                      {certificate.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="edistrict-label" htmlFor="applicationNumber">
+                  Application Number
+                </label>
+                <input
+                  id="applicationNumber"
+                  className="edistrict-input"
+                  value={applicationNumber}
+                  onChange={(event) => setApplicationNumber(event.target.value)}
+                  placeholder="Enter application number"
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className="edistrict-actions">
+                <button className="edistrict-button edistrict-track" type="submit" disabled={loading}>
+                  {loading ? "Checking..." : "Check Status"}
+                </button>
+                <button className="edistrict-button edistrict-clear" type="button" onClick={clearSearch}>
+                  Clear
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div className="edistrict-source">
+            Live status source: Kerala Government e-District • Selected service: {selectedCertificate}
+          </div>
+
+          {error && <div className="edistrict-error">{error}</div>}
+        </section>
+
+        {result && (
+          <section className="edistrict-card edistrict-result edistrict-print-area">
+            <div className="edistrict-result-top">
+              <div>
+                <h2 className="edistrict-name">{result.applicantName || "Applicant"}</h2>
+                <span className="edistrict-badge">
+                  APP #{result.applicationNumber}
+                </span>
+              </div>
+              <div className="edistrict-status">{result.status || "Status available"}</div>
+            </div>
+
+            <div className="edistrict-meta">
+              <div className="edistrict-meta-item">
+                <div className="edistrict-meta-label">Application Number</div>
+                <div className="edistrict-meta-value">{result.applicationNumber}</div>
+              </div>
+              <div className="edistrict-meta-item">
+                <div className="edistrict-meta-label">Service</div>
+                <div className="edistrict-meta-value">{result.serviceName || selectedCertificate}</div>
+              </div>
+              <div className="edistrict-meta-item">
+                <div className="edistrict-meta-label">Office</div>
+                <div className="edistrict-meta-value">{result.office || "—"}</div>
+              </div>
+            </div>
+
+            <button
+              className="edistrict-print-button"
+              type="button"
+              onClick={printResult}
+            >
+              Print
+            </button>
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}
+
+
+type SearchType = "applicationNumber" | "mobileNumber" | "name";
+
+type GazetteResult = {
+  applicationNumber: string;
+  applicantName: string;
+  applicationDate: string;
+  applicationType: string;
+  internalId: string;
+  status: string;
+  gazetteNumber: string;
+  gazetteYear: string;
+};
+
+const SEARCH_OPTIONS: {
+  value: SearchType;
+  label: string;
+}[] = [
+  { value: "applicationNumber", label: "Application Number" },
+  { value: "mobileNumber", label: "Mobile Number" },
+  { value: "name", label: "Name" },
+];
+
+function StatusGazetteTool() {
+  const [searchType, setSearchType] =
+    useState<SearchType>("applicationNumber");
+  const [searchValue, setSearchValue] = useState("");
+  const [results, setResults] = useState<GazetteResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const getPlaceholder = () => {
+    if (searchType === "applicationNumber") return "e.g. 17846";
+    if (searchType === "mobileNumber") return "e.g. 9633105245";
+    return "e.g. JAMSHEER";
+  };
+
+  const getHint = () => {
+    if (searchType === "applicationNumber") {
+      return "Enter your Kerala COMPOSE citizen service application number.";
+    }
+    if (searchType === "mobileNumber") {
+      return "Enter the mobile number used for the Kerala COMPOSE application.";
+    }
+    return "Enter the applicant name as used in the Kerala COMPOSE application.";
+  };
+
+  const handleSearchTypeChange = (value: SearchType) => {
+    setSearchType(value);
+    setSearchValue("");
+    setResults([]);
+    setError("");
+  };
+
+  const trackApplication = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const value = searchValue.trim();
+    if (!value) {
+      setError(`Please enter a ${searchType === "applicationNumber"
+        ? "Application Number"
+        : searchType === "mobileNumber"
+          ? "Mobile Number"
+          : "Name"
+      }.`);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setResults([]);
+
+    try {
+      const response = await fetch("/api/kerala-gazette/status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          searchType,
+          searchValue: value,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error || "Unable to fetch application status."
+        );
+      }
+
+      const apiResults = Array.isArray(data.results)
+        ? data.results
+        : data.data
+          ? [data.data]
+          : [];
+
+      if (apiResults.length === 0) {
+        setError(`No application was found for ${value}.`);
+        return;
+      }
+
+      setResults(
+        apiResults.map((result: any) => ({
+          applicationNumber: String(result.applicationNumber ?? ""),
+          applicantName: String(result.applicantName ?? ""),
+          applicationDate: String(result.applicationDate ?? ""),
+          applicationType: String(result.applicationType ?? ""),
+          internalId: String(result.internalId ?? ""),
+          status: String(
+            result.status ?? "Application status available"
+          ),
+          gazetteNumber: String(result.gazetteNumber ?? ""),
+          gazetteYear: String(result.gazetteYear ?? ""),
+        }))
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to fetch the application status."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="gazette-page">
+      <div className="gazette-container">
+        <header className="gazette-header">
+          <span className="gazette-emblem">Government of Kerala</span>
+          <h1>Kerala Gazette</h1>
+          <p className="gazette-subtitle">
+            Citizen Services — Application Status Tracker
+          </p>
+        </header>
+
+        <section className="gazette-card">
+          <div className="gazette-card-label">Track Application</div>
+
+          <div className="gazette-search-options" role="radiogroup" aria-label="Search by">
+            {SEARCH_OPTIONS.map((option) => (
+              <label key={option.value} className="gazette-radio">
+                <input
+                  type="radio"
+                  name="gazette-search-type"
+                  value={option.value}
+                  checked={searchType === option.value}
+                  onChange={() => handleSearchTypeChange(option.value)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <form className="gazette-input-group" onSubmit={trackApplication}>
+            <input
+              type="text"
+              inputMode={
+                searchType === "applicationNumber" || searchType === "mobileNumber"
+                  ? "numeric"
+                  : "text"
+              }
+              value={searchValue}
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                setSearchValue(
+                  searchType === "applicationNumber" ||
+                    searchType === "mobileNumber"
+                    ? nextValue.replace(/\D/g, "")
+                    : nextValue
+                );
+              }}
+              placeholder={getPlaceholder()}
+              required
+              autoFocus
+              aria-label={SEARCH_OPTIONS.find(
+                (option) => option.value === searchType
+              )?.label}
+            />
+
+            <button type="submit" disabled={loading}>
+              {loading ? "Checking..." : "Track →"}
+            </button>
+          </form>
+
+          <p className="gazette-hint">{getHint()}</p>
+        </section>
+
+        {error && <div className="gazette-error">{error}</div>}
+
+        {results.map((result, index) => (
+          <section
+            className="gazette-result-card"
+            key={`${result.applicationNumber}-${result.internalId}-${index}`}
+          >
+            <h2 className="gazette-applicant-name">
+              {result.applicantName || "Applicant"}
+            </h2>
+
+            <span className="gazette-app-id">
+              APP #{result.applicationNumber || "—"}
+            </span>
+
+            <div className="gazette-status-banner">
+              {result.status || "Application status available"}
+            </div>
+
+            {result.gazetteNumber &&
+              result.gazetteYear &&
+              /published/i.test(result.status) && (
+              <a
+                className="gazette-print-button"
+                href={`https://compose.kerala.gov.in/kgCitizenServicefiledownloadpdf?gztnotemp=${encodeURIComponent(result.gazetteNumber)}&gztyeartemp=${encodeURIComponent(result.gazetteYear)}&dstid=&tlkid=&department=&partid=14`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Print Gazette Notification
+              </a>
+            )}
+
+            <dl className="gazette-meta-grid">
+              <div className="gazette-meta-item">
+                <dt>Application Date</dt>
+                <dd>{result.applicationDate || "—"}</dd>
+              </div>
+
+              <div className="gazette-meta-item">
+                <dt>Application Type</dt>
+                <dd>{result.applicationType || "—"}</dd>
+              </div>
+
+              <div className="gazette-meta-item">
+                <dt>Internal ID</dt>
+                <dd>{result.internalId || "—"}</dd>
+              </div>
+
+              <div className="gazette-meta-item">
+                <dt>Source</dt>
+                <dd>Kerala COMPOSE</dd>
+              </div>
+            </dl>
+
+            <hr className="gazette-divider" />
+
+            <div className="gazette-source">
+              Live status fetched from{" "}
+              <a
+                href="https://compose.kerala.gov.in"
+                target="_blank"
+                rel="noreferrer"
+              >
+                compose.kerala.gov.in
+              </a>
+            </div>
+          </section>
+        ))}
+
+        <footer className="gazette-footer">
+          Kerala Gazette Citizen Services Status Tracker
+        </footer>
+      </div>
+
+      <style jsx>{`
+        .gazette-page {
+          min-height: 100vh;
+          background: #f7f9fd;
+          color: #1e2d3d;
+          font-family:
+            Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+            "Segoe UI", sans-serif;
+          padding: 48px 20px 72px;
+        }
+
+        .gazette-container {
+          width: 100%;
+          max-width: none;
+          margin: 0 auto;
+        }
+
+        .gazette-header {
+          margin-bottom: 32px;
+        }
+
+        .gazette-emblem {
+          display: block;
+          margin-bottom: 10px;
+          color: #4a90d9;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 2.5px;
+          text-transform: uppercase;
+        }
+
+        h1 {
+          margin: 0 0 5px;
+          color: #1e2d3d;
+          font-size: 28px;
+          font-weight: 650;
+          letter-spacing: -0.6px;
+        }
+
+        .gazette-subtitle {
+          margin: 0;
+          color: #7a95b0;
+          font-size: 13px;
+        }
+
+        .gazette-card,
+        .gazette-result-card {
+          margin-bottom: 18px;
+          overflow: hidden;
+          border: 1px solid #d6e6f5;
+          border-radius: 12px;
+          background: #ffffff;
+        }
+
+        .gazette-card {
+          padding: 25px 26px 21px;
+        }
+
+        .gazette-card-label {
+          margin-bottom: 13px;
+          color: #7a95b0;
+          font-size: 11px;
+          font-weight: 650;
+          letter-spacing: 1.8px;
+          text-transform: uppercase;
+        }
+
+        .gazette-search-options {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px 18px;
+          margin-bottom: 16px;
+        }
+
+        .gazette-radio {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          color: #48637d;
+          font-size: 13px;
+          font-weight: 550;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .gazette-radio input {
+          width: 15px;
+          height: 15px;
+          margin: 0;
+          accent-color: #4a90d9;
+          cursor: pointer;
+        }
+
+        .gazette-input-group {
+          display: flex;
+          gap: 10px;
+        }
+
+        .gazette-input-group input {
+          min-width: 0;
+          flex: 1;
+          border: 1.5px solid #d6e6f5;
+          border-radius: 8px;
+          outline: none;
+          background: #f7f9fd;
+          color: #1e2d3d;
+          padding: 11px 15px;
+          font: inherit;
+          font-size: 15px;
+          font-weight: 500;
+        }
+
+        .gazette-input-group input::placeholder {
+          color: #7a95b0;
+          font-weight: 400;
+        }
+
+        .gazette-input-group input:focus {
+          border-color: #4a90d9;
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.12);
+        }
+
+        .gazette-input-group button {
+          border: 0;
+          border-radius: 8px;
+          background: #4a90d9;
+          color: #ffffff;
+          padding: 11px 22px;
+          font: inherit;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .gazette-input-group button:hover:not(:disabled) {
+          background: #2c6fad;
+        }
+
+        .gazette-input-group button:disabled {
+          cursor: wait;
+          opacity: 0.7;
+        }
+
+        .gazette-hint {
+          margin: 9px 0 0;
+          color: #7a95b0;
+          font-size: 12px;
+        }
+
+        .gazette-error {
+          margin-bottom: 18px;
+          border: 1px solid #f5c6c6;
+          border-radius: 8px;
+          background: #fff0f0;
+          color: #b84f4f;
+          padding: 13px 16px;
+          font-size: 14px;
+        }
+
+        .gazette-result-card {
+          padding: 27px;
+        }
+
+        .gazette-applicant-name {
+          margin: 0 0 6px;
+          color: #1e2d3d;
+          font-size: 23px;
+          font-weight: 650;
+          letter-spacing: -0.35px;
+        }
+
+        .gazette-app-id {
+          display: inline-block;
+          margin-bottom: 21px;
+          border-radius: 20px;
+          background: #daeaf8;
+          color: #2c6fad;
+          padding: 3px 12px;
+          font-size: 11px;
+          font-weight: 650;
+          letter-spacing: 1.3px;
+          text-transform: uppercase;
+        }
+
+        .gazette-status-banner {
+          margin-bottom: 23px;
+          border-left: 3px solid #4a90d9;
+          border-radius: 0 8px 8px 0;
+          background: #daeaf8;
+          color: #2c6fad;
+          padding: 13px 15px;
+          font-size: 14px;
+          font-weight: 550;
+          line-height: 1.5;
+        }
+
+        .gazette-print-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin: -7px 0 24px;
+          border-radius: 8px;
+          background: #4a90d9;
+          color: #ffffff;
+          padding: 10px 16px;
+          font-size: 13px;
+          font-weight: 600;
+          text-decoration: none;
+        }
+
+        .gazette-print-button:hover {
+          background: #2c6fad;
+        }
+
+        .gazette-meta-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px 24px;
+          margin: 0;
+        }
+
+        .gazette-meta-item dt {
+          margin-bottom: 3px;
+          color: #7a95b0;
+          font-size: 10px;
+          font-weight: 650;
+          letter-spacing: 1.7px;
+          text-transform: uppercase;
+        }
+
+        .gazette-meta-item dd {
+          margin: 0;
+          color: #1e2d3d;
+          font-size: 14px;
+          font-weight: 550;
+          overflow-wrap: anywhere;
+        }
+
+        .gazette-divider {
+          margin: 22px 0 15px;
+          border: 0;
+          border-top: 1px solid #d6e6f5;
+        }
+
+        .gazette-source {
+          color: #7a95b0;
+          font-size: 12px;
+          line-height: 1.7;
+        }
+
+        .gazette-source a {
+          color: #4a90d9;
+          text-decoration: none;
+        }
+
+        .gazette-source a:hover {
+          text-decoration: underline;
+        }
+
+        .gazette-footer {
+          margin-top: 38px;
+          color: #7a95b0;
+          text-align: center;
+          font-size: 12px;
+        }
+
+        @media (max-width: 560px) {
+          .gazette-page {
+            padding: 30px 14px 50px;
+          }
+
+          .gazette-card,
+          .gazette-result-card {
+            padding: 20px;
+          }
+
+          .gazette-search-options {
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .gazette-input-group {
+            flex-direction: column;
+          }
+
+          .gazette-input-group button {
+            width: 100%;
+          }
+
+          .gazette-meta-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+        }
+      `}</style>
+    </main>
+  );
+}
+
+
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState({
@@ -153,6 +1176,7 @@ export default function DashboardPage() {
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
+  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | null>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const draggedItemIndex = useRef<number | null>(null);
   const draggedOverItemIndex = useRef<number | null>(null);
@@ -177,6 +1201,14 @@ export default function DashboardPage() {
     accountantAccess: true,
     staffAccess: true,
   });
+
+  const STATUS_QUICK_LINK: QuickLinkItem = {
+    id: 12,
+    name: "Status",
+    url: "status-center",
+    bgColor: "from-blue-600 to-cyan-600",
+    isInternal: true,
+  };
 
   const [quickLinks, setQuickLinks] = useState<QuickLinkItem[]>([
     {
@@ -302,6 +1334,12 @@ const loadDashboardData = () => {
             baseTools = parsedOrder;
           }
         } catch (e) {}
+      }
+
+      // Keep the Status Center card available even when an older
+      // saved dashboard layout does not contain it yet.
+      if (!baseTools.some((item: any) => String(item?.url || "") === "status-center")) {
+        baseTools = [...baseTools, STATUS_QUICK_LINK];
       }
 
       const customHubLinks = localStorage.getItem("hub_quick_links");
@@ -1167,6 +2205,7 @@ setServiceDirectory(filteredWithUrls);
               const isImageToTextTool = tool.name.toLowerCase().includes("image") || tool.url === "image-to-text-modal";
               const isCalculatorTool = tool.name.toLowerCase().includes("calculator") || tool.url === "calculator-modal";
               const isResumeBuilderTool = tool.url === "resume-builder-modal";
+              const isStatusCenter = tool.url === "status-center";
               return (
                 <div
                   key={`${tool.id}-${index}`}
@@ -1228,6 +2267,9 @@ setServiceDirectory(filteredWithUrls);
                       } else if (isResumeBuilderTool) {
                         e.preventDefault();
                         setShowResumeBuilderModal(true);
+                      } else if (isStatusCenter) {
+                        e.preventDefault();
+                        setStatusCenterView("center");
                       }
                     }}
                     target={tool.isInternal ? "_self" : "_blank"}
@@ -1272,6 +2314,170 @@ setServiceDirectory(filteredWithUrls);
             })}
           </div>
         </div>
+
+        {statusCenterView && (
+          <div
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[5px] sm:p-5"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) setStatusCenterView(null);
+            }}
+          >
+            <div className="relative flex h-auto max-h-[80vh] w-[min(92vw,950px)] flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl">
+              <div className="shrink-0 overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 px-4 py-3 text-white sm:px-5">
+                <div className="relative z-10 flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/15">
+                      {statusCenterView === "center" ? (
+                        <ClipboardCheck size={19} />
+                      ) : statusCenterView === "edistrict" ? (
+                        <ClipboardCheck size={19} />
+                      ) : (
+                        <ScrollText size={19} />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-base font-black tracking-tight sm:text-lg">
+                        {statusCenterView === "center"
+                          ? "Status Center"
+                          : statusCenterView === "edistrict"
+                          ? "e-District Status"
+                          : "Gazette Notification"}
+                      </h3>
+                      <p className="truncate text-[10px] text-blue-200 sm:text-xs">
+                        {statusCenterView === "center"
+                          ? "Government application status & certificate services"
+                          : "Live government status service"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    {statusCenterView !== "center" && (
+                      <button
+                        type="button"
+                        onClick={() => setStatusCenterView("center")}
+                        className="flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-2.5 text-[11px] font-bold text-white ring-1 ring-white/10 transition hover:bg-white/20"
+                      >
+                        <ArrowLeft size={13} />
+                        Back
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setStatusCenterView(null)}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-lg font-bold text-white transition hover:bg-white/20"
+                      aria-label="Close"
+                      title="Close"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                {statusCenterView === "center" ? (
+                  <div className="px-4 py-3.5 sm:px-5 sm:py-4">
+                    <div className="mb-3">
+                      <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-blue-600">
+                        Available Services
+                      </p>
+                      <h4 className="mt-0.5 text-sm font-black text-slate-800">
+                        Check application status
+                      </h4>
+                    </div>
+
+                    {/* Small dashboard-style tiles: ready for many more status services. */}
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                      <button
+                        type="button"
+                        onClick={() => setStatusCenterView("edistrict")}
+                        className="group min-h-[104px] rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
+                            <ClipboardCheck size={16} />
+                          </div>
+                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-blue-600" />
+                        </div>
+                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">e-District</h5>
+                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
+                          Certificate application status
+                        </p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setStatusCenterView("gazette")}
+                        className="group min-h-[104px] rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+                            <ScrollText size={16} />
+                          </div>
+                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-violet-600" />
+                        </div>
+                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Kerala Gazette</h5>
+                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
+                          Gazette application status
+                        </p>
+                      </button>
+
+                      {/* Future status-service tiles can be added here using the same compact style. */}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="status-tool-host">
+                    {statusCenterView === "edistrict" ? (
+                      <StatusEdistrictTool />
+                    ) : (
+                      <StatusGazetteTool />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <style jsx global>{`
+              /* Keep embedded status tools compact inside the Dashboard popup. */
+              .status-tool-host {
+                min-height: 0;
+                width: 100%;
+                background: #ffffff;
+              }
+
+              /* Embedded status pages must size to their CONTENT, not to 100vh.
+                 The standalone Gazette page intentionally uses min-height: 100vh;
+                 this override applies only inside the Dashboard popup. */
+              .status-tool-host .gazette-page {
+                min-height: 0 !important;
+                height: auto !important;
+                padding: 24px 20px 28px !important;
+                background: #f7f9fd !important;
+              }
+
+              .status-tool-host .edistrict-page {
+                min-height: 0 !important;
+                height: auto !important;
+                padding: 22px !important;
+              }
+
+              .status-tool-host .gazette-container,
+              .status-tool-host .edistrict-shell {
+                max-width: none !important;
+                width: 100% !important;
+              }
+
+              .status-tool-host .gazette-header {
+                margin-bottom: 14px !important;
+              }
+
+              .status-tool-host .gazette-footer {
+                margin-top: 16px !important;
+              }
+            `}</style>
+          </div>
+        )}
 
         <div className="rounded-3xl border border-white/80 bg-white/85 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.07)] backdrop-blur-xl">
           <div 
