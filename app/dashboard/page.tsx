@@ -10,6 +10,7 @@ import LandAreaConverterTool from "./tools/ConverterTool";
 import ImageToTextTool from "./tools/ImageToText";
 import CalculatorTool from "./tools/calculatol";
 import ResumeBuilder from "./tools/ResumeBuilder";
+import AadhaarStatusPage from "./tools/aadhaar-status/page";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -1176,7 +1177,7 @@ export default function DashboardPage() {
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
-  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | null>(null);
+  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | null>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const draggedItemIndex = useRef<number | null>(null);
   const draggedOverItemIndex = useRef<number | null>(null);
@@ -2331,8 +2332,10 @@ setServiceDirectory(filteredWithUrls);
                         <ClipboardCheck size={19} />
                       ) : statusCenterView === "edistrict" ? (
                         <ClipboardCheck size={19} />
-                      ) : (
+                      ) : statusCenterView === "gazette" ? (
                         <ScrollText size={19} />
+                      ) : (
+                        <FileText size={19} />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -2341,7 +2344,9 @@ setServiceDirectory(filteredWithUrls);
                           ? "Status Center"
                           : statusCenterView === "edistrict"
                           ? "e-District Status"
-                          : "Gazette Notification"}
+                          : statusCenterView === "gazette"
+                          ? "Gazette Notification"
+                          : "Aadhaar Status"}
                       </h3>
                       <p className="truncate text-[10px] text-blue-200 sm:text-xs">
                         {statusCenterView === "center"
@@ -2423,6 +2428,23 @@ setServiceDirectory(filteredWithUrls);
                         </p>
                       </button>
 
+                      <button
+                        type="button"
+                        onClick={() => setStatusCenterView("aadhaar")}
+                        className="group min-h-[104px] rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+                            <FileText size={16} />
+                          </div>
+                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-emerald-600" />
+                        </div>
+                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Aadhaar Status</h5>
+                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
+                          Aadhaar enrolment / update status
+                        </p>
+                      </button>
+
                       {/* Future status-service tiles can be added here using the same compact style. */}
                     </div>
                   </div>
@@ -2430,8 +2452,10 @@ setServiceDirectory(filteredWithUrls);
                   <div className="status-tool-host">
                     {statusCenterView === "edistrict" ? (
                       <StatusEdistrictTool />
-                    ) : (
+                    ) : statusCenterView === "gazette" ? (
                       <StatusGazetteTool />
+                    ) : (
+                      <AadhaarStatusPage />
                     )}
                   </div>
                 )}
