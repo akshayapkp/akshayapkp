@@ -1141,6 +1141,196 @@ function StatusGazetteTool() {
 }
 
 
+
+function PassportStatusTool() {
+  const [fileNo, setFileNo] = useState("");
+  const [dob, setDob] = useState("");
+  const [result, setResult] = useState<{
+    applicationReference?: string;
+    fileNumber?: string;
+    dateOfBirth?: string;
+    applicationDate?: string;
+    lastModifiedDate?: string;
+    applicantName?: string;
+    applicationType?: string;
+    status?: string;
+    statusMessage?: string;
+    policeVerificationOffice?: string;
+    smsCode?: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function checkStatus(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setResult(null);
+
+    const normalizedFile = fileNo.trim().toUpperCase();
+    const normalizedDob = dob.trim();
+
+    if (!normalizedFile) {
+      setError("Please enter the Passport File Number.");
+      return;
+    }
+    if (!normalizedDob) {
+      setError("Please enter the Date of Birth.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Passport Seva's live API is browser-origin protected. The production
+      // route must therefore use the optional Firefox bridge, which performs
+      // the request with the browser extension's host permission instead of
+      // making the request from the Codespaces/Vercel server.
+      const requestId = `passport-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      const bridgeResult = await new Promise<any>((resolve, reject) => {
+        let settled = false;
+
+        const cleanup = () => {
+          window.removeEventListener("message", onMessage);
+          window.clearTimeout(timer);
+        };
+
+        const finish = (fn: (value: any) => void, value: any) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          fn(value);
+        };
+
+        const onMessage = (event: MessageEvent) => {
+          const data = event.data;
+          if (!data || data.source !== "smart-akshaya-passport-bridge") return;
+          if (data.requestId !== requestId) return;
+          if (data.ok) finish(resolve, data.result);
+          else finish(reject, new Error(data.error || "Passport Seva request failed."));
+        };
+
+        const timer = window.setTimeout(() => {
+          finish(
+            reject,
+            new Error(
+              "Passport Status Bridge is not responding. Install/enable the Smart Akshaya Passport Bridge extension in Firefox and try again."
+            )
+          );
+        }, 12000);
+
+        window.addEventListener("message", onMessage);
+        window.postMessage(
+          {
+            source: "smart-akshaya",
+            type: "PASSPORT_STATUS_REQUEST",
+            requestId,
+            payload: { fileNo: normalizedFile, applDob: normalizedDob },
+          },
+          "*"
+        );
+      });
+
+      setResult(bridgeResult);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to connect to Passport Seva. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-4">
+        <h4 className="text-lg font-black text-slate-900">Passport Application Status</h4>
+        <p className="mt-1 text-xs text-slate-500">
+          Check live status using File Number and Date of Birth.
+        </p>
+      </div>
+
+      <form onSubmit={checkStatus} className="grid gap-3 md:grid-cols-[1fr_210px_auto] md:items-end">
+        <div>
+          <label className="mb-1.5 block text-[11px] font-bold text-slate-600">File Number</label>
+          <input
+            value={fileNo}
+            onChange={(e) => setFileNo(e.target.value.toUpperCase())}
+            placeholder="KO5074949286226"
+            autoComplete="off"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-[11px] font-bold text-slate-600">Date of Birth</label>
+          <input
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            placeholder="DD/MM/YYYY"
+            inputMode="numeric"
+            autoComplete="bday"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? "Checking..." : "Check Status"}
+        </button>
+      </form>
+
+      {error && (
+        <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-700">
+          {error}
+        </div>
+      )}
+
+      {result && (
+        <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/40 p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div>
+              <h5 className="text-sm font-black text-slate-900">Application Status</h5>
+              <p className="text-[10px] text-slate-500">Live Passport Seva response</p>
+            </div>
+            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">
+              LIVE
+            </span>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              ["Application Reference", result.applicationReference],
+              ["File Number", result.fileNumber],
+              ["Applicant Name", result.applicantName],
+              ["Date of Birth", result.dateOfBirth],
+              ["Application Date", result.applicationDate],
+              ["Application Type", result.applicationType],
+              ["Last Modified", result.lastModifiedDate],
+              ["Police Verification Office", result.policeVerificationOffice],
+              ["SMS Code", result.smsCode],
+            ].map(([label, value]) =>
+              value ? (
+                <div key={label} className="rounded-xl border border-slate-200 bg-white p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-wide text-slate-400">{label}</div>
+                  <div className="mt-0.5 break-words text-xs font-bold text-slate-800">{value}</div>
+                </div>
+              ) : null
+            )}
+          </div>
+
+          <div className="mt-3 rounded-xl border border-sky-100 bg-white p-3">
+            <div className="text-[9px] font-black uppercase tracking-wide text-slate-400">Current Status</div>
+            <div className="mt-1 text-xs font-bold leading-5 text-slate-800">
+              {result.statusMessage || result.status || "Status available"}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUser, setCurrentUser] = useState({
@@ -1177,7 +1367,7 @@ export default function DashboardPage() {
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
-  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | null>(null);
+  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "passport" | null>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const draggedItemIndex = useRef<number | null>(null);
   const draggedOverItemIndex = useRef<number | null>(null);
@@ -2346,7 +2536,11 @@ setServiceDirectory(filteredWithUrls);
                           ? "e-District Status"
                           : statusCenterView === "gazette"
                           ? "Gazette Notification"
-                          : "Aadhaar Status"}
+                          : statusCenterView === "aadhaar"
+                          ? "Aadhaar Status"
+                          : statusCenterView === "passport"
+                          ? "Passport Status"
+                          : "Status Service"}
                       </h3>
                       <p className="truncate text-[10px] text-blue-200 sm:text-xs">
                         {statusCenterView === "center"
@@ -2445,19 +2639,38 @@ setServiceDirectory(filteredWithUrls);
                         </p>
                       </button>
 
+                      <button
+                        type="button"
+                        onClick={() => setStatusCenterView("passport")}
+                        className="group min-h-[104px] rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm">
+                            <FileText size={16} />
+                          </div>
+                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-sky-600" />
+                        </div>
+                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Passport Status</h5>
+                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
+                          Passport application tracking
+                        </p>
+                      </button>
+
                       {/* Future status-service tiles can be added here using the same compact style. */}
                     </div>
                   </div>
                 ) : (
-                  <div className="status-tool-host">
-                    {statusCenterView === "edistrict" ? (
-                      <StatusEdistrictTool />
-                    ) : statusCenterView === "gazette" ? (
-                      <StatusGazetteTool />
-                    ) : (
-                      <AadhaarStatusPage />
-                    )}
-                  </div>
+<div className="status-tool-host">
+  {statusCenterView === "edistrict" ? (
+    <StatusEdistrictTool />
+  ) : statusCenterView === "gazette" ? (
+    <StatusGazetteTool />
+  ) : statusCenterView === "aadhaar" ? (
+    <AadhaarStatusPage />
+  ) : statusCenterView === "passport" ? (
+    <PassportStatusTool />
+  ) : null}
+</div>
                 )}
               </div>
             </div>
