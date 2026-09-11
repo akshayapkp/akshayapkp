@@ -6,7 +6,63 @@ import Tesseract from "tesseract.js";
 import { extractWorkData } from "../../work-status/parser";
 import { addWork } from "../../work-status/storage";
 
-export default function QuickReceiptScan() {
+type QuickReceiptScanProps = {
+  theme: "slate" | "green" | "blue" | "purple" | "amber" | "rose";
+};
+
+const scanThemeClasses: Record<QuickReceiptScanProps["theme"], {
+  shell: string;
+  icon: string;
+  eyebrow: string;
+  title: string;
+  button: string;
+}> = {
+  slate: {
+    shell: "border-slate-300 bg-slate-100 text-slate-900 shadow-slate-900/10 dark:border-blue-900 dark:bg-[#0d1b36] dark:text-slate-100",
+    icon: "border-slate-300 bg-white text-slate-700 dark:border-blue-900 dark:bg-[#12284b] dark:text-cyan-200",
+    eyebrow: "text-slate-500 dark:text-cyan-300",
+    title: "text-slate-900 dark:text-white",
+    button: "bg-slate-900 text-white shadow-slate-900/20 hover:bg-slate-800",
+  },
+  green: {
+    shell: "border-emerald-200 bg-emerald-50 text-emerald-950 shadow-emerald-900/10 dark:border-emerald-900 dark:bg-[#0d2b2a] dark:text-emerald-100",
+    icon: "border-emerald-200 bg-white text-emerald-700 dark:border-emerald-900 dark:bg-[#123c38] dark:text-emerald-200",
+    eyebrow: "text-emerald-700 dark:text-emerald-300",
+    title: "text-emerald-950 dark:text-white",
+    button: "bg-emerald-600 text-white shadow-emerald-600/20 hover:bg-emerald-700",
+  },
+  blue: {
+    shell: "border-blue-200 bg-blue-50 text-blue-950 shadow-blue-900/10 dark:border-blue-900 dark:bg-[#0d1b36] dark:text-blue-100",
+    icon: "border-blue-200 bg-white text-blue-700 dark:border-blue-900 dark:bg-[#12284b] dark:text-blue-200",
+    eyebrow: "text-blue-700 dark:text-blue-300",
+    title: "text-blue-950 dark:text-white",
+    button: "bg-blue-600 text-white shadow-blue-600/20 hover:bg-blue-700",
+  },
+  purple: {
+    shell: "border-purple-200 bg-purple-50 text-purple-950 shadow-purple-900/10 dark:border-purple-900 dark:bg-[#201640] dark:text-purple-100",
+    icon: "border-purple-200 bg-white text-purple-700 dark:border-purple-900 dark:bg-[#30205e] dark:text-purple-200",
+    eyebrow: "text-purple-700 dark:text-purple-300",
+    title: "text-purple-950 dark:text-white",
+    button: "bg-purple-600 text-white shadow-purple-600/20 hover:bg-purple-700",
+  },
+  amber: {
+    shell: "border-amber-200 bg-amber-50 text-amber-950 shadow-amber-900/10 dark:border-amber-900 dark:bg-[#32260d] dark:text-amber-100",
+    icon: "border-amber-200 bg-white text-amber-700 dark:border-amber-900 dark:bg-[#4a3812] dark:text-amber-200",
+    eyebrow: "text-amber-700 dark:text-amber-300",
+    title: "text-amber-950 dark:text-white",
+    button: "bg-amber-500 text-slate-950 shadow-amber-500/20 hover:bg-amber-600",
+  },
+  rose: {
+    shell: "border-rose-200 bg-rose-50 text-rose-950 shadow-rose-900/10",
+    icon: "border-rose-200 bg-white text-rose-700",
+    eyebrow: "text-rose-700",
+    title: "text-rose-950",
+    button: "bg-rose-600 text-white shadow-rose-600/20 hover:bg-rose-700",
+  },
+};
+
+export default function QuickReceiptScan({ theme }: QuickReceiptScanProps) {
+  const activeTheme = scanThemeClasses[theme];
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
@@ -379,7 +435,7 @@ export default function QuickReceiptScan() {
 
   return (
     <div
-      className="
+      className={`
         flex
         w-[280px]
         max-w-full
@@ -387,22 +443,20 @@ export default function QuickReceiptScan() {
         items-center
         rounded-xl
         border
-        border-cyan-400/20
-        bg-gradient-to-r
-        from-slate-900/95
-        via-slate-800/95
-        to-cyan-950/90
         px-2
         py-1.5
-        shadow-[0_10px_25px_rgba(6,182,212,0.14)]
+        shadow-[0_10px_25px_rgba(15,23,42,0.10)]
+        transition-colors
+        duration-300
+        ${activeTheme.shell}
         backdrop-blur-xl
-      "
+      `}
     >
       <div className="flex w-full min-w-0 items-center gap-2">
 
         {/* ICON */}
         <div
-          className="
+          className={`
             flex
             h-8
             w-8
@@ -411,10 +465,10 @@ export default function QuickReceiptScan() {
             justify-center
             rounded-lg
             border
-            border-cyan-300/20
-            bg-cyan-400/15
-            text-cyan-200
-          "
+            transition-colors
+            duration-300
+            ${activeTheme.icon}
+          `}
         >
           <ScanText size={17} />
         </div>
@@ -422,25 +476,25 @@ export default function QuickReceiptScan() {
         {/* TEXT */}
         <div className="min-w-0 flex-1">
           <p
-            className="
+            className={`
               text-[8px]
               font-bold
               uppercase
               tracking-[0.16em]
-              text-cyan-200/75
-            "
+              ${activeTheme.eyebrow}
+            `}
           >
             QUICK SCAN
           </p>
 
           <p
-            className="
+            className={`
               truncate
               text-[11px]
               font-black
               leading-tight
-              text-white
-            "
+              ${activeTheme.title}
+            `}
           >
             {loading
               ? "Scanning..."
@@ -477,26 +531,21 @@ export default function QuickReceiptScan() {
             fileInputRef.current?.click()
           }
           disabled={loading}
-          className="
+          className={`
             shrink-0
             whitespace-nowrap
             rounded-lg
-            bg-gradient-to-r
-            from-cyan-400
-            to-blue-500
             px-2.5
             py-1.5
             text-[10px]
             font-black
-            text-slate-950
             shadow-lg
-            shadow-cyan-500/20
             transition
             hover:-translate-y-0.5
-            hover:shadow-cyan-500/30
             disabled:cursor-not-allowed
             disabled:opacity-60
-          "
+            ${activeTheme.button}
+          `}
         >
           {loading
             ? "Scanning..."

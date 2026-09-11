@@ -1890,7 +1890,7 @@ function ServiceEntryForm() {
             </div>
 
             <div className="shrink-0">
-              <QuickReceiptScan />
+              <QuickReceiptScan theme={currentTheme as "slate" | "green" | "blue" | "purple" | "amber" | "rose"} />
             </div>
 
             <button
