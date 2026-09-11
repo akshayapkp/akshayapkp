@@ -94,7 +94,11 @@ export default function EdistrictCertificatePage() {
   }
 
   function printResult() {
-    if (!result) return;
+    // Print is allowed only when the official status is exactly
+    // "Approved" (case-insensitive, surrounding whitespace ignored).
+    // All other statuses such as Approval, Re-submit, Rejected,
+    // Pending, etc. must never open the certificate PDF.
+    if (!result || result.status.trim().toLowerCase() !== "approved") return;
 
     // Submit the same POST form used by the official Kerala e-District
     // Print button. This lets the browser use its existing e-District
