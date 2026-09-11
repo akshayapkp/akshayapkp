@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Smart Akshaya Management System",
-  description: "Smart Akshaya Management System",
+  title: "Smart Akshaya | Business Operations Hub",
+  description: "A focused workspace for managing Akshaya services, staff, wallets, bills, and customer operations.",
 };
 
 export default function RootLayout({
