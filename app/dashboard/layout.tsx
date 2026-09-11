@@ -29,6 +29,12 @@ import {
   Menu,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import {
+  clearLoginSession,
+  getMillisecondsUntilNextMidnight,
+  getLocalDateKey,
+  isSessionFromToday,
+} from "@/lib/session-date";
 
 
 const APP_VERSION = "1.0.9";
@@ -199,6 +205,23 @@ export default function DashboardLayout({
   useEffect(() => {
     let cancelled = false;
 
+    const expireSession = () => {
+      clearLoginSession();
+      router.replace("/login");
+    };
+
+    if (!isSessionFromToday()) {
+      expireSession();
+      return;
+    }
+
+    const midnightTimer = window.setTimeout(expireSession, getMillisecondsUntilNextMidnight());
+    const handleCrossTabLogout = (event: StorageEvent) => {
+      if (event.key === "loggedInUser" && !event.newValue) router.replace("/login");
+    };
+
+    window.addEventListener("storage", handleCrossTabLogout);
+
     const loadLayout = async () => {
       // Theme Loader from LocalStorage
       const savedTheme = localStorage.getItem("theme");
@@ -315,6 +338,8 @@ export default function DashboardLayout({
 
     return () => {
       cancelled = true;
+      window.clearTimeout(midnightTimer);
+      window.removeEventListener("storage", handleCrossTabLogout);
     };
   }, [pathname, router]);
 

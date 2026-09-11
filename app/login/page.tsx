@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { hashPassword, supabase } from "@/lib/supabase";
+import { getLocalDateKey } from "@/lib/session-date";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -241,7 +242,7 @@ export default function LoginPage() {
 
       localStorage.setItem(
         "loginSessionDate",
-        new Date().toISOString().split("T")[0]
+        getLocalDateKey()
       );
 
       /*
