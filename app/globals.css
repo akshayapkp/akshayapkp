@@ -3,8 +3,14 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f8ff;
+  --foreground: #10233f;
+  --surface: #ffffff;
+  --surface-muted: #eaf2ff;
+  --brand: #1d4ed8;
+  --brand-strong: #1e3a8a;
+  --accent: #06b6d4;
+  --border: #d9e5f5;
 }
 
 /* ഡാർക്ക് മോഡ് ക്ലാസ് സജീവമാകുമ്പോൾ മാറുന്ന കളറുകൾ */

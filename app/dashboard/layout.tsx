@@ -421,7 +421,7 @@ export default function DashboardLayout({
       {/* Floating Update Bubble */}
       {showUpdate && (
         <div className="fixed bottom-6 right-6 z-[100] animate-[fadeIn_.4s_ease]">
-          <div className="group relative w-64 rounded-2xl border border-emerald-200/70 bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:-translate-y-1">
+          <div className="group relative w-64 rounded-2xl border border-cyan-200/70 bg-white/80 dark:bg-slate-800/90 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:-translate-y-1">
             <button
               onClick={handleCloseUpdate}
               className="absolute right-3 top-3 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white"
@@ -473,7 +473,7 @@ export default function DashboardLayout({
         onMouseEnter={openSidebar}
       />
 
-      <div className="relative flex h-screen w-full overflow-hidden bg-[#eef3ff] dark:bg-[#070b16] text-slate-800 dark:text-slate-100 font-sans">
+      <div className="relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
           onMouseEnter={openSidebar}
           onMouseLeave={closeSidebar}
@@ -483,7 +483,7 @@ export default function DashboardLayout({
             z-50
             w-[272px]
             h-[calc(100vh-24px)]
-            bg-slate-950/90 dark:bg-slate-900/85
+            bg-[#071a3a]/95 dark:bg-[#061126]/95
             text-slate-300
             flex flex-col justify-between p-4
             rounded-[28px] border border-white/10
@@ -528,7 +528,7 @@ export default function DashboardLayout({
                   }
                   className={`rounded p-1 transition ${
                     sidebarPinned
-                      ? "text-emerald-400"
+                      ? "text-cyan-300"
                       : "text-slate-500 hover:text-white"
                   }`}
                 >
@@ -564,7 +564,7 @@ export default function DashboardLayout({
                             }}
                             className={`group flex cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
                               isActive(item.path)
-                                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-900/20"
+                                ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-900/25"
                                 : "text-slate-400 hover:bg-white/[0.07] hover:text-white hover:translate-x-0.5"
                             }`}
                           >
@@ -582,7 +582,7 @@ export default function DashboardLayout({
 
           <div className="flex shrink-0 items-center justify-between border-t border-white/10 pt-4 mt-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-sm font-black uppercase text-white shadow-lg shadow-emerald-900/30">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-sm font-black uppercase text-white shadow-lg shadow-emerald-900/30">
                 {userInitial}
               </div>
 
@@ -619,7 +619,7 @@ export default function DashboardLayout({
           type="button"
           aria-label="Open navigation"
           onClick={openSidebar}
-          className="fixed left-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-slate-950/90 text-white shadow-xl backdrop-blur-xl transition active:scale-95 md:hidden"
+          className="fixed left-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-[#071a3a]/95 text-white shadow-xl backdrop-blur-xl transition active:scale-95 md:hidden"
         >
           <Menu size={21} />
         </button>
