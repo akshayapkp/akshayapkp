@@ -260,6 +260,7 @@ export default function LoginPage() {
 
   return (
     <main
+      className="login-motion-stage"
       style={{
         minHeight: "100vh",
         width: "100%",
@@ -284,6 +285,7 @@ export default function LoginPage() {
       ------------------------------------------------------- */}
 
       <div
+        className="premium-float"
         aria-hidden="true"
         style={{
           position: "absolute",
@@ -365,6 +367,7 @@ export default function LoginPage() {
         }}
       >
         <section
+          className="login-motion-card premium-tilt"
           style={{
             width: "100%",
             boxSizing: "border-box",
