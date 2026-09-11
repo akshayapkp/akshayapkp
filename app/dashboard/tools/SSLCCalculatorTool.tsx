@@ -58,7 +58,7 @@ export default function SSLCCalculatorTool({
               onClick={onClose}
               className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-900 hover:shadow-md"
             >
-              <X size={18} />
+              <X aria-hidden="true" size={18} />
             </button>
 
           </div>
