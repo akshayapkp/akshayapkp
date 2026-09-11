@@ -547,3 +547,68 @@ html.dark ::-webkit-scrollbar-thumb {
 html.dark ::-webkit-scrollbar-thumb:hover {
   background: #5277a8;
 }
+
+/* Unified dark product surfaces: legacy pages should match the sidebar, not gray cards. */
+html.dark [class*="bg-white"],
+html.dark [class*="bg-gray-"],
+html.dark [class*="bg-slate-"],
+html.dark [class*="bg-zinc-"],
+html.dark [class*="bg-neutral-"] {
+  background-color: #10233f !important;
+  color: #f8fbff !important;
+  border-color: #29466b !important;
+}
+
+html.dark [class*="bg-gray-50"],
+html.dark [class*="bg-gray-100"],
+html.dark [class*="bg-slate-50"],
+html.dark [class*="bg-slate-100"],
+html.dark [class*="bg-zinc-50"],
+html.dark [class*="bg-neutral-50"] {
+  background-color: #0d1c33 !important;
+}
+
+html.dark [class*="text-gray-900"],
+html.dark [class*="text-gray-800"],
+html.dark [class*="text-slate-900"],
+html.dark [class*="text-slate-800"],
+html.dark [class*="text-zinc-900"],
+html.dark [class*="text-zinc-800"] {
+  color: #f8fbff !important;
+}
+
+html.dark [class*="text-gray-700"],
+html.dark [class*="text-slate-700"],
+html.dark [class*="text-zinc-700"] {
+  color: #dbeafe !important;
+}
+
+html.dark [class*="text-gray-600"],
+html.dark [class*="text-slate-600"],
+html.dark [class*="text-zinc-600"] {
+  color: #b8cbe3 !important;
+}
+
+/* Headings and section labels stay bright on every dark page. */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark label,
+html.dark legend,
+html.dark th {
+  color: #f8fbff;
+}
+
+/* Do not let white page sections leak through in dark mode. */
+html.dark main section,
+html.dark main article,
+html.dark main form,
+html.dark main aside {
+  border-color: #29466b;
+}
+
+html.dark .bg-white [class*="text-slate-400"],
+html.dark .bg-white [class*="text-gray-400"] {
+  color: #9fb7d6 !important;
+}
