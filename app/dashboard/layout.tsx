@@ -488,7 +488,7 @@ export default function DashboardLayout({
             shadow-[0_24px_80px_rgba(15,23,42,0.28)]
             backdrop-blur-2xl
             transition-transform duration-300
-            md:relative md:inset-auto md:left-auto md:z-auto md:h-full md:min-h-screen md:shrink-0 md:overflow-hidden md:rounded-none md:border-0 md:p-0 md:shadow-none md:backdrop-blur-none md:bg-transparent md:dark:bg-transparent md:transition-[width] md:duration-300
+            md:relative md:inset-auto md:left-auto md:z-auto md:h-full md:min-h-screen md:shrink-0 md:overflow-hidden md:rounded-none md:border-0 md:p-0 md:shadow-[8px_0_30px_rgba(25,70,140,0.08)] md:backdrop-blur-xl md:bg-[#f8fbff]/95 md:dark:bg-[#0d1b34]/95 md:transition-[width] md:duration-300
             ${
               sidebarOpen
                 ? "translate-x-0 md:w-[296px]"
@@ -499,7 +499,7 @@ export default function DashboardLayout({
           <div className="flex flex-col flex-1 overflow-hidden">
             <div className="mb-5 flex shrink-0 items-start justify-between px-2">
               <div>
-                <h1 className="text-xl font-black tracking-tight text-white">
+                <h1 className="text-xl font-black tracking-tight text-white md:text-slate-900 md:dark:text-white">
                   Smart Akshaya
                 </h1>
                 <p className="text-xs text-slate-400">
@@ -545,7 +545,7 @@ export default function DashboardLayout({
 
                 return (
                   <div key={sectionName}>
-                    <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                    <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 md:text-slate-600 md:dark:text-slate-400">
                       {sectionName}
                     </p>
 
@@ -563,7 +563,7 @@ export default function DashboardLayout({
                             className={`group flex cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
                               isActive(item.path)
                                 ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-900/25"
-                                : "text-slate-400 hover:bg-white/[0.07] hover:text-white hover:translate-x-0.5"
+                                : "text-slate-600 hover:bg-blue-100/70 hover:text-blue-800 hover:translate-x-0.5 md:dark:text-slate-300 md:dark:hover:bg-white/[0.07] md:dark:hover:text-white"
                             }`}
                           >
                             <IconComponent size={18} />
@@ -588,7 +588,7 @@ export default function DashboardLayout({
                 <p className="text-sm font-semibold text-white">
                   {currentUser.username}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-600 md:dark:text-slate-400">
                   {displayRole}
                 </p>
               </div>
