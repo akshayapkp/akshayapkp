@@ -625,15 +625,10 @@ export default function DashboardLayout({
         </button>
 
         <main
-          style={
-            {
-              "--dashboard-sidebar-offset": sidebarOpen ? "288px" : "0px",
-            } as React.CSSProperties
-          }
           className={`
             relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent
-            p-3 pt-16 sm:p-4 sm:pt-16 lg:p-5 xl:p-6 transition-all duration-300
-            ${sidebarOpen ? "md:ml-[288px]" : "md:ml-0"}
+            p-3 pt-16 sm:p-4 sm:pt-16 lg:p-5 xl:p-6 transition-[padding] duration-300
+            ${sidebarOpen ? "md:pl-[304px]" : "md:pl-6"}
             ml-0
           `}
         >
