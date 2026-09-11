@@ -1671,7 +1671,7 @@ function ServiceEntryForm() {
             onClick={() => setShowPaymentQRModal(false)}
           >
             <div
-              className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.2)] backdrop-blur-xl"
+              className="w-full max-w-sm rounded-3xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_30px_80px_rgba(15,23,42,0.2)] backdrop-blur-xl sm:p-5"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1691,7 +1691,7 @@ function ServiceEntryForm() {
                   <img
                     src={paymentQrImageUrl}
                     alt="GPay QR Code"
-                    className="w-56 h-56 rounded-xl border bg-white p-2 shadow object-contain"
+                    className="size-48 rounded-xl border bg-white p-2 shadow object-contain sm:size-52"
                     crossOrigin="anonymous"
                   />
                   <div className="mt-3 text-center">
@@ -1757,7 +1757,7 @@ function ServiceEntryForm() {
             onClick={() => setShowQRModal(false)}
           >
             <div
-              className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.2)] backdrop-blur-xl"
+              className="w-full max-w-sm rounded-3xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_30px_80px_rgba(15,23,42,0.2)] backdrop-blur-xl sm:p-5"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1777,7 +1777,7 @@ function ServiceEntryForm() {
                   <img
                     src={activeModalQrImageUrl}
                     alt="QR Code"
-                    className="w-56 h-56 rounded-xl border bg-white p-2 shadow object-contain"
+                    className="size-48 rounded-xl border bg-white p-2 shadow object-contain sm:size-52"
                     crossOrigin="anonymous"
                   />
                   {isModalGPayQr && (
