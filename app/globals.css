@@ -412,3 +412,138 @@ body {
     width: 100% !important;
   }
 }
+
+/* =========================================================
+   DARK MODE — HIGH-CONTRAST PRODUCT SURFACES
+   Keep every page readable, including legacy tool screens.
+   ========================================================= */
+
+html.dark {
+  --background: #071326;
+  --foreground: #f8fbff;
+  --surface: #101f38;
+  --surface-muted: #172b4b;
+  --border: #29466b;
+}
+
+html.dark body {
+  background: #071326;
+  color: #f8fbff;
+}
+
+html.dark .text-white\/70,
+html.dark .text-white\/80,
+html.dark .text-white\/90,
+html.dark .text-slate-300,
+html.dark .text-slate-200,
+html.dark .text-gray-300,
+html.dark .text-gray-200,
+html.dark .text-zinc-300,
+html.dark .text-zinc-200 {
+  color: #dbeafe !important;
+}
+
+html.dark .text-blue-100,
+html.dark .text-cyan-100,
+html.dark .text-indigo-100 {
+  color: #dbeafe !important;
+}
+
+html.dark .text-slate-400,
+html.dark .text-gray-400,
+html.dark .text-zinc-400,
+html.dark .text-blue-200\/70,
+html.dark .text-blue-200\/80 {
+  color: #a9c0df !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-gray-500,
+html.dark .text-zinc-500 {
+  color: #8fa8c8 !important;
+}
+
+html.dark .bg-white,
+html.dark .bg-white\/95,
+html.dark .bg-white\/90,
+html.dark .bg-white\/80,
+html.dark .bg-white\/70 {
+  background: #12233f !important;
+  color: #f8fbff !important;
+  border-color: #29466b !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/80,
+html.dark .bg-slate-50\/70,
+html.dark .bg-slate-50\/60,
+html.dark .bg-slate-50\/50,
+html.dark .bg-slate-100,
+html.dark .bg-slate-100\/50,
+html.dark .bg-slate-100\/30 {
+  background: #0d1c33 !important;
+  color: #e7f0ff !important;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-200\/80,
+html.dark .border-slate-300,
+html.dark .border-gray-200,
+html.dark .border-gray-300 {
+  border-color: #29466b !important;
+}
+
+html.dark button:not([class*="bg-gradient"]),
+html.dark [role="button"] {
+  color: #e7f0ff;
+}
+
+html.dark table,
+html.dark th,
+html.dark td {
+  color: #e7f0ff;
+  border-color: #29466b;
+}
+
+html.dark hr {
+  border-color: #29466b !important;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background: #08162b !important;
+  color: #f8fbff !important;
+  border-color: #3a5b86 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+html.dark select:invalid {
+  color: #8fa8c8 !important;
+}
+
+html.dark .premium-card {
+  background: rgba(16, 31, 56, 0.94);
+  border-color: #29466b;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-white:hover,
+html.dark .hover\:bg-slate-100:hover {
+  background: #1a3458 !important;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #071326;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #3a5b86;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #5277a8;
+}
