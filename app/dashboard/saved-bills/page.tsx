@@ -17,10 +17,23 @@ interface SavedBill {
   amount: number;
 }
 
+const getToday = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+const dateKey = (value: string) => {
+  const match = value.match(/(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})/);
+  if (match) return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '' : `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+};
+
 export default function SavedBillsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(getToday);
   const [savedBills, setSavedBills] = useState<SavedBill[]>([]);
 
   // LocalStorage-ൽ നിന്ന് ഡാറ്റ എടുക്കുന്ന ഫങ്ക്ഷൻ (Role-based filtering ഉൾപ്പെടുത്തി)
@@ -102,11 +115,13 @@ export default function SavedBillsPage() {
   };
 
   // ഫിൽറ്റർ ലോജിക്
-  const filteredBills = savedBills.filter(bill => 
-    bill.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    bill.mobile.includes(searchQuery) ||
-    bill.staffName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredBills = savedBills.filter(bill => {
+    const matchesSearch =
+      bill.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bill.mobile.includes(searchQuery) ||
+      bill.staffName.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch && (!selectedDate || dateKey(bill.date) === selectedDate);
+  });
 
   return (
     <div className="p-8 space-y-6 max-w-7xl w-full mx-auto">
@@ -135,7 +150,13 @@ export default function SavedBillsPage() {
           </span>
         </div>
 
-        <div className="relative w-full sm:w-80">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500">
+            <Calendar size={14} />
+            <span className="sr-only">Saved bills date</span>
+            <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="bg-transparent text-xs text-slate-600 outline-none" />
+          </label>
+          <div className="relative w-full sm:w-80">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input 
             type="text"
@@ -144,6 +165,7 @@ export default function SavedBillsPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          </div>
         </div>
       </div>
 

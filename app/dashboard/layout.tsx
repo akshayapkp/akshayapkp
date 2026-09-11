@@ -473,28 +473,26 @@ export default function DashboardLayout({
         onMouseEnter={openSidebar}
       />
 
-      <div className="relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
+      <div className="dashboard-surface relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
           onMouseEnter={openSidebar}
           onMouseLeave={closeSidebar}
           className={`
-            fixed
-            top-3 bottom-3 left-3
+            fixed inset-y-3 left-3
             z-50
-            w-[272px]
-            h-[calc(100vh-24px)]
+            h-[calc(100vh-24px)] w-[min(86vw,272px)]
             bg-[#071a3a]/95 dark:bg-[#061126]/95
             text-slate-300
             flex flex-col justify-between p-4
             rounded-[28px] border border-white/10
-            w-[min(86vw,272px)] md:w-[272px]
             shadow-[0_24px_80px_rgba(15,23,42,0.28)]
             backdrop-blur-2xl
             transition-transform duration-300
+            md:relative md:inset-auto md:left-auto md:z-auto md:h-full md:min-h-screen md:shrink-0 md:overflow-hidden md:rounded-none md:border-0 md:p-0 md:shadow-none md:backdrop-blur-none md:bg-transparent md:dark:bg-transparent md:transition-[width] md:duration-300
             ${
               sidebarOpen
-                ? "translate-x-0"
-                : "-translate-x-full"
+                ? "translate-x-0 md:w-[296px]"
+                : "-translate-x-[calc(100%+12px)] md:w-0 md:translate-x-0"
             }
           `}
         >
@@ -626,9 +624,9 @@ export default function DashboardLayout({
 
         <main
           className={`
-            relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent
+            dashboard-content relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent premium-enter
             p-3 pt-16 sm:p-4 sm:pt-16 lg:p-5 xl:p-6 transition-[padding] duration-300
-            ${sidebarOpen ? "md:pl-[304px]" : "md:pl-6"}
+            md:pl-5
             ml-0
           `}
         >

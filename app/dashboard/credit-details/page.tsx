@@ -23,9 +23,14 @@ interface CreditBill {
 export default function CreditDetailsPage() {
   const router = useRouter();
   const [bills, setBills] = useState<CreditBill[]>([]);
+  const getToday = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(getToday);
+  const [endDate, setEndDate] = useState(getToday);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Role-based filtering ഉൾപ്പെടുത്തിയ useEffect
@@ -181,7 +186,7 @@ export default function CreditDetailsPage() {
 
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => { setSearchQuery(''); setStartDate(''); setEndDate(''); }}
+              onClick={() => { const today = getToday(); setSearchQuery(''); setStartDate(today); setEndDate(today); }}
               className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition"
               title="Reset Filters"
             >

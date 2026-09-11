@@ -17,9 +17,14 @@ interface TransactionItem {
 
 function TransactionHistoryContent() {
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  const getToday = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [fromDate, setFromDate] = useState(getToday);
+  const [toDate, setToDate] = useState(getToday);
   const [isMounted, setIsMounted] = useState(false);
   const [currentStaff, setCurrentStaff] = useState('');
   const [currentRole, setCurrentRole] = useState('');
@@ -338,9 +343,10 @@ function TransactionHistoryContent() {
           {/* Reset Filters Button */}
           <button 
             onClick={() => {
+              const today = getToday();
               setSearchQuery('');
-              setFromDate('');
-              setToDate('');
+              setFromDate(today);
+              setToDate(today);
               loadTransactions();
             }}
             title="Reset Filters & Refresh"

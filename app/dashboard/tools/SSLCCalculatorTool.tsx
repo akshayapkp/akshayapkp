@@ -55,10 +55,12 @@ export default function SSLCCalculatorTool({
             </button>
 
             <button
+              type="button"
               onClick={onClose}
+              aria-label="Close SSLC calculator"
               className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-900 hover:shadow-md"
             >
-              <X size={18} />
+              <X aria-hidden />
             </button>
 
           </div>
