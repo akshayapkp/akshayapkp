@@ -548,7 +548,20 @@ body {
 }
 
 .service-entry-shell > * {
-  animation: premium-rise 450ms cubic-bezier(.2,.8,.2,1) both;
+  animation: premium-rise 600ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.service-entry-shell > div:not([class*="fixed"]),
+.service-entry-shell > section,
+.service-entry-shell > form {
+  transition: transform 280ms ease, box-shadow 280ms ease, border-color 280ms ease;
+}
+
+.service-entry-shell > div:not([class*="fixed"]):hover,
+.service-entry-shell > section:hover,
+.service-entry-shell > form:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 38px rgba(24, 61, 125, 0.14);
 }
 
 .service-entry-shell > *:nth-child(2) { animation-delay: 50ms; }

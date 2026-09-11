@@ -436,6 +436,7 @@ export default function QuickReceiptScan({ theme }: QuickReceiptScanProps) {
   return (
     <div
       className={`
+        premium-tilt premium-shimmer
         flex
         w-[280px]
         max-w-full
