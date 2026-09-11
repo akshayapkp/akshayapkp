@@ -201,6 +201,108 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
 
+/* Service Entry themes apply to every billing surface, not just the page shell. */
+.service-entry-shell[data-theme="slate"],
+.service-entry-shell[data-theme="green"],
+.service-entry-shell[data-theme="blue"],
+.service-entry-shell[data-theme="purple"],
+.service-entry-shell[data-theme="amber"],
+.service-entry-shell[data-theme="rose"] {
+  --service-surface: rgb(255 255 255 / 0.88);
+  --service-surface-muted: rgb(248 250 252 / 0.9);
+  --service-border: rgb(148 163 184 / 0.28);
+  --service-copy: #0f172a;
+  --service-muted-copy: #64748b;
+}
+
+.service-entry-shell[data-theme="green"] {
+  --service-surface: rgb(236 253 245 / 0.92);
+  --service-surface-muted: rgb(209 250 229 / 0.86);
+  --service-border: rgb(52 211 153 / 0.35);
+  --service-copy: #064e3b;
+  --service-muted-copy: #047857;
+}
+
+.service-entry-shell[data-theme="blue"] {
+  --service-surface: rgb(239 246 255 / 0.94);
+  --service-surface-muted: rgb(224 242 254 / 0.9);
+  --service-border: rgb(96 165 250 / 0.35);
+  --service-copy: #172554;
+  --service-muted-copy: #1d4ed8;
+}
+
+.service-entry-shell[data-theme="purple"] {
+  --service-surface: rgb(250 245 255 / 0.94);
+  --service-surface-muted: rgb(243 232 252 / 0.92);
+  --service-border: rgb(192 132 252 / 0.35);
+  --service-copy: #3b0764;
+  --service-muted-copy: #7e22ce;
+}
+
+.service-entry-shell[data-theme="amber"] {
+  --service-surface: rgb(255 251 235 / 0.96);
+  --service-surface-muted: rgb(254 243 199 / 0.94);
+  --service-border: rgb(245 158 11 / 0.38);
+  --service-copy: #451a03;
+  --service-muted-copy: #92400e;
+}
+
+.service-entry-shell[data-theme="rose"] {
+  --service-surface: rgb(255 241 242 / 0.95);
+  --service-surface-muted: rgb(255 228 230 / 0.92);
+  --service-border: rgb(251 113 133 / 0.36);
+  --service-copy: #4c0519;
+  --service-muted-copy: #be123c;
+}
+
+.service-entry-shell .bg-white,
+.service-entry-shell .bg-white\/95,
+.service-entry-shell .bg-white\/90,
+.service-entry-shell .bg-white\/85,
+.service-entry-shell .bg-white\/80 {
+  background-color: var(--service-surface) !important;
+  color: var(--service-copy);
+}
+
+.service-entry-shell .bg-slate-50,
+.service-entry-shell .bg-slate-50\/50,
+.service-entry-shell .bg-slate-50\/30,
+.service-entry-shell .bg-slate-100,
+.service-entry-shell .bg-slate-100\/30 {
+  background-color: var(--service-surface-muted) !important;
+}
+
+.service-entry-shell .border-slate-100,
+.service-entry-shell .border-slate-200,
+.service-entry-shell .border-slate-200\/80,
+.service-entry-shell .border-slate-300 {
+  border-color: var(--service-border) !important;
+}
+
+.service-entry-shell .text-slate-900,
+.service-entry-shell .text-slate-800,
+.service-entry-shell .text-slate-700 {
+  color: var(--service-copy) !important;
+}
+
+.service-entry-shell .text-slate-600,
+.service-entry-shell .text-slate-500,
+.service-entry-shell .text-slate-400 {
+  color: var(--service-muted-copy) !important;
+}
+
+.service-entry-shell input,
+.service-entry-shell textarea,
+.service-entry-shell select {
+  background-color: var(--service-surface-muted) !important;
+  color: var(--service-copy) !important;
+  border-color: var(--service-border) !important;
+}
+
+.service-entry-shell img {
+  color: initial;
+}
+
 /* Smooth theme transitions for major UI surfaces */
 body *,
 body *::before,

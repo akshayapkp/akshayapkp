@@ -1587,7 +1587,7 @@ function ServiceEntryForm() {
         </div>
       )}
 
-      <div className={`w-full max-w-none mx-auto space-y-1.5 relative min-h-screen transition-colors duration-300 px-2 py-1.5 lg:px-3 lg:py-1.5 ${activeTheme.bg} ${activeTheme.text}`} ref={customerDropdownRef}>
+      <div data-theme={currentTheme} className={`service-entry-shell w-full max-w-none mx-auto space-y-1.5 relative min-h-screen transition-colors duration-300 px-2 py-1.5 lg:px-3 lg:py-1.5 ${activeTheme.bg} ${activeTheme.text}`} ref={customerDropdownRef}>
         {showStaffModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
             <div className="w-full rounded-3xl border border-slate-200/80 bg-white/95 px-5 py-4 shadow-[0_25px_70px_rgba(15,23,42,0.18)] backdrop-blur-xl">
