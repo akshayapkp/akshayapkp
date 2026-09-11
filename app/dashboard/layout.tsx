@@ -494,7 +494,7 @@ export default function DashboardLayout({
             ${
               sidebarOpen
                 ? "translate-x-0"
-                : "-translate-x-full"
+                : "-translate-x-full md:translate-x-0"
             }
           `}
         >
@@ -633,7 +633,8 @@ export default function DashboardLayout({
           className={`
             relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent
             p-3 pt-16 sm:p-4 sm:pt-16 lg:p-5 xl:p-6 transition-all duration-300
-            ${sidebarOpen ? "md:ml-[288px]" : "ml-0"}
+            md:ml-[288px]
+            ${sidebarOpen ? "ml-0" : "ml-0"}
           `}
         >
           {children}
