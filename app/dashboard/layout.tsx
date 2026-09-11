@@ -473,7 +473,7 @@ export default function DashboardLayout({
         onMouseEnter={openSidebar}
       />
 
-      <div className="relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
+      <div className="dashboard-surface relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
           onMouseEnter={openSidebar}
           onMouseLeave={closeSidebar}
@@ -624,7 +624,7 @@ export default function DashboardLayout({
 
         <main
           className={`
-            relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent
+            dashboard-content relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent premium-enter
             p-3 pt-16 sm:p-4 sm:pt-16 lg:p-5 xl:p-6 transition-[padding] duration-300
             md:pl-5
             ml-0
