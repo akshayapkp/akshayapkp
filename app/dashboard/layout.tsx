@@ -70,18 +70,18 @@ const allMenuItems: MenuItem[] = [
     permissionKey: "Service Entry",
   },
   {
+    name: "Billed Services",
+    path: "/dashboard/billed-services",
+    icon: FileSpreadsheet,
+    section: "Services",
+    permissionKey: "Billed Services",
+  },
+  {
     name: "Saved Bills",
     path: "/dashboard/saved-bills",
     icon: Receipt,
     section: "Services",
     permissionKey: "Saved Bills",
-  },
-  {
-    name: "Service Management",
-    path: "/dashboard/service-management",
-    icon: Settings,
-    section: "Services",
-    permissionKey: "Service Management",
   },
   {
   name: "Work Status",
@@ -96,13 +96,6 @@ const allMenuItems: MenuItem[] = [
     icon: Wallet,
     section: "Wallets",
     permissionKey: "Wallet Management",
-  },
-  {
-    name: "Billed Services",
-    path: "/dashboard/billed-services",
-    icon: FileSpreadsheet,
-    section: "Finance",
-    permissionKey: "Billed Services",
   },
   {
     name: "Transaction History",
@@ -126,8 +119,15 @@ const allMenuItems: MenuItem[] = [
     permissionKey: "Credit Details",
   },
   {
-    name: "Staff Management",
-    path: "/dashboard/staff-management",
+    name: "Service Management",
+    path: "/dashboard/service-management",
+    icon: Settings,
+    section: "System",
+    permissionKey: "Service Management",
+  },
+  {
+  name: "Staff Management",
+  path: "/dashboard/staff-management",
     icon: Users,
     section: "System",
     permissionKey: "Staff Management",
