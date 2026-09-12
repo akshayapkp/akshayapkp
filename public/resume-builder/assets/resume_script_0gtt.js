@@ -120,6 +120,38 @@ window.addLanguage = function() {
     updateDynamicPreview('lang');
 };
 
+window.handleSignatureUpload = function(input) {
+    const file = input?.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const dataUrl = event.target?.result;
+        if (typeof dataUrl !== 'string') return;
+        const uploadPreview = document.getElementById('signatureUploadPreview');
+        const uploadImage = document.getElementById('signatureUploadImage');
+        const previewContainer = document.getElementById('prev-signature-container');
+        const previewImage = document.getElementById('prev-signature');
+        if (uploadImage) uploadImage.src = dataUrl;
+        if (previewImage) previewImage.src = dataUrl;
+        if (uploadPreview) uploadPreview.style.display = 'flex';
+        if (previewContainer) previewContainer.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+};
+
+window.clearSignatureUpload = function() {
+    const input = document.getElementById('signatureInput');
+    const uploadPreview = document.getElementById('signatureUploadPreview');
+    const uploadImage = document.getElementById('signatureUploadImage');
+    const previewContainer = document.getElementById('prev-signature-container');
+    const previewImage = document.getElementById('prev-signature');
+    if (input) input.value = '';
+    if (uploadImage) uploadImage.src = '';
+    if (previewImage) previewImage.src = '';
+    if (uploadPreview) uploadPreview.style.display = 'none';
+    if (previewContainer) previewContainer.style.display = 'none';
+};
+
 window.addReference = function() {
     const container = document.getElementById('referencesList');
     if (!container) return;
