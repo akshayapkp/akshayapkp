@@ -2056,7 +2056,8 @@ setServiceDirectory(filteredWithUrls);
                 )}
               </button>
 
-            {isNotificationsOpen && (
+            {isNotificationsOpen && typeof document !== "undefined" &&
+              createPortal(
               <div
                 className="fixed z-[2147483647] w-[min(24rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] overflow-y-auto overflow-x-hidden bg-white rounded-2xl shadow-[0_18px_45px_rgba(15,23,42,0.18)] border border-slate-100 animate-in fade-in slide-in-from-top-2"
                 style={{ top: notificationPopupPosition.top, left: notificationPopupPosition.left }}
@@ -2098,8 +2099,9 @@ setServiceDirectory(filteredWithUrls);
                     ))
                   )}
                 </div>
-              </div>
-              )}
+              </div>,
+              document.body
+            )}
             </div>
 
             {canViewLatestEntry && (
