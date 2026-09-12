@@ -108,6 +108,11 @@ body {
     display: flex; flex-direction: column;
     border-right: 1px solid var(--glass-border);
 }
+.template-picker { display: flex; align-items: center; gap: 0.55rem; color: #475569; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; }
+.template-picker span { white-space: nowrap; }
+.template-picker i { color: var(--primary); margin-right: 0.25rem; }
+.template-picker select { min-width: 245px; font-weight: 700; color: #1e293b; }
+
 .editor-controls {
     padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--glass-border);
     display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;

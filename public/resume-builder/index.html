@@ -97,11 +97,16 @@
         <!-- LEFT PANEL: EDITOR -->
         <div class="editor-panel">
             <div class="editor-controls">
-                <select id="templateSelector">
-                    <option value="template-1" selected="selected">Template 1 (Dark Sidebar)</option>
-                    <option value="template-2">Template 2 (Light Sidebar)</option>
-                    <option value="template-3">Template 3 (Clean Top / 2-Col Data)</option>
-                    <option value="template-4">Template 4 (Pastel Blue Header / 2-Col Data)</option>
+                <label class="template-picker" for="templateSelector">
+                    <span><i class="fas fa-palette"></i> CV Model</span>
+                    <select id="templateSelector" aria-label="Choose CV model">
+                        <optgroup label="Recommended models">
+                            <option value="template-1" selected="selected">ATS Friendly — Dark Sidebar</option>
+                            <option value="template-2">Classic — Light Sidebar</option>
+                            <option value="template-3">Modern — Clean Top</option>
+                            <option value="template-4">Government — Pastel Blue Header</option>
+                        </optgroup>
+                        <optgroup label="Additional models">
                     <option value="template-5">Template 5 (Soft Mint Modern)</option>
                     <option value="template-6">Template 6 (Elegant Lavender)</option>
                     <option value="template-7">Template 7 (Royal Purple)</option>
@@ -110,7 +115,9 @@
                     <option value="template-10">Template 10 (Minimal Slate)</option>
                     <option value="template-11">Template 11 (Minimal Emerald Line)</option>
                     <option value="template-12">Template 12 (Minimal Gold Charcoal)</option>
-                </select>
+                        </optgroup>
+                    </select>
+                </label>
                 <div class="editor-btn-group">
                     <button type="button" id="historyBtn" class="secondary-btn" title="View Saved Resumes">
                         <i class="fas fa-history"></i> History
