@@ -108,6 +108,11 @@ body {
     display: flex; flex-direction: column;
     border-right: 1px solid var(--glass-border);
 }
+.category-autofill-card { background: linear-gradient(135deg, #effcff 0%, #f8fbff 100%); border-color: #9eeaf4; }
+.category-autofill-card h3 { margin-bottom: 0.25rem; }
+.category-autofill-card small { color: #475569; }
+.category-autofill-card select { border-color: #06b6d4; font-weight: 700; color: #334155; }
+
 .template-picker { display: flex; align-items: center; gap: 0.55rem; color: #475569; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; }
 .template-picker span { white-space: nowrap; }
 .template-picker i { color: var(--primary); margin-right: 0.25rem; }

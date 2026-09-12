@@ -328,6 +328,64 @@ window.updateDynamicPreview = function(type) {
     if (targetElem) targetElem.innerHTML = html;
 };
 
+window.applyResumeCategory = function() {
+    const category = document.getElementById('resumeCategory')?.value || 'general';
+    const presets = {
+        general: {
+            title: 'Professional',
+            summary: 'Motivated professional seeking a challenging position where I can use my skills, contribute to organizational success and continue professional growth.',
+            skills: 'Communication, Teamwork, Problem Solving, Time Management',
+            hobbies: 'Reading, Writing'
+        },
+        teacher: {
+            title: 'Teacher',
+            summary: 'Dedicated and passionate educator committed to fostering student development in a nurturing and inclusive classroom environment. Skilled in communication, classroom management and lesson planning.',
+            skills: 'Classroom Management, Lesson Planning, Student Assessment, Communication, Presentation, Leadership',
+            hobbies: 'Drawing, Painting, Reading, Speaking, Story Telling'
+        },
+        sales: {
+            title: 'Sales Professional',
+            summary: 'Hardworking sales professional with customer service and retail experience, focused on achieving targets, supporting customers and contributing to business growth.',
+            skills: 'Customer Service, Sales, Communication, Teamwork, Product Knowledge, Time Management',
+            hobbies: 'Reading, Craft Work, Writing'
+        },
+        medical: {
+            title: 'Medical Laboratory Technician',
+            summary: 'Committed healthcare professional seeking a position in a forward-looking hospital where I can apply my technical knowledge, practical skills and dedication to quality patient care.',
+            skills: 'Laboratory Assistance, Sample Handling, ECG, Nebulization, IV, Pulse Monitoring, Reception',
+            hobbies: 'Reading, Craft Work, Writing'
+        },
+        accountant: {
+            title: 'Accountant / Manager',
+            summary: 'To obtain a challenging position in a forward-looking company where I can utilize my accounting skills and abilities while contributing to organizational success and professional growth.',
+            skills: 'Accounting, Team Leadership, Communication, Negotiation, Management, Tally, SAP Finance',
+            hobbies: 'Reading, Writing'
+        },
+        mechanical: {
+            title: 'QA/QC Mechanical / NDT Professional',
+            summary: 'Certified NDT professional with a strong foundation in material testing and inspection techniques, committed to precision, safety and continuous learning.',
+            skills: 'QA/QC Mechanical, Ultrasonic Testing, Radiographic Testing, Magnetic Particle Testing, Welding Inspection, HSE Management',
+            hobbies: 'Reading'
+        }
+    }[category];
+    if (!presets) return;
+    const setValue = (selector, value) => {
+        const field = document.querySelector(selector);
+        if (!field) return;
+        field.value = value;
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    setValue('[data-preview="prev-title"]', presets.title);
+    setValue('#summaryInput', presets.summary);
+    setValue('#skills', presets.skills);
+    setValue('#hobbies', presets.hobbies);
+    ['prev-summary-container', 'prev-skills-container', 'prev-hobbies-container'].forEach((id) => {
+        const toggle = document.querySelector(`[data-toggle="${id}"]`);
+        if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event('change', { bubbles: true })); }
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
 
     let currentResumeId = null;

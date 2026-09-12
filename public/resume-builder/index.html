@@ -154,6 +154,27 @@
             </div>
 
             <form id="bioDataForm">
+                <!-- Resume Category Auto Fill -->
+                <div class="form-section category-autofill-card">
+                    <div class="section-header-flex">
+                        <div>
+                            <h3><i class="fas fa-briefcase"></i> Resume Category</h3>
+                            <small>Select a category and auto-fill professional data.</small>
+                        </div>
+                        <button type="button" class="secondary-btn" onclick="applyResumeCategory()"><i class="fas fa-wand-magic-sparkles"></i> Auto Fill</button>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <select id="resumeCategory" aria-label="Resume category">
+                            <option value="general" selected>General / Professional</option>
+                            <option value="teacher">Teacher / Education</option>
+                            <option value="sales">Sales / Retail</option>
+                            <option value="medical">Medical / Healthcare</option>
+                            <option value="accountant">Accountant / Finance</option>
+                            <option value="mechanical">Mechanical / QA-QC / NDT</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Personal Info -->
                 <div class="form-section">
                     <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
