@@ -2035,7 +2035,7 @@ setServiceDirectory(filteredWithUrls);
         <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1600px] space-y-2.5 pb-5">
+      <div className="relative z-[100] isolate mx-auto w-full max-w-[1600px] space-y-2.5 pb-5">
         <div className="flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl mb-0">
           <div>
             <h2 className="text-lg font-bold text-slate-800">Dashboard</h2>
@@ -2058,7 +2058,15 @@ setServiceDirectory(filteredWithUrls);
 
             {isNotificationsOpen && (
               <div
-                className="fixed z-[999999] w-[min(24rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-top-2"
+                className="fixed inset-0 z-[2147483640] bg-slate-950/10"
+                onMouseDown={() => setIsNotificationsOpen(false)}
+                aria-hidden="true"
+              />
+            )}
+
+            {isNotificationsOpen && (
+              <div
+                className="fixed z-[2147483647] w-[min(24rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] overflow-y-auto bg-white opacity-100 rounded-2xl shadow-2xl border-2 border-slate-200 animate-in fade-in slide-in-from-top-2"
                 style={{ top: notificationPopupPosition.top, left: notificationPopupPosition.left }}
                 onMouseDown={(event) => event.stopPropagation()}
               >
