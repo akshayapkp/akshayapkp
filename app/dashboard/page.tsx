@@ -2058,19 +2058,11 @@ setServiceDirectory(filteredWithUrls);
 
             {isNotificationsOpen && (
               <div
-                className="fixed inset-0 z-[2147483640] bg-slate-950/10"
-                onMouseDown={() => setIsNotificationsOpen(false)}
-                aria-hidden="true"
-              />
-            )}
-
-            {isNotificationsOpen && (
-              <div
-                className="fixed z-[2147483647] w-[min(24rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] overflow-y-auto bg-white opacity-100 rounded-2xl shadow-2xl border-2 border-slate-200 animate-in fade-in slide-in-from-top-2"
+                className="fixed z-[2147483647] w-[min(24rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] overflow-y-auto overflow-x-hidden bg-white rounded-2xl shadow-[0_18px_45px_rgba(15,23,42,0.18)] border border-slate-100 animate-in fade-in slide-in-from-top-2"
                 style={{ top: notificationPopupPosition.top, left: notificationPopupPosition.left }}
                 onMouseDown={(event) => event.stopPropagation()}
               >
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm">Notifications</h4>
                     <p className="text-xs text-slate-500">{announcements.length} unread message(s)</p>
