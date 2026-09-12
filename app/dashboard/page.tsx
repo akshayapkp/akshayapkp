@@ -11,6 +11,7 @@ import ImageToTextTool from "./tools/ImageToText";
 import CalculatorTool from "./tools/calculatol";
 import ResumeBuilder from "./tools/ResumeBuilder";
 import AadhaarStatusPage from "./tools/aadhaar-status/page";
+import AadhaarNameChangePage from "./tools/aadhaar-name-change/page";
 import PanStatusPage from "./tools/pan-status/page";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -1180,7 +1181,7 @@ export default function DashboardPage() {
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
-  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "pan" | null>(null);
+  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "aadhaar-name" | "pan" | null>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const draggedItemIndex = useRef<number | null>(null);
   const draggedOverItemIndex = useRef<number | null>(null);
@@ -2485,6 +2486,21 @@ setServiceDirectory(filteredWithUrls);
 
                       <button
                         type="button"
+                        onClick={() => setStatusCenterView("aadhaar-name")}
+                        className="group min-h-[104px] rounded-2xl border border-fuchsia-100 bg-gradient-to-br from-fuchsia-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-fuchsia-300 hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-fuchsia-600 text-white shadow-sm">
+                            <FileText size={16} />
+                          </div>
+                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-fuchsia-600" />
+                        </div>
+                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Name Change Check</h5>
+                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">Aadhaar Gazette eligibility check</p>
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() =>
                           window.open(
                             "https://www.passportindia.gov.in/psp/trackApplicationService",
@@ -2532,9 +2548,11 @@ setServiceDirectory(filteredWithUrls);
     <StatusEdistrictTool />
   ) : statusCenterView === "gazette" ? (
     <StatusGazetteTool />
-  ) : statusCenterView === "aadhaar" ? (
-    <AadhaarStatusPage />
-  ) : statusCenterView === "pan" ? (
+) : statusCenterView === "aadhaar" ? (
+  <AadhaarStatusPage />
+) : statusCenterView === "aadhaar-name" ? (
+  <AadhaarNameChangePage />
+) : statusCenterView === "pan" ? (
      <PanStatusPage />
    ) : null}
 </div>
