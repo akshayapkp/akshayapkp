@@ -610,20 +610,22 @@ export default function DashboardLayout({
               </div>
 
               <div>
-                <p className="text-sm font-semibold text-white">
-                  {currentUser.username}
-                </p>
-                <p className="text-xs text-slate-600 md:dark:text-slate-400">
-                  {displayRole}
-                </p>
+  <p className="max-w-[9rem] truncate text-sm font-semibold text-slate-800 dark:text-white">
+  {currentUser.username}
+  </p>
+  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+  {displayRole}
+  </p>
               </div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="cursor-pointer rounded-xl p-2 text-slate-500 transition-all hover:bg-rose-500/10 hover:text-rose-400"
-            >
-              <LogOut size={18} />
+  aria-label={`Log out ${currentUser.username}`}
+  title="Log out"
+  className="cursor-pointer rounded-xl p-2 text-slate-600 transition-all hover:bg-rose-500/10 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400"
+  >
+  <LogOut size={18} />
             </button>
           </div>
         </aside>
