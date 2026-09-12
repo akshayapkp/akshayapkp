@@ -368,7 +368,7 @@ export default function LoginPage() {
         }}
       >
         <div className="login-service-rail" aria-hidden="true">
-          <span className="login-rail-label">DIGITAL SERVICE CENTER</span>
+          <span className="login-rail-label">AKSHAYA CENTER</span>
           <span className="login-rail-status"><span /> SYSTEM ONLINE</span>
         </div>
 

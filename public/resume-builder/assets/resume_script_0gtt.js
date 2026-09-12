@@ -376,7 +376,7 @@ window.applyResumeCategory = function() {
         field.dispatchEvent(new Event('input', { bubbles: true }));
         field.dispatchEvent(new Event('change', { bubbles: true }));
     };
-    setValue('[data-preview="prev-title"]', presets.title);
+    setValue('input[data-preview="prev-title"], textarea[data-preview="prev-title"]', presets.title);
     setValue('#summaryInput', presets.summary);
     setValue('#skills', presets.skills);
     setValue('#hobbies', presets.hobbies);
@@ -387,6 +387,11 @@ window.applyResumeCategory = function() {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    const categorySelect = document.getElementById('resumeCategory');
+    const categoryButton = document.getElementById('resumeCategoryAutoFill');
+    if (categorySelect && categoryButton) {
+        categorySelect.addEventListener('change', () => categoryButton.focus());
+    }
 
     let currentResumeId = null;
 
