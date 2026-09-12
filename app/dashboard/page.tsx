@@ -1188,6 +1188,8 @@ export default function DashboardPage() {
   const currentVersion = "1.0.0";
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
+  const [notificationPopupPosition, setNotificationPopupPosition] = useState({ top: 0, left: 0 });
 
   const [isLatestEntryOpen, setIsLatestEntryOpen] = useState(false);
   const [latestEntry, setLatestEntry] = useState<LatestEntry | null>(null);
@@ -1550,7 +1552,29 @@ setServiceDirectory(filteredWithUrls);
   }, []);
 
   useEffect(() => {
-    if (!isLatestEntryOpen) return;
+  if (!isNotificationsOpen) return;
+
+  const updateNotificationPopupPosition = () => {
+    const button = notificationButtonRef.current;
+    if (!button) return;
+    const rect = button.getBoundingClientRect();
+    const popupWidth = Math.min(384, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(rect.right - popupWidth, window.innerWidth - popupWidth - 12));
+    setNotificationPopupPosition({ top: rect.bottom + 8, left });
+  };
+
+  updateNotificationPopupPosition();
+  window.addEventListener("resize", updateNotificationPopupPosition);
+  window.addEventListener("scroll", updateNotificationPopupPosition, true);
+  return () => {
+    window.removeEventListener("resize", updateNotificationPopupPosition);
+    window.removeEventListener("scroll", updateNotificationPopupPosition, true);
+  };
+  }, [isNotificationsOpen]);
+
+  useEffect(() => {
+  if (!isLatestEntryOpen) return;
+
 
     const updateLatestEntryPopupPosition = () => {
       const button = latestEntryButtonRef.current;
@@ -2020,6 +2044,7 @@ setServiceDirectory(filteredWithUrls);
           <div className="flex items-center gap-2">
             <div className="relative" ref={notificationRef}>
               <button
+                ref={notificationButtonRef}
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 className="relative rounded-2xl border border-slate-200/80 bg-white/70 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
                 aria-label="Notifications"
@@ -2032,7 +2057,11 @@ setServiceDirectory(filteredWithUrls);
               </button>
 
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+              <div
+                className="fixed z-[999999] w-[min(24rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-top-2"
+                style={{ top: notificationPopupPosition.top, left: notificationPopupPosition.left }}
+                onMouseDown={(event) => event.stopPropagation()}
+              >
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm">Notifications</h4>
