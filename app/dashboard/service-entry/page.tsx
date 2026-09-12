@@ -709,9 +709,18 @@ function ServiceEntryForm() {
     try {
       const storedServices = localStorage.getItem('managedServices');
       let managedList = storedServices ? JSON.parse(storedServices) : [];
+      const recentDefaults = JSON.parse(localStorage.getItem('recentServiceBillingDefaults') || '{}');
 
       let updated = false;
       items.forEach(item => {
+        if (item.name) {
+          recentDefaults[item.name.trim().toLowerCase()] = {
+            wallet: item.wallet,
+            walletChg: Number(item.walletChg) || 0,
+            srvChg: Number(item.srvChg) || 0,
+            updatedAt: new Date().toISOString(),
+          };
+        }
         if (!item.name) return;
         const exists = managedList.some((s: any) => s.name.toLowerCase() === item.name.toLowerCase());
         if (!exists) {
@@ -730,6 +739,7 @@ function ServiceEntryForm() {
         }
       });
 
+      localStorage.setItem('recentServiceBillingDefaults', JSON.stringify(recentDefaults));
       if (updated) {
         localStorage.setItem('managedServices', JSON.stringify(managedList));
         loadManagedServices();
@@ -743,22 +753,31 @@ function ServiceEntryForm() {
   const handleSelectService = (srv: ServiceItem) => {
     setSelectedService(srv);
     setSearchService(srv.name);
-    setSrvChg(Number(srv.srvChg));
-    setWalletChg(Number(srv.deptChg));
-    
+
+    let nextWallet = 'Select Wallet';
+    let nextWalletChg = Number(srv.deptChg) || 0;
+    let nextSrvChg = Number(srv.srvChg) || 0;
+
     try {
+      const recentDefaults = JSON.parse(localStorage.getItem('recentServiceBillingDefaults') || '{}');
+      const recent = recentDefaults[String(srv.name).trim().toLowerCase()];
       const storedServices = localStorage.getItem('managedServices');
-      if (storedServices) {
-        const parsed = JSON.parse(storedServices);
-        const found = parsed.find((s: any) => s.name.toLowerCase() === srv.name.toLowerCase());
-        if (found && found.defaultWallet) {
-          setWallet(found.defaultWallet);
-        }
+      const parsed = storedServices ? JSON.parse(storedServices) : [];
+      const found = parsed.find((s: any) => String(s.name || '').trim().toLowerCase() === String(srv.name).trim().toLowerCase());
+      const saved = recent || found;
+
+      if (saved) {
+        nextWallet = String(saved.wallet || saved.defaultWallet || nextWallet);
+        nextWalletChg = Number(saved.walletChg ?? saved.deptFee ?? saved.deptChg ?? nextWalletChg) || 0;
+        nextSrvChg = Number(saved.srvChg ?? saved.srvCharge ?? saved.serviceCharge ?? nextSrvChg) || 0;
       }
     } catch (e) {
-      console.error(e);
+      console.error('Unable to restore service billing defaults', e);
     }
 
+    setWallet(nextWallet);
+    setWalletChg(nextWalletChg);
+    setSrvChg(nextSrvChg);
     setShowDropdown(false);
   };
 
