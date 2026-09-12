@@ -368,7 +368,7 @@ export default function LoginPage() {
         }}
       >
         <section
-          className="login-motion-card premium-tilt"
+          className="login-motion-card premium-tilt login-glass-panel"
           style={{
             width: "100%",
             boxSizing: "border-box",
@@ -421,6 +421,7 @@ export default function LoginPage() {
             }}
           >
             <div
+              className="login-logo-stage"
               style={{
                 position: "relative",
                 width: "150px",
@@ -454,10 +455,11 @@ export default function LoginPage() {
                 width={120}
                 height={120}
                 draggable={false}
-                style={{
-                  position: "relative",
-                  zIndex: 2,
-                  display: "block",
+                  className="login-brand-logo"
+                  style={{
+                    position: "relative",
+                    zIndex: 2,
+                    display: "block",
                   width: "120px",
                   height: "120px",
                   objectFit: "contain",

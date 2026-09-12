@@ -572,6 +572,22 @@ body {
 .dashboard-content > *:nth-child(3) { animation-delay: 120ms; }
 .dashboard-content > *:nth-child(4) { animation-delay: 180ms; }
 
+@keyframes login-breathe {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -8px, 0) scale(1.02); }
+}
+
+@keyframes login-orbit-glow {
+  from { transform: rotate(0deg) translateX(76px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(76px) rotate(-360deg); }
+}
+
+@keyframes login-sheen {
+  0% { transform: translateX(-120%) rotate(18deg); opacity: 0; }
+  20%, 70% { opacity: .75; }
+  100% { transform: translateX(230%) rotate(18deg); opacity: 0; }
+}
+
 .login-motion-stage > div:first-of-type,
 .login-motion-stage > div:nth-of-type(2),
 .login-motion-stage > div:nth-of-type(3),
@@ -583,8 +599,59 @@ body {
   animation: premium-rise 700ms cubic-bezier(.2,.8,.2,1) both;
 }
 
-.login-motion-card img {
+.login-glass-panel {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.login-glass-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 24%, rgba(255,255,255,.1) 45%, transparent 58%);
+  transform: translateX(-120%);
+  animation: login-sheen 7s ease-in-out infinite;
+}
+
+.login-logo-stage {
+  animation: login-breathe 5.5s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+.login-logo-stage::before,
+.login-logo-stage::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px;
+  border-radius: 999px;
+  background: #22d3ee;
+  box-shadow: 0 0 22px rgba(34,211,238,.9);
+  animation: login-orbit-glow 8s linear infinite;
+}
+
+.login-logo-stage::after {
+  width: 8px;
+  height: 8px;
+  margin: -4px;
+  background: #a78bfa;
+  box-shadow: 0 0 18px rgba(167,139,250,.95);
+  animation-duration: 11s;
+  animation-direction: reverse;
+}
+
+.login-brand-logo {
   animation: premium-float 6s ease-in-out infinite;
+  transition: transform 350ms ease, filter 350ms ease;
+}
+
+.login-logo-stage:hover .login-brand-logo {
+  transform: translateY(-5px) scale(1.045) rotate(-1deg);
+  filter: drop-shadow(0 16px 26px rgba(34,211,238,.34)) drop-shadow(0 0 22px rgba(129,140,248,.26));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -592,6 +659,10 @@ body {
   .premium-orbit,
   .premium-shimmer,
   .premium-enter,
+  .login-logo-stage,
+  .login-logo-stage::before,
+  .login-logo-stage::after,
+  .login-glass-panel::before,
   .dashboard-content > * {
     animation: none !important;
   }
