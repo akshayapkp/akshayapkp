@@ -457,6 +457,74 @@ window.fillResumeLanguages = function() {
     updateDynamicPreview('lang');
 };
 
+const categoryDetailPresets = {
+    general: {
+        education: [{ degree: 'Higher Secondary', school: 'State Board', date: '' }],
+        experience: [{ title: 'Professional', company: '', date: '', desc: '' }],
+        projects: []
+    },
+    teacher: {
+        education: [
+            { degree: 'Secondary School Leaving Certificate (SSLC)', school: 'Kerala Public Examination Board', date: '' },
+            { degree: 'Higher Secondary (HSE)', school: '', date: '' },
+            { degree: 'Diploma in Montessori Training (MTTC)', school: '', date: '' }
+        ],
+        experience: [{ title: 'Primary Teacher', company: '', date: '', desc: 'Planned lessons, supported student development and maintained a positive classroom environment.' }],
+        projects: []
+    },
+    sales: {
+        education: [{ degree: 'SSLC', school: '', date: '' }, { degree: 'PLUS TWO', school: '', date: '' }],
+        experience: [{ title: 'Salesman', company: 'Bharath Super Market', date: '6 Year', desc: 'Supported customers, maintained product displays and contributed to sales targets.' }],
+        projects: []
+    },
+    medical: {
+        education: [
+            { degree: 'Diploma in Medical Laboratory', school: 'Jain University', date: '2023' },
+            { degree: 'PLUS TWO', school: 'Kerala Board of Higher Secondary Examination', date: '2020' },
+            { degree: 'S.S.L.C', school: 'Board of Public Examinations, Kerala', date: '2018' }
+        ],
+        experience: [
+            { title: 'Lab Assistant Trainee', company: 'Venniyur GHC, Malappuram', date: '6 Month', desc: '' },
+            { title: 'Lab Assistant Technician', company: 'Family Medical Center, Pookiparamba, Malappuram', date: '1 Year', desc: '' }
+        ],
+        projects: []
+    },
+    accountant: {
+        education: [
+            { degree: 'S.S.L.C', school: 'N I O S', date: '2017' },
+            { degree: 'PLUSTWO', school: 'N I O S', date: '2021' },
+            { degree: 'PG Diploma in Indian and Foreign Accounting', school: 'ITPC Campus, Kottakkal', date: '2024' },
+            { degree: 'TALLY ESSENTIAL LEVEL-1', school: 'ITPC Campus, Kottakkal', date: '2024' },
+            { degree: 'SAP S/4HANA Finance & Controlling', school: 'ITPC Campus, Kottakkal', date: '2024' }
+        ],
+        experience: [{ title: 'Accountant & Manager', company: 'V G R Rent House', date: '6 month', desc: 'Managed accounting records, customer coordination and daily financial operations.' }],
+        projects: []
+    },
+    mechanical: {
+        education: [
+            { degree: 'S.S.L.C', school: 'Kerala Board Of Public Examinations', date: '2022' },
+            { degree: 'PLUSTWO', school: 'Kerala Board Of Higher Secondary Examinations', date: '2025' },
+            { degree: 'Diploma in Fire and Safety Engineering', school: 'Knowit Education', date: '2026' }
+        ],
+        experience: [{ title: 'QA/QC Mechanical / NDT Professional', company: '', date: '', desc: 'Performed inspection and testing activities while following safety and quality standards.' }],
+        projects: [{ name: 'Industrial Visit: Fire Station, Tirur', tech: 'Fire Safety', desc: 'Gained exposure to emergency response protocols and fire safety equipment handling.' }]
+    }
+};
+
+function applyCategoryDetailPreset(category) {
+    const preset = categoryDetailPresets[category];
+    if (!preset) return;
+    const education = document.getElementById('educationList');
+    const experience = document.getElementById('experienceList');
+    const projects = document.getElementById('projectsList');
+    if (education) education.innerHTML = preset.education.map(item => `<div class="dynamic-item"><button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('edu')"><i class="fas fa-trash"></i></button><div class="form-grid"><input type="text" class="edu-degree" value="${item.degree}" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')"><input type="text" class="edu-school" value="${item.school}" placeholder="University / Board" oninput="updateDynamicPreview('edu')"><input type="text" class="edu-date" value="${item.date}" placeholder="e.g. 2016 - 2020" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')"></div></div>`).join('');
+    if (experience) experience.innerHTML = preset.experience.map(item => `<div class="dynamic-item"><button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('exp')"><i class="fas fa-trash"></i></button><div class="form-grid"><input type="text" class="exp-title" value="${item.title}" placeholder="Job Title" oninput="updateDynamicPreview('exp')"><input type="text" class="exp-company" value="${item.company}" placeholder="Company Name" oninput="updateDynamicPreview('exp')"><input type="text" class="exp-date" value="${item.date}" placeholder="e.g. 2020 - Present" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')"><textarea class="exp-desc" placeholder="Responsibilities & Achievements..." rows="3" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')">${item.desc}</textarea></div></div>`).join('');
+    if (projects) projects.innerHTML = (preset.projects || []).map(item => `<div class="dynamic-item"><button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('proj')"><i class="fas fa-trash"></i></button><div class="form-grid"><input type="text" class="proj-name" value="${item.name}" placeholder="Project Name" oninput="updateDynamicPreview('proj')"><input type="text" class="proj-tech" value="${item.tech}" placeholder="Tech Used" oninput="updateDynamicPreview('proj')"><textarea class="proj-desc" placeholder="Project Description..." rows="2" style="grid-column: span 2;" oninput="updateDynamicPreview('proj')">${item.desc}</textarea></div></div>`).join('');
+    updateDynamicPreview('edu');
+    updateDynamicPreview('exp');
+    updateDynamicPreview('proj');
+}
+
 window.applyResumeCategory = function() {
     const category = document.getElementById('resumeCategory')?.value || 'general';
     const presets = {
@@ -519,7 +587,8 @@ window.applyResumeCategory = function() {
     };
     setValue('#strengths', strengthsByCategory[category] || strengthsByCategory.general);
     window.fillResumeLanguages();
-    ['prev-summary-container', 'prev-skills-container', 'prev-hobbies-container', 'prev-strengths-container', 'prev-languages-container'].forEach((id) => {
+    applyCategoryDetailPreset(category);
+    ['prev-summary-container', 'prev-skills-container', 'prev-hobbies-container', 'prev-strengths-container', 'prev-languages-container', 'prev-education-container', 'prev-experience-container', 'prev-projects-container'].forEach((id) => {
         const toggle = document.querySelector(`[data-toggle="${id}"]`);
         if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event('change', { bubbles: true })); }
     });
