@@ -274,6 +274,7 @@
                     </div>
                     <div class="form-group">
                         <textarea id="summaryInput" data-preview="prev-summary" rows="4">Driven and enthusiastic professional with a strong passion for delivering high-quality results.</textarea>
+                        <button type="button" class="add-btn generate-content-btn" onclick="window.generateResumeContent('summary')"><i class="fas fa-wand-magic-sparkles"></i> Generate Summary / Objective</button>
                     </div>
                 </div>
 
@@ -317,6 +318,7 @@
             </div>
         </div></div>
                     <button type="button" class="add-btn" onclick="addLanguage()"><i class="fas fa-plus"></i> Add Language</button>
+                    <button type="button" class="add-btn generate-content-btn" onclick="window.fillResumeLanguages()"><i class="fas fa-wand-magic-sparkles"></i> Auto Fill Languages</button>
                 </div>
 
                 <!-- Hobbies -->
@@ -331,6 +333,23 @@
                     </div>
                     <div class="form-group">
                         <input type="text" id="hobbies" data-preview="prev-hobbies" placeholder="Reading, Traveling, Coding (Comma separated)">
+                        <button type="button" class="add-btn generate-content-btn" onclick="window.generateResumeContent('hobbies')"><i class="fas fa-wand-magic-sparkles"></i> Generate Hobbies &amp; Interests</button>
+                    </div>
+                </div>
+
+                <!-- Strengths -->
+                <div class="form-section">
+                    <div class="section-header-flex">
+                        <h3><i class="fas fa-star"></i> Strengths</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" data-toggle="prev-strengths-container">
+                            <span class="slider"></span>
+                            <span class="toggle-text">Disabled</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="strengths" data-preview="prev-strengths" placeholder="Leadership, Adaptability, Teamwork (Comma separated)">
+                        <button type="button" class="add-btn generate-content-btn" onclick="window.generateResumeContent('strengths')"><i class="fas fa-wand-magic-sparkles"></i> Generate Strengths</button>
                     </div>
                 </div>
 

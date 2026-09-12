@@ -328,6 +328,81 @@ window.updateDynamicPreview = function(type) {
     if (targetElem) targetElem.innerHTML = html;
 };
 
+window.generateResumeContent = function(type) {
+    const category = document.getElementById('resumeCategory')?.value || 'general';
+    const content = {
+        general: {
+            summary: 'Motivated professional seeking a challenging position where I can use my skills, contribute to organizational success and continue professional growth.',
+            hobbies: 'Reading, Writing, Travelling, Learning new skills',
+            strengths: 'Hardworking, Positive attitude, Adaptable, Teamwork'
+        },
+        teacher: {
+            summary: 'Dedicated and passionate educator committed to fostering student development in a nurturing and inclusive classroom environment. Skilled in communication, classroom management and lesson planning.',
+            hobbies: 'Drawing, Painting, Reading, Story Telling, Public Speaking',
+            strengths: 'Patient with students, Classroom management, Honest and punctual, Adaptable, Motivating'
+        },
+        sales: {
+            summary: 'Hardworking sales professional focused on achieving targets, supporting customers and contributing to business growth through strong communication and product knowledge.',
+            hobbies: 'Reading, Craft Work, Writing, Networking',
+            strengths: 'Customer-focused, Persuasive communication, Target-oriented, Confident, Teamwork'
+        },
+        medical: {
+            summary: 'Committed healthcare professional dedicated to quality patient care, accurate procedures and continuous learning in a clinical environment.',
+            hobbies: 'Reading, Craft Work, Writing, Community Service',
+            strengths: 'Patient care, Attention to detail, Calm under pressure, Responsible, Teamwork'
+        },
+        accountant: {
+            summary: 'Detail-oriented accounting professional seeking to apply accounting knowledge, financial software skills and organizational ability in a growth-focused company.',
+            hobbies: 'Reading, Writing, Learning finance, Travelling',
+            strengths: 'Numerical accuracy, Integrity, Time management, Analytical thinking, Responsible'
+        },
+        mechanical: {
+            summary: 'Certified mechanical QA/QC and NDT professional committed to precision, safety and reliable inspection results across industrial projects.',
+            hobbies: 'Reading, Technical learning, Safety awareness, Travelling',
+            strengths: 'Safety-conscious, Quality-focused, Problem solving, Discipline, Team collaboration'
+        }
+    }[category] || null;
+    if (!content) return;
+    const fieldMap = { summary: '#summaryInput', hobbies: '#hobbies', strengths: '#strengths' };
+    const field = document.querySelector(fieldMap[type]);
+    if (!field) return;
+    field.value = content[type];
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    const toggle = document.querySelector(`[data-toggle="prev-${type === 'summary' ? 'summary' : `${type}-container`}"]`) || document.querySelector(`[data-toggle="prev-${type}-container"]`);
+    if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event('change', { bubbles: true })); }
+};
+
+window.fillResumeLanguages = function() {
+    const category = document.getElementById('resumeCategory')?.value || 'general';
+    const languages = {
+        general: [['English', '5'], ['Malayalam', '5']],
+        teacher: [['English', '5'], ['Malayalam', '5'], ['Hindi', '3'], ['Arabic', '3']],
+        sales: [['English', '5'], ['Hindi', '3'], ['Malayalam', '5']],
+        medical: [['English', '5'], ['Malayalam', '5']],
+        accountant: [['English', '5'], ['Malayalam', '5'], ['Arabic', '3']],
+        mechanical: [['English', '5'], ['Malayalam', '5'], ['Hindi', '3'], ['Tamil', '3']]
+    }[category] || [];
+    const list = document.getElementById('languagesList');
+    if (!list || !languages.length) return;
+    list.innerHTML = languages.map(([name, level]) => `<div class="dynamic-item">
+        <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('lang')"><i class="fas fa-trash"></i></button>
+        <div class="form-grid">
+            <input type="text" class="lang-name" value="${name}" placeholder="Language (e.g. English)" oninput="updateDynamicPreview('lang')">
+            <select class="lang-prof" onchange="updateDynamicPreview('lang')">
+                <option value="5" ${level === '5' ? 'selected' : ''}>Native (5 Stars)</option>
+                <option value="4" ${level === '4' ? 'selected' : ''}>Fluent (4 Stars)</option>
+                <option value="3" ${level === '3' ? 'selected' : ''}>Intermediate (3 Stars)</option>
+                <option value="2" ${level === '2' ? 'selected' : ''}>Basic (2 Stars)</option>
+                <option value="1" ${level === '1' ? 'selected' : ''}>Beginner (1 Star)</option>
+            </select>
+        </div>
+    </div>`).join('');
+    const toggle = document.querySelector('[data-toggle="prev-languages-container"]');
+    if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event('change', { bubbles: true })); }
+    updateDynamicPreview('lang');
+};
+
 window.applyResumeCategory = function() {
     const category = document.getElementById('resumeCategory')?.value || 'general';
     const presets = {
@@ -380,7 +455,17 @@ window.applyResumeCategory = function() {
     setValue('#summaryInput', presets.summary);
     setValue('#skills', presets.skills);
     setValue('#hobbies', presets.hobbies);
-    ['prev-summary-container', 'prev-skills-container', 'prev-hobbies-container'].forEach((id) => {
+    const strengthsByCategory = {
+        general: 'Hardworking, Positive attitude, Adaptable, Teamwork',
+        teacher: 'Patient with students, Honest and punctual, Adaptable, Motivating',
+        sales: 'Customer-focused, Persuasive communication, Target-oriented, Confident',
+        medical: 'Patient care, Attention to detail, Calm under pressure, Responsible',
+        accountant: 'Numerical accuracy, Integrity, Time management, Analytical thinking',
+        mechanical: 'Safety-conscious, Quality-focused, Problem solving, Discipline'
+    };
+    setValue('#strengths', strengthsByCategory[category] || strengthsByCategory.general);
+    window.fillResumeLanguages();
+    ['prev-summary-container', 'prev-skills-container', 'prev-hobbies-container', 'prev-strengths-container', 'prev-languages-container'].forEach((id) => {
         const toggle = document.querySelector(`[data-toggle="${id}"]`);
         if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event('change', { bubbles: true })); }
     });
