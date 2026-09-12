@@ -588,6 +588,61 @@ body {
   100% { transform: translateX(230%) rotate(18deg); opacity: 0; }
 }
 
+.login-service-center {
+  background:
+    linear-gradient(rgba(16, 31, 67, .2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 31, 67, .2) 1px, transparent 1px),
+    radial-gradient(circle at 18% 18%, rgba(34, 211, 238, .24), transparent 28%),
+    radial-gradient(circle at 82% 78%, rgba(99, 102, 241, .26), transparent 30%),
+    #07152f;
+  background-size: 46px 46px, 46px 46px, auto, auto, auto;
+}
+
+.login-service-center::after {
+  content: "";
+  position: absolute;
+  inset: 9%;
+  pointer-events: none;
+  border: 1px solid rgba(103, 232, 249, .16);
+  border-radius: 28px;
+  box-shadow: inset 0 0 80px rgba(34, 211, 238, .06), 0 0 80px rgba(37, 99, 235, .1);
+}
+
+.login-service-rail {
+  position: absolute;
+  top: 28px;
+  left: 38px;
+  right: 38px;
+  z-index: 4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: rgba(186, 230, 253, .72);
+  font: 600 10px/1.2 Arial, sans-serif;
+  letter-spacing: .18em;
+}
+
+.login-rail-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(165, 243, 252, .86);
+}
+
+.login-rail-status span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 14px rgba(34, 211, 238, .95);
+  animation: login-status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes login-status-pulse {
+  0%, 100% { opacity: .55; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
 .login-motion-stage > div:first-of-type,
 .login-motion-stage > div:nth-of-type(2),
 .login-motion-stage > div:nth-of-type(3),
@@ -654,6 +709,16 @@ body {
   filter: drop-shadow(0 16px 26px rgba(34,211,238,.34)) drop-shadow(0 0 22px rgba(129,140,248,.26));
 }
 
+@media (max-width: 600px) {
+  .login-service-rail {
+    top: 16px;
+    left: 20px;
+    right: 20px;
+    font-size: 8px;
+    letter-spacing: .12em;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .premium-float,
   .premium-orbit,
@@ -663,6 +728,9 @@ body {
   .login-logo-stage::before,
   .login-logo-stage::after,
   .login-glass-panel::before,
+  .login-service-center::after,
+  .login-service-rail,
+  .login-rail-status span,
   .dashboard-content > * {
     animation: none !important;
   }

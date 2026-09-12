@@ -261,7 +261,7 @@ export default function LoginPage() {
 
   return (
     <main
-      className="login-motion-stage"
+      className="login-motion-stage login-service-center"
       style={{
         minHeight: "100vh",
         width: "100%",
@@ -367,6 +367,11 @@ export default function LoginPage() {
           zIndex: 5,
         }}
       >
+        <div className="login-service-rail" aria-hidden="true">
+          <span className="login-rail-label">DIGITAL SERVICE CENTER</span>
+          <span className="login-rail-status"><span /> SYSTEM ONLINE</span>
+        </div>
+
         <section
           className="login-motion-card premium-tilt login-glass-panel"
           style={{
@@ -375,10 +380,10 @@ export default function LoginPage() {
             position: "relative",
             padding: "44px 42px 38px",
             borderRadius: "30px",
-            background:
-              "linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.045))",
+              background:
+              "linear-gradient(145deg, rgba(17, 40, 79, 0.86), rgba(7, 21, 47, 0.72))",
             border:
-              "1px solid rgba(255,255,255,0.14)",
+              "1px solid rgba(103,232,249,0.2)",
             boxShadow:
               "0 30px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
             backdropFilter: "blur(20px)",
@@ -540,9 +545,9 @@ export default function LoginPage() {
                   boxSizing: "border-box",
                   padding: "0 20px",
                   background:
-                    "rgba(255,255,255,0.07)",
+                    "rgba(2, 12, 31, 0.58)",
                   border:
-                    "1px solid rgba(255,255,255,0.14)",
+                    "1px solid rgba(125,211,252,0.2)",
                   borderRadius: "15px",
                   color: "#ffffff",
                   fontSize: "16px",
@@ -576,9 +581,9 @@ export default function LoginPage() {
                   boxSizing: "border-box",
                   padding: "0 20px",
                   background:
-                    "rgba(255,255,255,0.07)",
+                    "rgba(2, 12, 31, 0.58)",
                   border:
-                    "1px solid rgba(255,255,255,0.14)",
+                    "1px solid rgba(125,211,252,0.2)",
                   borderRadius: "15px",
                   color: "#ffffff",
                   fontSize: "16px",
@@ -599,8 +604,8 @@ export default function LoginPage() {
                 height: "62px",
                 border: "none",
                 borderRadius: "15px",
-                background:
-                  "linear-gradient(135deg, #00c6ff 0%, #0072ff 45%, #6d28d9 100%)",
+                  background:
+                  "linear-gradient(135deg, #06b6d4 0%, #2563eb 52%, #4f46e5 100%)",
                 color: "#ffffff",
                 fontSize: "17px",
                 fontWeight: 700,
