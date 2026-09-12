@@ -2,6 +2,7 @@
 
 import html2canvas from "html2canvas";
 import React, { useState, useEffect, Suspense, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import QuickReceiptScan from "./components/QuickReceiptScan";
 import { supabase } from '@/lib/supabase';
@@ -339,6 +340,7 @@ function ServiceEntryForm() {
   const [searchService, setSearchService] = useState('');
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [serviceDropdownPosition, setServiceDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [wallet, setWallet] = useState('Select Wallet');
   const [walletChg, setWalletChg] = useState<number>(0);
   const [srvChg, setSrvChg] = useState<number>(0);
@@ -372,6 +374,25 @@ function ServiceEntryForm() {
 
   const hasInProgressItems = items.some(item => item.status === 'In Progress');
   const hasCompletedItems = items.some(item => item.status === 'Completed');
+
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    const syncServiceDropdown = () => {
+      const input = serviceInputRef.current;
+      if (!input) return;
+      const rect = input.getBoundingClientRect();
+      setServiceDropdownPosition({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    };
+
+    syncServiceDropdown();
+    window.addEventListener('resize', syncServiceDropdown);
+    window.addEventListener('scroll', syncServiceDropdown, true);
+    return () => {
+      window.removeEventListener('resize', syncServiceDropdown);
+      window.removeEventListener('scroll', syncServiceDropdown, true);
+    };
+  }, [showDropdown]);
 
   const loadWallets = () => {
     const savedWallets = localStorage.getItem('managedWallets');
@@ -2026,9 +2047,13 @@ function ServiceEntryForm() {
                   onClick={() => setShowDropdown(true)}
                 />
               </div>
-              {showDropdown && (
-                <div className="absolute left-0 top-full z-30 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl">
-                  {services
+  {showDropdown && typeof document !== 'undefined' && createPortal(
+  <div
+    className="fixed z-[2147483647] max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.22)]"
+    style={{ top: serviceDropdownPosition.top, left: serviceDropdownPosition.left, width: serviceDropdownPosition.width }}
+    onMouseDown={(event) => event.stopPropagation()}
+  >
+  {services
                     .filter(s => s.name.toLowerCase().includes(searchService.toLowerCase()))
                     .map(srv => (
                       <div
@@ -2042,11 +2067,12 @@ function ServiceEntryForm() {
                         </p>
                       </div>
                     ))}
-                </div>
-              )}
-            </div>
-
-            <div className="md:col-span-1 lg:col-span-2">
+  </div>,
+  document.body
+  )}
+  </div>
+  
+  <div className="md:col-span-1 lg:col-span-2">
               <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Wallet</label>
               <select
                 className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none focus:border-cyan-400"
