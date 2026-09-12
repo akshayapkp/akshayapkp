@@ -109,6 +109,10 @@ body {
     border-right: 1px solid var(--glass-border);
 }
 .generate-content-btn { margin-top: 0.65rem; font-size: 0.78rem; }
+.saved-suggestions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.8rem; }
+.saved-suggestion { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid #dbeafe; border-radius: 999px; background: #f8fbff; color: #334155; padding: 0.3rem 0.55rem; font-size: 0.72rem; }
+.saved-suggestion button { border: 0; background: transparent; color: #94a3b8; cursor: pointer; padding: 0; }
+.saved-suggestion button:hover { color: #dc2626; }
 
 .category-autofill-card { background: linear-gradient(135deg, #effcff 0%, #f8fbff 100%); border-color: #9eeaf4; }
 .category-autofill-card h3 { margin-bottom: 0.25rem; }

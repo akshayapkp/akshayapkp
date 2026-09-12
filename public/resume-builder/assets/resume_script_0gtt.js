@@ -328,8 +328,62 @@ window.updateDynamicPreview = function(type) {
     if (targetElem) targetElem.innerHTML = html;
 };
 
+const generatedContentIndex = { summary: 0, hobbies: 0, strengths: 0, skills: 0 };
+const generatedContent = {
+    general: {
+        summary: ['Motivated professional seeking a challenging position where I can contribute to organizational success and continue professional growth.', 'Results-oriented professional with strong communication, teamwork and problem-solving abilities.', 'Dedicated individual eager to bring reliability, adaptability and a positive attitude to a progressive organization.'],
+        hobbies: ['Reading, Writing, Travelling', 'Learning new skills, Music, Community activities', 'Photography, Sports, Volunteering'],
+        strengths: ['Hardworking, Positive attitude, Adaptable, Teamwork', 'Quick learner, Reliable, Organized, Problem solver', 'Leadership, Communication, Time management, Creativity'],
+        skills: ['Communication, Teamwork, Problem Solving, Time Management', 'Microsoft Office, Customer Service, Organization, Adaptability', 'Planning, Documentation, Presentation, Critical Thinking']
+    },
+    teacher: {
+        summary: ['Dedicated educator committed to fostering student development through engaging lessons and a supportive classroom environment.', 'Passionate teacher skilled in classroom management, lesson planning and student assessment.', 'Creative education professional focused on inclusive learning and measurable student progress.'],
+        hobbies: ['Drawing, Painting, Reading, Story Telling', 'Public Speaking, Music, Educational activities', 'Writing, Travelling, Community service'],
+        strengths: ['Patient with students, Classroom management, Honest and punctual, Adaptable', 'Creative teaching, Communication, Leadership, Motivating', 'Empathy, Planning, Organization, Continuous learning'],
+        skills: ['Classroom Management, Lesson Planning, Student Assessment, Communication', 'Presentation, Leadership, Curriculum Planning, Microsoft Office', 'Child Development, Public Speaking, Educational Technology, Teamwork']
+    },
+    sales: {
+        summary: ['Hardworking sales professional focused on achieving targets, supporting customers and contributing to business growth.', 'Customer-focused sales executive with strong communication and product knowledge.', 'Target-oriented professional experienced in building relationships and converting opportunities into results.'],
+        hobbies: ['Reading, Networking, Travelling', 'Craft Work, Writing, Sports', 'Music, Public Speaking, Social activities'],
+        strengths: ['Customer-focused, Persuasive communication, Target-oriented, Confident', 'Negotiation, Relationship building, Energetic, Resilient', 'Positive attitude, Listening, Product knowledge, Teamwork'],
+        skills: ['Customer Service, Sales, Communication, Teamwork, Product Knowledge', 'Retail Operations, Negotiation, Lead Generation, CRM, Target Achievement', 'Visual Merchandising, Billing, Relationship Management, Presentation']
+    },
+    medical: {
+        summary: ['Committed healthcare professional dedicated to quality patient care, accurate procedures and continuous learning.', 'Responsible medical professional with a patient-first approach and strong clinical support skills.', 'Detail-oriented healthcare worker committed to safety, compassion and reliable clinical service.'],
+        hobbies: ['Reading, Community Service, Writing', 'Craft Work, Health awareness, Music', 'Volunteering, Travelling, Learning'],
+        strengths: ['Patient care, Attention to detail, Calm under pressure, Responsible', 'Empathy, Discipline, Observation, Teamwork', 'Compassionate, Safety-conscious, Reliable, Quick learner'],
+        skills: ['Laboratory Assistance, Sample Handling, ECG, Nebulization, IV', 'Patient Care, Vital Monitoring, Medical Records, Reception', 'First Aid, Infection Control, Healthcare Communication, Teamwork']
+    },
+    accountant: {
+        summary: ['Detail-oriented accounting professional seeking to apply accounting knowledge, financial software skills and organizational ability.', 'Analytical finance professional committed to accurate records, timely reporting and responsible financial operations.', 'Organized accountant with strong numerical ability and a focus on compliance and business support.'],
+        hobbies: ['Reading, Writing, Learning finance', 'Travelling, Music, Volunteering', 'Technology, Research, Community activities'],
+        strengths: ['Numerical accuracy, Integrity, Time management, Analytical thinking', 'Attention to detail, Organization, Confidentiality, Problem solving', 'Planning, Responsibility, Communication, Decision making'],
+        skills: ['Accounting, Team Leadership, Communication, Negotiation, Management', 'Tally, SAP Finance, Excel, Bookkeeping, GST, Financial Reporting', 'Accounts Payable, Accounts Receivable, Reconciliation, Auditing']
+    },
+    mechanical: {
+        summary: ['Certified mechanical QA/QC and NDT professional committed to precision, safety and reliable inspection results.', 'Safety-focused mechanical professional experienced in inspection, testing and quality documentation.', 'Detail-oriented NDT technician dedicated to standards, accuracy and continuous technical learning.'],
+        hobbies: ['Reading, Technical learning, Travelling', 'Safety awareness, Sports, Photography', 'Research, Volunteering, Fitness'],
+        strengths: ['Safety-conscious, Quality-focused, Problem solving, Discipline', 'Attention to detail, Technical aptitude, Team collaboration, Reliability', 'Inspection mindset, Documentation, Patience, Continuous learning'],
+        skills: ['QA/QC Mechanical, Ultrasonic Testing, Radiographic Testing', 'Magnetic Particle Testing, Welding Inspection, HSE Management', 'Visual Inspection, Documentation, Safety Standards, Quality Control']
+    }
+};
+
 window.generateResumeContent = function(type) {
     const category = document.getElementById('resumeCategory')?.value || 'general';
+    const options = generatedContent[category]?.[type];
+    if (options?.length) {
+        const index = generatedContentIndex[type] % options.length;
+        generatedContentIndex[type] += 1;
+        const field = document.querySelector({ summary: '#summaryInput', hobbies: '#hobbies', strengths: '#strengths', skills: '#skills' }[type]);
+        if (field) {
+            field.value = options[index];
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+            const toggle = document.querySelector(`[data-toggle="prev-${type === 'summary' ? 'summary' : `${type}-container`}"]`);
+            if (toggle && !toggle.checked) { toggle.checked = true; toggle.dispatchEvent(new Event('change', { bubbles: true })); }
+        }
+        return;
+    }
     const content = {
         general: {
             summary: 'Motivated professional seeking a challenging position where I can use my skills, contribute to organizational success and continue professional growth.',
@@ -471,12 +525,45 @@ window.applyResumeCategory = function() {
     });
 };
 
+const EDUCATION_SUGGESTIONS_KEY = 'resume-builder-education-suggestions';
+function readEducationSuggestions() {
+    try { return JSON.parse(localStorage.getItem(EDUCATION_SUGGESTIONS_KEY) || '{"degrees":[],"schools":[]}'); } catch { return { degrees: [], schools: [] }; }
+}
+function renderEducationSuggestions() {
+    const container = document.getElementById('educationSavedSuggestions');
+    if (!container) return;
+    const saved = readEducationSuggestions();
+    const values = [...saved.degrees.map(value => `Degree: ${value}`), ...saved.schools.map(value => `Board: ${value}`)];
+    container.innerHTML = values.map(label => `<span class="saved-suggestion">${label}<button type="button" aria-label="Delete saved education suggestion" onclick="window.deleteEducationSuggestion('${label.replace(/^(Degree: |Board: )/, '').replace(/'/g, "\\'")}')"><i class="fas fa-times"></i></button></span>`).join('');
+}
+window.deleteEducationSuggestion = function(value) {
+    const saved = readEducationSuggestions();
+    saved.degrees = saved.degrees.filter(item => item !== value);
+    saved.schools = saved.schools.filter(item => item !== value);
+    localStorage.setItem(EDUCATION_SUGGESTIONS_KEY, JSON.stringify(saved));
+    renderEducationSuggestions();
+};
+function saveEducationSuggestions() {
+    const saved = readEducationSuggestions();
+    document.querySelectorAll('.edu-degree').forEach(field => { const value = field.value.trim(); if (value && !saved.degrees.includes(value)) saved.degrees.push(value); });
+    document.querySelectorAll('.edu-school').forEach(field => { const value = field.value.trim(); if (value && !saved.schools.includes(value)) saved.schools.push(value); });
+    localStorage.setItem(EDUCATION_SUGGESTIONS_KEY, JSON.stringify(saved));
+    renderEducationSuggestions();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    renderEducationSuggestions();
     const categorySelect = document.getElementById('resumeCategory');
     const categoryButton = document.getElementById('resumeCategoryAutoFill');
-    if (categorySelect && categoryButton) {
-        categorySelect.addEventListener('change', () => categoryButton.focus());
+    if (categorySelect) {
+        categorySelect.addEventListener('change', () => {
+            window.fillResumeLanguages();
+            categoryButton?.focus();
+        });
     }
+    document.addEventListener('blur', (event) => {
+        if (event.target.matches?.('.edu-degree, .edu-school')) saveEducationSuggestions();
+    }, true);
 
     let currentResumeId = null;
 
