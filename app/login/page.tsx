@@ -277,7 +277,7 @@ export default function LoginPage() {
           '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
         color: "#ffffff",
         background:
-          "radial-gradient(circle at 15% 20%, rgba(0,198,255,0.16), transparent 32%), radial-gradient(circle at 85% 80%, rgba(124,58,237,0.18), transparent 35%), #0b0f19",
+          "radial-gradient(circle at 15% 20%, rgba(45,212,191,0.2), transparent 32%), radial-gradient(circle at 85% 80%, rgba(245,158,11,0.16), transparent 35%), #071a1b",
       }}
     >
       {/* -------------------------------------------------------
@@ -297,7 +297,7 @@ export default function LoginPage() {
           borderRadius: "50%",
           pointerEvents: "none",
           background:
-            "radial-gradient(circle at 35% 35%, rgba(0,198,255,0.85), rgba(0,114,255,0.35) 42%, transparent 72%)",
+            "radial-gradient(circle at 35% 35%, rgba(45,212,191,0.8), rgba(13,148,136,0.34) 42%, transparent 72%)",
           filter: "blur(2px)",
           opacity: 0.75,
           zIndex: 0,
@@ -315,7 +315,7 @@ export default function LoginPage() {
           borderRadius: "50%",
           pointerEvents: "none",
           background:
-            "radial-gradient(circle at 40% 40%, rgba(139,92,246,0.8), rgba(236,72,153,0.28) 45%, transparent 72%)",
+            "radial-gradient(circle at 40% 40%, rgba(245,158,11,0.78), rgba(180,83,9,0.25) 45%, transparent 72%)",
           filter: "blur(2px)",
           opacity: 0.75,
           zIndex: 0,
@@ -334,7 +334,7 @@ export default function LoginPage() {
           borderRadius: "50%",
           pointerEvents: "none",
           background:
-            "radial-gradient(circle, rgba(0,198,255,0.28), rgba(59,130,246,0.1) 48%, transparent 72%)",
+            "radial-gradient(circle, rgba(45,212,191,0.28), rgba(20,184,166,0.1) 48%, transparent 72%)",
           zIndex: 0,
         }}
       />
@@ -350,7 +350,7 @@ export default function LoginPage() {
           borderRadius: "50%",
           pointerEvents: "none",
           background:
-            "radial-gradient(circle, rgba(255,65,108,0.22), rgba(255,75,43,0.06) 55%, transparent 75%)",
+            "radial-gradient(circle, rgba(245,158,11,0.22), rgba(217,119,6,0.06) 55%, transparent 75%)",
           zIndex: 0,
         }}
       />
@@ -605,7 +605,7 @@ export default function LoginPage() {
                 border: "none",
                 borderRadius: "15px",
                   background:
-                  "linear-gradient(135deg, #06b6d4 0%, #2563eb 52%, #4f46e5 100%)",
+                  "linear-gradient(135deg, #14b8a6 0%, #0f766e 52%, #d97706 100%)",
                 color: "#ffffff",
                 fontSize: "17px",
                 fontWeight: 700,
@@ -662,10 +662,10 @@ export default function LoginPage() {
 
         input:focus {
           background: rgba(255, 255, 255, 0.11) !important;
-          border-color: rgba(0, 198, 255, 0.65) !important;
+          border-color: rgba(45, 212, 191, 0.72) !important;
           box-shadow:
             0 0 0 4px rgba(0, 198, 255, 0.08),
-            0 0 25px rgba(0, 114, 255, 0.15);
+            0 0 25px rgba(13, 148, 136, 0.2);
         }
 
         button:hover:not(:disabled) {
