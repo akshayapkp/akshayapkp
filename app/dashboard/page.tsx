@@ -10,6 +10,7 @@ import LandAreaConverterTool from "./tools/ConverterTool";
 import ImageToTextTool from "./tools/ImageToText";
 import CalculatorTool from "./tools/calculatol";
 import ResumeBuilder from "./tools/ResumeBuilder";
+import PrototypeOperationsPanel from "./components/PrototypeOperationsPanel";
 import AadhaarStatusPage from "./tools/aadhaar-status/page";
 import PanStatusPage from "./tools/pan-status/page";
 import React, { useState, useEffect, useRef } from "react";
@@ -2149,6 +2150,8 @@ setServiceDirectory(filteredWithUrls);
             </div>
           </div>
         </div>
+
+        <PrototypeOperationsPanel />
 
         {showWalletDetails && (
           <div className="rounded-3xl border border-white/80 bg-white/65 p-5 shadow-sm backdrop-blur-xl animate-in fade-in slide-in-from-top-2">
