@@ -11,6 +11,7 @@ import ImageToTextTool from "./tools/ImageToText";
 import CalculatorTool from "./tools/calculatol";
 import ResumeBuilder from "./tools/ResumeBuilder";
 import AadhaarStatusPage from "./tools/aadhaar-status/page";
+import AadhaarNameChangePage from "./tools/aadhaar-name-change/page";
 import PanStatusPage from "./tools/pan-status/page";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -1180,7 +1181,7 @@ export default function DashboardPage() {
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
-  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "pan" | null>(null);
+  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "aadhaar-name" | "pan" | null>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const draggedItemIndex = useRef<number | null>(null);
   const draggedOverItemIndex = useRef<number | null>(null);
@@ -1188,6 +1189,8 @@ export default function DashboardPage() {
   const currentVersion = "1.0.0";
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
+  const [notificationPopupPosition, setNotificationPopupPosition] = useState({ top: 0, left: 0 });
 
   const [isLatestEntryOpen, setIsLatestEntryOpen] = useState(false);
   const [latestEntry, setLatestEntry] = useState<LatestEntry | null>(null);
@@ -1550,7 +1553,29 @@ setServiceDirectory(filteredWithUrls);
   }, []);
 
   useEffect(() => {
-    if (!isLatestEntryOpen) return;
+  if (!isNotificationsOpen) return;
+
+  const updateNotificationPopupPosition = () => {
+    const button = notificationButtonRef.current;
+    if (!button) return;
+    const rect = button.getBoundingClientRect();
+    const popupWidth = Math.min(384, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(rect.right - popupWidth, window.innerWidth - popupWidth - 12));
+    setNotificationPopupPosition({ top: rect.bottom + 8, left });
+  };
+
+  updateNotificationPopupPosition();
+  window.addEventListener("resize", updateNotificationPopupPosition);
+  window.addEventListener("scroll", updateNotificationPopupPosition, true);
+  return () => {
+    window.removeEventListener("resize", updateNotificationPopupPosition);
+    window.removeEventListener("scroll", updateNotificationPopupPosition, true);
+  };
+  }, [isNotificationsOpen]);
+
+  useEffect(() => {
+  if (!isLatestEntryOpen) return;
+
 
     const updateLatestEntryPopupPosition = () => {
       const button = latestEntryButtonRef.current;
@@ -2011,8 +2036,8 @@ setServiceDirectory(filteredWithUrls);
         <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1600px] space-y-2.5 pb-5">
-        <div className="flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl mb-0">
+      <div className="dashboard-page-frame relative z-[100] isolate mx-auto w-full max-w-[1600px] space-y-2.5 pb-5">
+        <div className="dashboard-topbar flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl mb-0">
           <div>
             <h2 className="text-lg font-bold text-slate-800">Dashboard</h2>
           </div>
@@ -2020,6 +2045,7 @@ setServiceDirectory(filteredWithUrls);
           <div className="flex items-center gap-2">
             <div className="relative" ref={notificationRef}>
               <button
+                ref={notificationButtonRef}
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 className="relative rounded-2xl border border-slate-200/80 bg-white/70 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
                 aria-label="Notifications"
@@ -2031,9 +2057,14 @@ setServiceDirectory(filteredWithUrls);
                 )}
               </button>
 
-            {isNotificationsOpen && (
-              <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            {isNotificationsOpen && typeof document !== "undefined" &&
+              createPortal(
+              <div
+                className="fixed z-[2147483647] w-[min(24rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] overflow-y-auto overflow-x-hidden bg-white rounded-2xl shadow-[0_18px_45px_rgba(15,23,42,0.18)] border border-slate-100 animate-in fade-in slide-in-from-top-2"
+                style={{ top: notificationPopupPosition.top, left: notificationPopupPosition.left }}
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
                   <div>
                     <h4 className="font-bold text-slate-800 text-sm">Notifications</h4>
                     <p className="text-xs text-slate-500">{announcements.length} unread message(s)</p>
@@ -2069,8 +2100,9 @@ setServiceDirectory(filteredWithUrls);
                     ))
                   )}
                 </div>
-              </div>
-              )}
+              </div>,
+              document.body
+            )}
             </div>
 
             {canViewLatestEntry && (
@@ -2090,7 +2122,7 @@ setServiceDirectory(filteredWithUrls);
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[24px] border border-white/20 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 px-5 py-4 text-white shadow-[0_20px_55px_rgba(37,99,235,0.20)] sm:px-6 sm:py-5">
+        <div className="dashboard-welcome relative overflow-hidden rounded-[24px] border border-white/20 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 px-5 py-4 text-white shadow-[0_20px_55px_rgba(37,99,235,0.20)] sm:px-6 sm:py-5">
           <div className="relative z-10 pr-2 sm:pr-52">
             <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-blue-200">{todayDate}</p>
             <h3 className="text-xl font-black tracking-tight sm:text-2xl">Welcome back, {currentUser.username}!</h3>
@@ -2101,7 +2133,7 @@ setServiceDirectory(filteredWithUrls);
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="dashboard-stat-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="group flex h-[78px] items-center justify-between gap-2 rounded-2xl border border-white/80 bg-white/85 p-3 shadow-[0_10px_35px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.11)]">
             <div>
               <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">Today's Entries</p>
@@ -2168,7 +2200,7 @@ setServiceDirectory(filteredWithUrls);
           </div>
         )}
 
-        <div className="rounded-3xl border border-white/80 bg-white/85 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.07)] backdrop-blur-xl">
+        <div className="dashboard-quick-launch rounded-3xl border border-white/80 bg-white/85 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.07)] backdrop-blur-xl">
           <div className="flex items-center justify-between mb-2.5">
             <div>
               <h4 className="font-bold text-slate-800">Quick Launch Tools</h4>
@@ -2278,7 +2310,7 @@ setServiceDirectory(filteredWithUrls);
                     }}
                     target={tool.isInternal ? "_self" : "_blank"}
                     rel="noopener noreferrer"
-                    className={`flex h-24 flex-col justify-between p-3 bg-gradient-to-br ${
+                    className={`dashboard-tool-card flex h-24 flex-col justify-between p-3 bg-gradient-to-br ${
                       tool.bgColor || "from-indigo-500 to-violet-600"
                     } text-white rounded-2xl shadow-[0_12px_30px_rgba(15,23,42,0.14)] hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.18)] transition-all duration-200 ${
                       isCustomizing ? "ring-2 ring-blue-400 ring-offset-2 opacity-95" : ""
@@ -2454,6 +2486,21 @@ setServiceDirectory(filteredWithUrls);
 
                       <button
                         type="button"
+                        onClick={() => setStatusCenterView("aadhaar-name")}
+                        className="group min-h-[104px] rounded-2xl border border-fuchsia-100 bg-gradient-to-br from-fuchsia-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-fuchsia-300 hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-fuchsia-600 text-white shadow-sm">
+                            <FileText size={16} />
+                          </div>
+                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-fuchsia-600" />
+                        </div>
+                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Name Change Check</h5>
+                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">Aadhaar Gazette eligibility check</p>
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() =>
                           window.open(
                             "https://www.passportindia.gov.in/psp/trackApplicationService",
@@ -2501,9 +2548,11 @@ setServiceDirectory(filteredWithUrls);
     <StatusEdistrictTool />
   ) : statusCenterView === "gazette" ? (
     <StatusGazetteTool />
-  ) : statusCenterView === "aadhaar" ? (
-    <AadhaarStatusPage />
-  ) : statusCenterView === "pan" ? (
+) : statusCenterView === "aadhaar" ? (
+  <AadhaarStatusPage />
+) : statusCenterView === "aadhaar-name" ? (
+  <AadhaarNameChangePage />
+) : statusCenterView === "pan" ? (
      <PanStatusPage />
    ) : null}
 </div>

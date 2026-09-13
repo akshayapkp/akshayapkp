@@ -2,6 +2,7 @@
 
 import html2canvas from "html2canvas";
 import React, { useState, useEffect, Suspense, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import QuickReceiptScan from "./components/QuickReceiptScan";
 import { supabase } from '@/lib/supabase';
@@ -339,6 +340,7 @@ function ServiceEntryForm() {
   const [searchService, setSearchService] = useState('');
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [serviceDropdownPosition, setServiceDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
   const [wallet, setWallet] = useState('Select Wallet');
   const [walletChg, setWalletChg] = useState<number>(0);
   const [srvChg, setSrvChg] = useState<number>(0);
@@ -372,6 +374,25 @@ function ServiceEntryForm() {
 
   const hasInProgressItems = items.some(item => item.status === 'In Progress');
   const hasCompletedItems = items.some(item => item.status === 'Completed');
+
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    const syncServiceDropdown = () => {
+      const input = serviceInputRef.current;
+      if (!input) return;
+      const rect = input.getBoundingClientRect();
+      setServiceDropdownPosition({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    };
+
+    syncServiceDropdown();
+    window.addEventListener('resize', syncServiceDropdown);
+    window.addEventListener('scroll', syncServiceDropdown, true);
+    return () => {
+      window.removeEventListener('resize', syncServiceDropdown);
+      window.removeEventListener('scroll', syncServiceDropdown, true);
+    };
+  }, [showDropdown]);
 
   const loadWallets = () => {
     const savedWallets = localStorage.getItem('managedWallets');
@@ -688,9 +709,18 @@ function ServiceEntryForm() {
     try {
       const storedServices = localStorage.getItem('managedServices');
       let managedList = storedServices ? JSON.parse(storedServices) : [];
+      const recentDefaults = JSON.parse(localStorage.getItem('recentServiceBillingDefaults') || '{}');
 
       let updated = false;
       items.forEach(item => {
+        if (item.name) {
+          recentDefaults[item.name.trim().toLowerCase()] = {
+            wallet: item.wallet,
+            walletChg: Number(item.walletChg) || 0,
+            srvChg: Number(item.srvChg) || 0,
+            updatedAt: new Date().toISOString(),
+          };
+        }
         if (!item.name) return;
         const exists = managedList.some((s: any) => s.name.toLowerCase() === item.name.toLowerCase());
         if (!exists) {
@@ -709,6 +739,7 @@ function ServiceEntryForm() {
         }
       });
 
+      localStorage.setItem('recentServiceBillingDefaults', JSON.stringify(recentDefaults));
       if (updated) {
         localStorage.setItem('managedServices', JSON.stringify(managedList));
         loadManagedServices();
@@ -722,22 +753,31 @@ function ServiceEntryForm() {
   const handleSelectService = (srv: ServiceItem) => {
     setSelectedService(srv);
     setSearchService(srv.name);
-    setSrvChg(Number(srv.srvChg));
-    setWalletChg(Number(srv.deptChg));
-    
+
+    let nextWallet = 'Select Wallet';
+    let nextWalletChg = Number(srv.deptChg) || 0;
+    let nextSrvChg = Number(srv.srvChg) || 0;
+
     try {
+      const recentDefaults = JSON.parse(localStorage.getItem('recentServiceBillingDefaults') || '{}');
+      const recent = recentDefaults[String(srv.name).trim().toLowerCase()];
       const storedServices = localStorage.getItem('managedServices');
-      if (storedServices) {
-        const parsed = JSON.parse(storedServices);
-        const found = parsed.find((s: any) => s.name.toLowerCase() === srv.name.toLowerCase());
-        if (found && found.defaultWallet) {
-          setWallet(found.defaultWallet);
-        }
+      const parsed = storedServices ? JSON.parse(storedServices) : [];
+      const found = parsed.find((s: any) => String(s.name || '').trim().toLowerCase() === String(srv.name).trim().toLowerCase());
+      const saved = recent || found;
+
+      if (saved) {
+        nextWallet = String(saved.wallet || saved.defaultWallet || nextWallet);
+        nextWalletChg = Number(saved.walletChg ?? saved.deptFee ?? saved.deptChg ?? nextWalletChg) || 0;
+        nextSrvChg = Number(saved.srvChg ?? saved.srvCharge ?? saved.serviceCharge ?? nextSrvChg) || 0;
       }
     } catch (e) {
-      console.error(e);
+      console.error('Unable to restore service billing defaults', e);
     }
 
+    setWallet(nextWallet);
+    setWalletChg(nextWalletChg);
+    setSrvChg(nextSrvChg);
     setShowDropdown(false);
   };
 
@@ -1587,7 +1627,7 @@ function ServiceEntryForm() {
         </div>
       )}
 
-      <div className={`w-full max-w-none mx-auto space-y-1.5 relative min-h-screen transition-colors duration-300 px-2 py-1.5 lg:px-3 lg:py-1.5 ${activeTheme.bg} ${activeTheme.text}`} ref={customerDropdownRef}>
+      <div data-theme={currentTheme} className={`service-entry-shell premium-enter w-full max-w-none mx-auto space-y-1.5 relative min-h-screen transition-colors duration-300 px-2 py-1.5 lg:px-3 lg:py-1.5 ${activeTheme.bg} ${activeTheme.text}`} ref={customerDropdownRef}>
         {showStaffModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
             <div className="w-full rounded-3xl border border-slate-200/80 bg-white/95 px-5 py-4 shadow-[0_25px_70px_rgba(15,23,42,0.18)] backdrop-blur-xl">
@@ -1671,7 +1711,7 @@ function ServiceEntryForm() {
             onClick={() => setShowPaymentQRModal(false)}
           >
             <div
-              className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.2)] backdrop-blur-xl"
+              className="w-full max-w-sm rounded-3xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_30px_80px_rgba(15,23,42,0.2)] backdrop-blur-xl sm:p-5"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1691,7 +1731,7 @@ function ServiceEntryForm() {
                   <img
                     src={paymentQrImageUrl}
                     alt="GPay QR Code"
-                    className="w-56 h-56 rounded-xl border bg-white p-2 shadow object-contain"
+                    className="size-48 rounded-xl border bg-white p-2 shadow object-contain sm:size-52"
                     crossOrigin="anonymous"
                   />
                   <div className="mt-3 text-center">
@@ -1757,7 +1797,7 @@ function ServiceEntryForm() {
             onClick={() => setShowQRModal(false)}
           >
             <div
-              className="w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.2)] backdrop-blur-xl"
+              className="w-full max-w-sm rounded-3xl border border-slate-200/80 bg-white/95 p-4 shadow-[0_30px_80px_rgba(15,23,42,0.2)] backdrop-blur-xl sm:p-5"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1777,7 +1817,7 @@ function ServiceEntryForm() {
                   <img
                     src={activeModalQrImageUrl}
                     alt="QR Code"
-                    className="w-56 h-56 rounded-xl border bg-white p-2 shadow object-contain"
+                    className="size-48 rounded-xl border bg-white p-2 shadow object-contain sm:size-52"
                     crossOrigin="anonymous"
                   />
                   {isModalGPayQr && (
@@ -1890,7 +1930,7 @@ function ServiceEntryForm() {
             </div>
 
             <div className="shrink-0">
-              <QuickReceiptScan />
+              <QuickReceiptScan theme={currentTheme as "slate" | "green" | "blue" | "purple" | "amber" | "rose"} />
             </div>
 
             <button
@@ -2026,9 +2066,13 @@ function ServiceEntryForm() {
                   onClick={() => setShowDropdown(true)}
                 />
               </div>
-              {showDropdown && (
-                <div className="absolute left-0 top-full z-30 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl">
-                  {services
+  {showDropdown && typeof document !== 'undefined' && createPortal(
+  <div
+    className="fixed z-[2147483647] max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.22)]"
+    style={{ top: serviceDropdownPosition.top, left: serviceDropdownPosition.left, width: serviceDropdownPosition.width }}
+    onMouseDown={(event) => event.stopPropagation()}
+  >
+  {services
                     .filter(s => s.name.toLowerCase().includes(searchService.toLowerCase()))
                     .map(srv => (
                       <div
@@ -2042,11 +2086,12 @@ function ServiceEntryForm() {
                         </p>
                       </div>
                     ))}
-                </div>
-              )}
-            </div>
-
-            <div className="md:col-span-1 lg:col-span-2">
+  </div>,
+  document.body
+  )}
+  </div>
+  
+  <div className="md:col-span-1 lg:col-span-2">
               <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Wallet</label>
               <select
                 className="h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none focus:border-cyan-400"
@@ -2229,7 +2274,7 @@ function ServiceEntryForm() {
                   <button
                     type="button"
                     onClick={() => setShowPaymentQRModal(true)}
-                    className="rounded-md border border-indigo-200 bg-indigo-50 p-1.5 text-indigo-600 transition hover:bg-indigo-100"
+                    className="rounded-md border border-indigo-300 bg-indigo-100 p-1.5 text-indigo-700 transition hover:bg-indigo-200 dark:border-indigo-400/60 dark:bg-indigo-400/20 dark:text-indigo-100 dark:hover:bg-indigo-400/30"
                     title="Generate QR for entered amount"
                   >
                     <QrCode size={14} />
@@ -2344,21 +2389,21 @@ function ServiceEntryForm() {
 
           <button
             onClick={() => { setIsModalGPayQr(true); setShowQRModal(true); }}
-            className="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-2 text-[11px] font-black text-cyan-700 shadow-sm transition hover:bg-cyan-100"
+            className="rounded-lg border border-cyan-300 bg-cyan-100 px-4 py-2 text-[11px] font-black text-cyan-800 shadow-sm transition hover:bg-cyan-200 dark:border-cyan-400/60 dark:bg-cyan-400/20 dark:text-cyan-100 dark:hover:bg-cyan-400/30"
           >
             <QrCode size={13} className="mr-1 inline" /> QR
           </button>
 
           <button
             onClick={handleShare}
-            className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-[11px] font-black text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+            className="rounded-lg border border-emerald-300 bg-emerald-100 px-4 py-2 text-[11px] font-black text-emerald-800 shadow-sm transition hover:bg-emerald-200 dark:border-emerald-400/60 dark:bg-emerald-400/20 dark:text-emerald-100 dark:hover:bg-emerald-400/30"
           >
             <Share2 size={13} className="mr-1 inline" /> Share
           </button>
 
           <button
             onClick={handleClearForm}
-            className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-[11px] font-black text-rose-600 shadow-sm transition hover:bg-rose-100"
+            className="rounded-lg border border-rose-300 bg-rose-100 px-4 py-2 text-[11px] font-black text-rose-800 shadow-sm transition hover:bg-rose-200 dark:border-rose-400/60 dark:bg-rose-400/20 dark:text-rose-100 dark:hover:bg-rose-400/30"
           >
             <Trash2 size={13} className="mr-1 inline" /> Clear <span className="rounded bg-rose-100 px-1 text-[8px]">F10</span>
           </button>

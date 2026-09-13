@@ -29,6 +29,12 @@ import {
   Menu,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import {
+  clearLoginSession,
+  getMillisecondsUntilNextMidnight,
+  getLocalDateKey,
+  isSessionFromToday,
+} from "@/lib/session-date";
 
 
 const APP_VERSION = "1.0.9";
@@ -64,18 +70,18 @@ const allMenuItems: MenuItem[] = [
     permissionKey: "Service Entry",
   },
   {
+    name: "Billed Services",
+    path: "/dashboard/billed-services",
+    icon: FileSpreadsheet,
+    section: "Services",
+    permissionKey: "Billed Services",
+  },
+  {
     name: "Saved Bills",
     path: "/dashboard/saved-bills",
     icon: Receipt,
     section: "Services",
     permissionKey: "Saved Bills",
-  },
-  {
-    name: "Service Management",
-    path: "/dashboard/service-management",
-    icon: Settings,
-    section: "Services",
-    permissionKey: "Service Management",
   },
   {
   name: "Work Status",
@@ -90,13 +96,6 @@ const allMenuItems: MenuItem[] = [
     icon: Wallet,
     section: "Wallets",
     permissionKey: "Wallet Management",
-  },
-  {
-    name: "Billed Services",
-    path: "/dashboard/billed-services",
-    icon: FileSpreadsheet,
-    section: "Finance",
-    permissionKey: "Billed Services",
   },
   {
     name: "Transaction History",
@@ -120,8 +119,15 @@ const allMenuItems: MenuItem[] = [
     permissionKey: "Credit Details",
   },
   {
-    name: "Staff Management",
-    path: "/dashboard/staff-management",
+    name: "Service Management",
+    path: "/dashboard/service-management",
+    icon: Settings,
+    section: "System",
+    permissionKey: "Service Management",
+  },
+  {
+  name: "Staff Management",
+  path: "/dashboard/staff-management",
     icon: Users,
     section: "System",
     permissionKey: "Staff Management",
@@ -198,6 +204,23 @@ export default function DashboardLayout({
 
   useEffect(() => {
     let cancelled = false;
+
+    const expireSession = () => {
+      clearLoginSession();
+      router.replace("/login");
+    };
+
+    if (!isSessionFromToday()) {
+      expireSession();
+      return;
+    }
+
+    const midnightTimer = window.setTimeout(expireSession, getMillisecondsUntilNextMidnight());
+    const handleCrossTabLogout = (event: StorageEvent) => {
+      if (event.key === "loggedInUser" && !event.newValue) router.replace("/login");
+    };
+
+    window.addEventListener("storage", handleCrossTabLogout);
 
     const loadLayout = async () => {
       // Theme Loader from LocalStorage
@@ -315,6 +338,8 @@ export default function DashboardLayout({
 
     return () => {
       cancelled = true;
+      window.clearTimeout(midnightTimer);
+      window.removeEventListener("storage", handleCrossTabLogout);
     };
   }, [pathname, router]);
 
@@ -473,7 +498,7 @@ export default function DashboardLayout({
         onMouseEnter={openSidebar}
       />
 
-      <div className="dashboard-surface relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
+      <div className="dashboard-surface dashboard-depth relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
           onMouseEnter={openSidebar}
           onMouseLeave={closeSidebar}
@@ -488,7 +513,7 @@ export default function DashboardLayout({
             shadow-[0_24px_80px_rgba(15,23,42,0.28)]
             backdrop-blur-2xl
             transition-transform duration-300
-            md:relative md:inset-auto md:left-auto md:z-auto md:h-full md:min-h-screen md:shrink-0 md:overflow-hidden md:rounded-none md:border-0 md:p-0 md:shadow-none md:backdrop-blur-none md:bg-transparent md:dark:bg-transparent md:transition-[width] md:duration-300
+            md:relative md:inset-auto md:left-auto md:z-auto md:h-full md:min-h-screen md:shrink-0 md:overflow-hidden md:rounded-none md:border-0 md:p-0 md:shadow-[8px_0_30px_rgba(25,70,140,0.08)] md:backdrop-blur-xl             md:bg-[#f8fbff]/95 md:dark:bg-[#0d1b34]/95 md:transition-[width] md:duration-300 dashboard-sidebar-shell
             ${
               sidebarOpen
                 ? "translate-x-0 md:w-[296px]"
@@ -497,14 +522,19 @@ export default function DashboardLayout({
           `}
         >
           <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="mb-5 flex shrink-0 items-start justify-between px-2">
-              <div>
-                <h1 className="text-xl font-black tracking-tight text-white">
-                  Smart Akshaya
-                </h1>
-                <p className="text-xs text-slate-400">
-                  Akshaya Pookiparamba
-                </p>
+            <div className="dashboard-sidebar-brand mb-5 flex shrink-0 items-start justify-between px-2">
+              <div className="flex items-center gap-3">
+                <div className="dashboard-sidebar-logo flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-cyan-200/60 bg-white shadow-lg shadow-cyan-500/20">
+                  <img src="/akshaya-logo.png" alt="Akshaya Pookiparamba" className="h-full w-full object-contain p-1" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-black tracking-tight text-white md:text-slate-900 md:dark:text-white">
+                    Smart Akshaya
+                  </h1>
+                  <p className="text-xs text-slate-400">
+                    Akshaya Pookiparamba
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center gap-1">
@@ -545,7 +575,7 @@ export default function DashboardLayout({
 
                 return (
                   <div key={sectionName}>
-                    <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                    <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 md:text-slate-600 md:dark:text-slate-400">
                       {sectionName}
                     </p>
 
@@ -560,10 +590,10 @@ export default function DashboardLayout({
                               router.push(item.path);
                               setSidebarOpen(false);
                             }}
-                            className={`group flex cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                            className={`dashboard-nav-item group flex cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
                               isActive(item.path)
                                 ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-900/25"
-                                : "text-slate-400 hover:bg-white/[0.07] hover:text-white hover:translate-x-0.5"
+                                : "text-slate-600 hover:bg-blue-100/70 hover:text-blue-800 hover:translate-x-0.5 md:dark:text-slate-300 md:dark:hover:bg-white/[0.07] md:dark:hover:text-white"
                             }`}
                           >
                             <IconComponent size={18} />
@@ -585,20 +615,22 @@ export default function DashboardLayout({
               </div>
 
               <div>
-                <p className="text-sm font-semibold text-white">
-                  {currentUser.username}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {displayRole}
-                </p>
+  <p className="max-w-[9rem] truncate text-sm font-semibold text-slate-800 dark:text-white">
+  {currentUser.username}
+  </p>
+  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+  {displayRole}
+  </p>
               </div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="cursor-pointer rounded-xl p-2 text-slate-500 transition-all hover:bg-rose-500/10 hover:text-rose-400"
-            >
-              <LogOut size={18} />
+  aria-label={`Log out ${currentUser.username}`}
+  title="Log out"
+  className="cursor-pointer rounded-xl p-2 text-slate-600 transition-all hover:bg-rose-500/10 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400"
+  >
+  <LogOut size={18} />
             </button>
           </div>
         </aside>
