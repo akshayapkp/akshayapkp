@@ -812,6 +812,37 @@ body {
   }
 }
 
+/* Reference-inspired dashboard visual system */
+.dashboard-page-frame { perspective: 1400px; }
+.dashboard-topbar { min-height: 54px; animation: dashboard-content-in .65s cubic-bezier(.2,.8,.2,1) both; }
+.dashboard-welcome { min-height: 142px; background-image: linear-gradient(100deg, rgba(12,74,190,.98) 0%, rgba(37,99,235,.9) 52%, rgba(79,70,229,.78) 100%), url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%2013%2C%202026%2C%2010_06_59%20PM-oaXTU0VazrqLY8FXkuNaXpx4yDEvQ5.png'); background-size: cover; background-position: center 42%; isolation: isolate; animation: dashboard-content-in .75s .08s cubic-bezier(.2,.8,.2,1) both; }
+.dashboard-welcome::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 75% 25%, rgba(255,255,255,.23), transparent 26%), linear-gradient(90deg, rgba(7,27,76,.2), transparent 60%); z-index: -1; }
+.dashboard-welcome::after { content: ""; position: absolute; width: 420px; height: 140px; right: -80px; bottom: -90px; border-radius: 50%; background: rgba(129,140,248,.35); filter: blur(4px); transform: rotate(-8deg); }
+.dashboard-stat-grid { perspective: 1200px; }
+.dashboard-stat-grid > * { animation: dashboard-card-in .65s cubic-bezier(.2,.8,.2,1) both; transform-style: preserve-3d; }
+.dashboard-stat-grid > *:nth-child(2) { animation-delay: 70ms; }
+.dashboard-stat-grid > *:nth-child(3) { animation-delay: 140ms; }
+.dashboard-stat-grid > *:nth-child(4) { animation-delay: 210ms; }
+.dashboard-stat-grid > *:hover { transform: translateY(-7px) rotateX(2deg) rotateY(-2deg); box-shadow: 0 22px 48px rgba(37,99,235,.16); }
+.dashboard-quick-launch { animation: dashboard-content-in .75s .2s cubic-bezier(.2,.8,.2,1) both; }
+.dashboard-tool-card { position: relative; overflow: hidden; transform-style: preserve-3d; }
+.dashboard-tool-card::before { content: ""; position: absolute; inset: -40% 50% auto -30%; height: 180%; transform: rotate(24deg) translateX(-110%); background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent); transition: transform .65s ease; pointer-events: none; }
+.dashboard-tool-card:hover::before { transform: rotate(24deg) translateX(220%); }
+.dashboard-tool-card:hover { transform: translateY(-8px) rotateX(3deg) rotateY(-3deg) scale(1.015); box-shadow: 0 22px 42px rgba(37,99,235,.22); }
+@keyframes dashboard-content-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dashboard-card-in { from { opacity: 0; transform: translateY(18px) rotateX(-4deg); } to { opacity: 1; transform: translateY(0) rotateX(0); } }
+@media (min-width: 768px) {
+  .dashboard-sidebar-shell { background: linear-gradient(180deg, #112d63 0%, #081b41 56%, #061432 100%) !important; color: #dbeafe; box-shadow: 12px 0 40px rgba(7,29,73,.16) !important; }
+  .dashboard-sidebar-shell .dashboard-sidebar-brand h1 { color: #fff !important; }
+  .dashboard-sidebar-shell .dashboard-nav-item { color: #c7d8f4; }
+  .dashboard-sidebar-shell .dashboard-nav-item:hover { background: rgba(96,165,250,.14); color: #fff; }
+  .dashboard-sidebar-shell .dashboard-nav-item[class*="from-blue"] { background: linear-gradient(100deg, #2475f5, #6444f5) !important; color: #fff !important; }
+  .dashboard-sidebar-shell .dashboard-sidebar-brand { padding-top: 20px; display: block; text-align: center; }
+  .dashboard-sidebar-shell .dashboard-sidebar-brand > div:first-child { display: block; }
+  .dashboard-sidebar-shell .dashboard-sidebar-logo { width: 120px; height: 94px; margin: 0 auto 8px; border-radius: 22px; }
+  .dashboard-sidebar-shell .dashboard-sidebar-brand .text-xl { font-size: 1.18rem; }
+}
+
 /* Smart Akshaya dashboard shell polish */
 .dashboard-depth::before,
 .dashboard-depth::after {
