@@ -650,9 +650,41 @@ body {
   animation: premium-float 9s ease-in-out infinite;
 }
 
-.login-motion-card {
+  .login-motion-card {
   animation: premium-rise 700ms cubic-bezier(.2,.8,.2,1) both;
-}
+  transform-style: preserve-3d;
+  will-change: transform;
+  }
+
+  .login-motion-card::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(125, 211, 252, .12);
+  transform: translateZ(18px);
+  opacity: .7;
+  }
+
+  .login-motion-card:hover {
+  transform: perspective(1400px) rotateX(1.2deg) rotateY(-1.6deg) translateY(-7px) scale(1.006);
+  box-shadow: 0 38px 100px rgba(0,0,0,.52), 0 0 42px rgba(34,211,238,.12), inset 0 1px 0 rgba(255,255,255,.12) !important;
+  }
+
+  .login-motion-card form > * {
+  animation: login-field-rise 600ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .login-motion-card form > *:nth-child(1) { animation-delay: 120ms; }
+  .login-motion-card form > *:nth-child(2) { animation-delay: 190ms; }
+  .login-motion-card form > *:nth-child(3) { animation-delay: 260ms; }
+  .login-motion-card form > *:nth-child(4) { animation-delay: 330ms; }
+
+  @keyframes login-field-rise {
+  from { opacity: 0; transform: translate3d(0, 16px, 24px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
 
 .login-glass-panel {
   overflow: hidden;
@@ -699,10 +731,24 @@ body {
   animation-direction: reverse;
 }
 
-.login-brand-logo {
+  .login-brand-logo {
   animation: premium-float 6s ease-in-out infinite;
   transition: transform 350ms ease, filter 350ms ease;
-}
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 12px 22px rgba(15,23,42,.28));
+  }
+
+  .login-logo-stage::before,
+  .login-logo-stage::after {
+  animation: login-orbit-pulse 5s ease-in-out infinite;
+  }
+
+  .login-logo-stage::after { animation-delay: -2.5s; }
+
+  @keyframes login-orbit-pulse {
+  0%, 100% { opacity: .35; transform: scale(.92) rotate(0deg); }
+  50% { opacity: .85; transform: scale(1.08) rotate(8deg); }
+  }
 
 .login-logo-stage:hover .login-brand-logo {
   transform: translateY(-5px) scale(1.045) rotate(-1deg);
@@ -727,6 +773,8 @@ body {
   .login-logo-stage,
   .login-logo-stage::before,
   .login-logo-stage::after,
+  .login-motion-card::after,
+  .login-motion-card form > *,
   .login-glass-panel::before,
   .login-service-center::after,
   .login-service-rail,
