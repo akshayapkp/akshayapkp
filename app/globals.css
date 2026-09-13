@@ -779,7 +779,11 @@ body {
   .login-service-center::after,
   .login-service-rail,
   .login-rail-status span,
-  .dashboard-content > * {
+  .dashboard-content > *,
+  .dashboard-sidebar-brand,
+  .dashboard-sidebar-logo,
+  .dashboard-depth::before,
+  .dashboard-depth::after {
     animation: none !important;
   }
   .premium-tilt:hover { transform: none; }
@@ -807,6 +811,51 @@ body {
     width: 100% !important;
   }
 }
+
+/* Smart Akshaya dashboard shell polish */
+.dashboard-depth::before,
+.dashboard-depth::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(18px);
+  opacity: .5;
+  animation: dashboard-ambient 12s ease-in-out infinite alternate;
+}
+.dashboard-depth::before { width: 280px; height: 280px; right: 9%; top: -90px; background: rgba(34,211,238,.12); }
+.dashboard-depth::after { width: 240px; height: 240px; left: 34%; bottom: -100px; background: rgba(99,102,241,.1); animation-delay: -4s; }
+.dashboard-sidebar-shell {
+  position: relative;
+  isolation: isolate;
+}
+.dashboard-sidebar-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 15% 5%, rgba(34,211,238,.16), transparent 28%), linear-gradient(165deg, rgba(255,255,255,.12), transparent 35%);
+  opacity: .9;
+}
+.dashboard-sidebar-shell > * { position: relative; z-index: 1; }
+.dashboard-sidebar-brand { animation: dashboard-brand-in .7s cubic-bezier(.2,.8,.2,1) both; }
+.dashboard-sidebar-logo { animation: dashboard-logo-float 5s ease-in-out infinite; transform-style: preserve-3d; }
+.dashboard-nav-item { position: relative; overflow: hidden; }
+.dashboard-nav-item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  transition: transform .55s ease;
+}
+.dashboard-nav-item:hover::after { transform: translateX(120%) skewX(-18deg); }
+.dashboard-nav-item svg { transition: transform .25s ease, filter .25s ease; }
+.dashboard-nav-item:hover svg { transform: translateZ(8px) scale(1.12) rotate(-4deg); filter: drop-shadow(0 4px 8px rgba(14,165,233,.25)); }
+.dashboard-sidebar-shell .dashboard-nav-item[class*="from-blue"] { box-shadow: 0 12px 26px rgba(14,116,214,.24), inset 0 1px 0 rgba(255,255,255,.18); }
+@keyframes dashboard-brand-in { from { opacity: 0; transform: translateY(-14px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes dashboard-ambient { from { transform: translate3d(-12px, 0, 0) scale(.9); } to { transform: translate3d(18px, 24px, 0) scale(1.12); } }
+@keyframes dashboard-logo-float { 0%,100% { transform: translateY(0) rotateY(0deg); } 50% { transform: translateY(-4px) rotateY(8deg); } }
 
 /* =========================================================
    DARK MODE — HIGH-CONTRAST PRODUCT SURFACES
