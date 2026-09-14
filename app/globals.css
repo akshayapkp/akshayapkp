@@ -888,6 +888,42 @@ body {
 @keyframes dashboard-ambient { from { transform: translate3d(-12px, 0, 0) scale(.9); } to { transform: translate3d(18px, 24px, 0) scale(1.12); } }
 @keyframes dashboard-logo-float { 0%,100% { transform: translateY(0) rotateY(0deg); } 50% { transform: translateY(-4px) rotateY(8deg); } }
 
+/* Final reference match: keep dashboard content, update visual shell only */
+@media (min-width: 768px) {
+  .dashboard-depth {
+    background-color: #f4f8ff !important;
+    background-image: linear-gradient(rgba(73,128,219,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(73,128,219,.08) 1px, transparent 1px) !important;
+    background-size: 22px 22px !important;
+  }
+  .dashboard-sidebar-shell {
+    background: #f8fbff !important;
+    color: #334155 !important;
+    box-shadow: 8px 0 30px rgba(25,70,140,.08) !important;
+  }
+  .dashboard-sidebar-shell::before { background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(231,242,255,.84)) !important; }
+  .dashboard-sidebar-shell .dashboard-sidebar-brand { text-align: left; display: flex; padding: 18px 14px 8px; }
+  .dashboard-sidebar-shell .dashboard-sidebar-brand > div:first-child { display: flex; text-align: left; }
+  .dashboard-sidebar-shell .dashboard-sidebar-logo { width: 48px; height: 48px; margin: 0; border-radius: 15px; }
+  .dashboard-sidebar-shell .dashboard-sidebar-brand h1 { color: #10234c !important; }
+  .dashboard-sidebar-shell .dashboard-sidebar-brand p { color: #7890b7 !important; }
+  .dashboard-sidebar-shell .dashboard-nav-item { color: #465a7a !important; border-radius: 13px; }
+  .dashboard-sidebar-shell .dashboard-nav-item:hover { background: #e6f1ff !important; color: #1559c6 !important; }
+  .dashboard-sidebar-shell .dashboard-nav-item[class*="from-blue"],
+  .dashboard-sidebar-shell .dashboard-nav-item[class*="bg-gradient"] { background: linear-gradient(100deg, #1378ff, #07b7d4) !important; color: white !important; box-shadow: 0 10px 22px rgba(14,139,221,.28) !important; }
+  .dashboard-sidebar-shell .dashboard-nav-item[class*="from-blue"]::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); }
+  .dashboard-sidebar-shell nav > div > p { color: #7b8ca8 !important; border-bottom: 1px solid #e4ecf7; padding-bottom: 7px; }
+  .dashboard-sidebar-shell .border-t { border-color: #dfe9f5 !important; }
+  .dashboard-sidebar-shell .text-slate-800 { color: #18315d !important; }
+}
+.dashboard-topbar { border-color: #e1ebf8 !important; box-shadow: 0 8px 22px rgba(38,76,132,.07) !important; }
+.dashboard-welcome { min-height: 90px; background-image: linear-gradient(100deg, rgba(7,27,76,.98), rgba(31,45,117,.95)), url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%2013%2C%202026%2C%2010_06_59%20PM-oaXTU0VazrqLY8FXkuNaXpx4yDEvQ5.png') !important; background-position: center !important; background-size: cover !important; }
+.dashboard-welcome::before { z-index: 0 !important; background: linear-gradient(90deg, rgba(4,18,55,.15), rgba(32,64,180,.25)) !important; }
+.dashboard-welcome > * { position: relative; z-index: 2; }
+.dashboard-stat-grid > * { border-color: #e0eafa !important; background: rgba(255,255,255,.92) !important; box-shadow: 0 8px 22px rgba(43,79,134,.08) !important; }
+.dashboard-quick-launch { border-color: #e1eaf7 !important; background: rgba(255,255,255,.9) !important; box-shadow: 0 14px 34px rgba(43,79,134,.09) !important; }
+.dashboard-tool-card { border-radius: 15px !important; min-height: 96px; box-shadow: 0 10px 22px rgba(24,58,113,.16) !important; }
+.dashboard-tool-card:hover { box-shadow: 0 18px 32px rgba(24,58,113,.24) !important; }
+
 /* =========================================================
    DARK MODE — HIGH-CONTRAST PRODUCT SURFACES
    Keep every page readable, including legacy tool screens.
