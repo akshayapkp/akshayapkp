@@ -96,7 +96,7 @@ export default function SalarySection({
     const seen = new Set<string>();
 
     billedServiceRows.forEach((item: any, index: number) => {
-      const rawDate = item.dateTime || item.date || item.createdAt || item.timestamp;
+      const rawDate = item.dateTime || item.timestamp || item.date || item.createdAt;
       const date = new Date(rawDate);
       if (
         Number.isNaN(date.getTime()) ||
@@ -108,9 +108,17 @@ export default function SalarySection({
       if (!serviceName) return;
 
       const staffName = String(item.staffName || item.staff || "Admin User").trim();
-      const billId = String(item.billId || item.billID || item.invoiceId || item.id || `row-${index}`).trim();
 
-      // Use the exact same service-line identity as Staff Performance → Billed Services.
+      // Salary Summary must use the same staff scope as Staff Performance → Billed Services.
+      const staffMatches =
+        selectedStaff === "All" ||
+        staffName.toLowerCase() === selectedStaff.toLowerCase();
+      if (!staffMatches) return;
+
+      const billId = String(
+        item.billId || item.billID || item.invoiceId || item.id || `row-${index}`
+      ).trim();
+
       const signature = [
         billId,
         serviceName.toLowerCase(),
@@ -125,15 +133,19 @@ export default function SalarySection({
       monthRows.push({
         ...item,
         quantity: Number(item.qty ?? item.quantity ?? 1) || 1,
-        departmentFee: Number(item.walletChg ?? item.deptChg ?? item.deptFee ?? item.departmentFee ?? 0) || 0,
-        serviceCharge: Number(item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0) || 0,
+        departmentFee: Number(
+          item.walletChg ?? item.deptChg ?? item.deptFee ?? item.departmentFee ?? 0
+        ) || 0,
+        serviceCharge: Number(
+          item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0
+        ) || 0,
         totalAmount: Number(item.totalAmount ?? item.total ?? 0) || 0,
         staffName,
       });
     });
 
     return monthRows;
-  }, [billedServiceRows, selectedMonth, selectedYear]);
+  }, [billedServiceRows, selectedStaff, selectedMonth, selectedYear]);
 
   const commissionByService = useMemo(() => {
     try {
