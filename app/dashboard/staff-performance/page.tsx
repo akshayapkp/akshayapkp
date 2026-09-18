@@ -629,6 +629,14 @@ export default function StaffPerformancePage() {
   }
 />
           )}
+
+          {activeTab === "report" && (
+            <StaffPerformanceReport
+              records={staffRecords}
+              attendanceRecords={attendanceRecords}
+              selectedStaff={selectedStaff}
+            />
+          )}
         </div>
       </div>
 
