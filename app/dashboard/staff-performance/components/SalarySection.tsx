@@ -96,14 +96,10 @@ export default function SalarySection({
       billedServiceRows.filter((row: any) => {
         const raw = row.dateTime || row.date || row.createdAt || row.timestamp;
         const date = new Date(raw);
-        const staffName = String(row.staffName || row.staff || "").trim();
-
         return (
           !Number.isNaN(date.getTime()) &&
           date.getMonth() === selectedMonth &&
-          date.getFullYear() === selectedYear &&
-          (selectedStaff === "All" ||
-            staffName.toLowerCase() === selectedStaff.toLowerCase())
+          date.getFullYear() === selectedYear
         );
       }),
     [billedServiceRows, selectedStaff, selectedMonth, selectedYear]
