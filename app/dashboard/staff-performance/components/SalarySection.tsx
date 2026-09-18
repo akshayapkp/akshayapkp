@@ -91,19 +91,49 @@ export default function SalarySection({
     [records, selectedStaff, selectedMonth, selectedYear]
   );
 
-  const monthlyBilledRows = useMemo(
-    () =>
-      billedServiceRows.filter((row: any) => {
-        const raw = row.dateTime || row.date || row.createdAt || row.timestamp;
-        const date = new Date(raw);
-        return (
-          !Number.isNaN(date.getTime()) &&
-          date.getMonth() === selectedMonth &&
-          date.getFullYear() === selectedYear
-        );
-      }),
-    [billedServiceRows, selectedStaff, selectedMonth, selectedYear]
-  );
+  const monthlyBilledRows = useMemo(() => {
+    const monthRows: any[] = [];
+    const seen = new Set<string>();
+
+    billedServiceRows.forEach((item: any, index: number) => {
+      const rawDate = item.dateTime || item.date || item.createdAt || item.timestamp;
+      const date = new Date(rawDate);
+      if (
+        Number.isNaN(date.getTime()) ||
+        date.getMonth() !== selectedMonth ||
+        date.getFullYear() !== selectedYear
+      ) return;
+
+      const serviceName = String(item.serviceName || item.service || item.name || "").trim();
+      if (!serviceName) return;
+
+      const staffName = String(item.staffName || item.staff || "Admin User").trim();
+      const billId = String(item.billId || item.billID || item.invoiceId || item.id || `row-${index}`).trim();
+
+      // Use the exact same service-line identity as Staff Performance → Billed Services.
+      const signature = [
+        billId,
+        serviceName.toLowerCase(),
+        Number(item.qty ?? item.quantity ?? 1),
+        Number(item.totalAmount ?? item.total ?? 0),
+        staffName.toLowerCase(),
+      ].join("|");
+
+      if (seen.has(signature)) return;
+      seen.add(signature);
+
+      monthRows.push({
+        ...item,
+        quantity: Number(item.qty ?? item.quantity ?? 1) || 1,
+        departmentFee: Number(item.walletChg ?? item.deptChg ?? item.deptFee ?? item.departmentFee ?? 0) || 0,
+        serviceCharge: Number(item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0) || 0,
+        totalAmount: Number(item.totalAmount ?? item.total ?? 0) || 0,
+        staffName,
+      });
+    });
+
+    return monthRows;
+  }, [billedServiceRows, selectedMonth, selectedYear]);
 
   const commissionByService = useMemo(() => {
     try {
@@ -133,132 +163,20 @@ export default function SalarySection({
         const qty = Number(row.qty ?? row.quantity ?? 1) || 1;
         return sum + commissionRate * qty;
       }, 0)
-    : monthlyRecords.reduce(
-        (sum, record) => sum + Number(record.commission || 0),
-        0
-      );
+    : monthlyRecords.reduce((sum, record) => sum + Number(record.commission || 0), 0);
 
   const totalDepartmentFee = useBilledData
-    ? monthlyBilledRows.reduce(
-        (sum, row) =>
-          sum +
-          (Number(row.walletChg ?? row.deptChg ?? row.deptFee ?? row.departmentFee ?? 0) || 0) *
-            (Number(row.qty ?? row.quantity ?? 1) || 1),
-        0
-      )
-    : monthlyRecords.reduce(
-        (sum, record) => sum + Number(record.departmentFee || 0),
-        0
-      );
+    ? monthlyBilledRows.reduce((sum, row: any) => sum + Number(row.departmentFee || 0), 0)
+    : monthlyRecords.reduce((sum, record) => sum + Number(record.departmentFee || 0), 0);
 
   const totalServiceCharge = useBilledData
-    ? monthlyBilledRows.reduce(
-        (sum, row) =>
-          sum +
-          (Number(row.srvChg ?? row.srvCharge ?? row.serviceCharge ?? 0) || 0) *
-            (Number(row.qty ?? row.quantity ?? 1) || 1),
-        0
-      )
-    : monthlyRecords.reduce(
-        (sum, record) => sum + Number(record.serviceCharge || 0),
-        0
-      );
+    ? monthlyBilledRows.reduce((sum, row: any) => sum + Number(row.serviceCharge || 0), 0)
+    : monthlyRecords.reduce((sum, record) => sum + Number(record.serviceCharge || 0), 0);
 
-  // Match the Billed Services screen: Total Items means billed line items, not quantity.
+  // Match Billed Services exactly: one displayed service row = one item.
   const totalServices = useBilledData
     ? monthlyBilledRows.length
-    : monthlyRecords.reduce(
-        (sum, record) => sum + Number(record.totalServices || 0),
-        0
-      );
-
-  const latestSalary =
-    salaryHistory.length > 0 ? salaryHistory[0] : null;
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadStaffPaymentInfo = async () => {
-      if (!selectedStaff || selectedStaff === "All") {
-        setStaffPaymentInfo(null);
-        return;
-      }
-
-      setStaffLoading(true);
-
-      const { data, error } = await supabase
-        .from("staff")
-        .select("name, salary, upi_id")
-        .ilike("name", selectedStaff)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      if (error) {
-        console.error("Failed to load staff payment details:", error);
-        setStaffPaymentInfo(null);
-      } else if (data) {
-        setStaffPaymentInfo({
-          name: String(data.name ?? selectedStaff),
-          salary: Number(data.salary ?? 0),
-          upiId: String(data.upi_id ?? "").trim(),
-        });
-      } else {
-        setStaffPaymentInfo(null);
-      }
-
-      setStaffLoading(false);
-    };
-
-    loadStaffPaymentInfo();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedStaff]);
-
-  const currentMonthPaidAmount =
-    latestSalary &&
-    latestSalary.paymentDate &&
-    (() => {
-      const paymentDate = new Date(latestSalary.paymentDate);
-      return (
-        paymentDate.getMonth() === selectedMonth &&
-        paymentDate.getFullYear() === selectedYear
-      );
-    })()
-      ? Number(latestSalary.amount || 0)
-      : 0;
-
-  const salaryAmount =
-    currentMonthPaidAmount > 0
-      ? currentMonthPaidAmount
-      : Number(staffPaymentInfo?.salary || 0);
-
-  const upiId = staffPaymentInfo?.upiId || "";
-
-  const upiPaymentUrl = useMemo(() => {
-    if (!upiId || salaryAmount <= 0 || selectedStaff === "All") {
-      return "";
-    }
-
-    const params = new URLSearchParams({
-      pa: upiId,
-      pn: staffPaymentInfo?.name || selectedStaff,
-      am: salaryAmount.toFixed(2),
-      cu: "INR",
-    });
-
-    return `upi://pay?${params.toString()}`;
-  }, [upiId, salaryAmount, selectedStaff, staffPaymentInfo?.name]);
-
-  const qrImageUrl = useMemo(() => {
-    if (!upiPaymentUrl) return "";
-
-    return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=${encodeURIComponent(
-      upiPaymentUrl
-    )}`;
-  }, [upiPaymentUrl]);
+    : monthlyRecords.reduce((sum, record) => sum + Number(record.totalServices || 0), 0);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
