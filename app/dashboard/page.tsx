@@ -26,6 +26,7 @@ import {
   ArrowUpRight,
   Bell,
   History,
+  ReceiptText,
   Megaphone,
   ChevronDown,
   ChevronUp,
@@ -2131,7 +2132,7 @@ setServiceDirectory(filteredWithUrls);
                 aria-label="Latest billed entry"
                 title="Latest billed entry"
               >
-                <History size={19} strokeWidth={2.2} />
+                <ReceiptText className="!block !text-slate-700" size={20} strokeWidth={2.4} aria-hidden="true" />
               </button>
             </div>
             )}
