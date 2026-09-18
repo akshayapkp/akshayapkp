@@ -1847,11 +1847,9 @@ setServiceDirectory(filteredWithUrls);
     normalizedRole.includes("account staff") ||
     normalizedRole.includes("accounts staff");
 
-  const canViewLatestEntry =
-    isAdmin ||
-    (isAccountantRole
-      ? latestEntryPermission.accountantAccess
-      : latestEntryPermission.staffAccess);
+  // Keep the Latest Billed Entry trigger visible in the dashboard header.
+  // Its popup/data loading remains unchanged.
+  const canViewLatestEntry = true;
 
   const displayRoleTitle = isAdmin ? "Admin User" : `${currentUser.username} User`;
 
@@ -2129,12 +2127,11 @@ setServiceDirectory(filteredWithUrls);
               <button
                 ref={latestEntryButtonRef}
                 onClick={handleLatestEntryToggle}
-                className={`relative flex h-10 items-center gap-2 rounded-2xl border border-blue-200/80 bg-white/90 px-3 text-blue-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:shadow-md ${isLatestEntryOpen ? "ring-2 ring-blue-100" : ""}`}
+                className={`relative flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/90 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md ${isLatestEntryOpen ? "ring-2 ring-blue-200" : ""}`}
                 aria-label="Latest billed entry"
                 title="Latest billed entry"
               >
                 <History size={19} strokeWidth={2.2} />
-                <span className="hidden text-xs font-bold sm:inline">Latest</span>
               </button>
             </div>
             )}
