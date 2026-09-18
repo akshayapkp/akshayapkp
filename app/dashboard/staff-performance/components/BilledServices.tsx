@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { Search, ShieldAlert } from "lucide-react";
-
+import React, { useEffect, useMemo, useState } from "react";
+import { Calendar, Search, ShieldAlert } from "lucide-react";
 import { PerformanceRecord } from "../types";
 
 interface BilledServicesProps {
@@ -11,410 +10,272 @@ interface BilledServicesProps {
   searchQuery: string;
 }
 
-export default function BilledServices({
-  records,
-  selectedStaff,
-  searchQuery,
-}: BilledServicesProps) {
-  // --------------------------------------------------
-  // DATE FILTER
-  // --------------------------------------------------
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+interface BilledRow {
+  id: string;
+  billId: string;
+  dateTime: string;
+  serviceName: string;
+  wallet: string;
+  quantity: number;
+  departmentFee: number;
+  serviceCharge: number;
+  totalAmount: number;
+  staffName: string;
+  customerName: string;
+}
 
-  const [appliedFromDate, setAppliedFromDate] = useState("");
-  const [appliedToDate, setAppliedToDate] = useState("");
+const todayKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
+const localDateKey = (value: unknown) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const indian = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+  if (indian) return `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
+};
+
+const money = (value: number) => `₹${value.toFixed(2)}`;
+
+export default function BilledServices({ records, selectedStaff, searchQuery }: BilledServicesProps) {
+  const today = todayKey();
+  const [rows, setRows] = useState<BilledRow[]>([]);
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
+  const [appliedFromDate, setAppliedFromDate] = useState(today);
+  const [appliedToDate, setAppliedToDate] = useState(today);
+  const [serviceSearch, setServiceSearch] = useState("");
   const [dateError, setDateError] = useState("");
 
-  // --------------------------------------------------
-  // SEARCH DATE RANGE
-  // --------------------------------------------------
-  const handleDateSearch = () => {
-    setDateError("");
+  useEffect(() => {
+    try {
+      const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
+      const billedData = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
+      const savedBills = JSON.parse(localStorage.getItem("savedBillsList") || "[]");
+      const source = [
+        ...(Array.isArray(serviceEntries) ? serviceEntries : []),
+        ...(Array.isArray(billedData) ? billedData : []),
+      ];
 
+      const savedMap = new Map<string, any>();
+      (Array.isArray(savedBills) ? savedBills : []).forEach((bill: any) => {
+        const id = String(bill?.billId || bill?.id || "").trim();
+        if (id) savedMap.set(id, bill);
+      });
+
+      const seen = new Set<string>();
+      const formatted: BilledRow[] = [];
+
+      source.forEach((item: any, index: number) => {
+        if (!item || typeof item !== "object") return;
+
+        const billId = String(item.billId || item.billID || item.invoiceId || item.id || `row-${index}`).trim();
+        const serviceName = String(item.serviceName || item.service || item.name || "").trim();
+        const staffName = String(item.staffName || item.staff || "Admin User").trim();
+        const saved = savedMap.get(billId);
+
+        const status = String(saved?.status ?? item.status ?? "").toLowerCase();
+        const pending = Number(saved?.balance ?? saved?.owedAmount ?? item.pendingAmount ?? item.balance ?? 0);
+        const validBill = status === "completed" || status === "paid" || status === "credit" || status === "pending" || pending > 0;
+        if (!validBill || !serviceName) return;
+
+        const signature = [
+          billId, serviceName.toLowerCase(),
+          Number(item.qty ?? item.quantity ?? 1),
+          Number(item.totalAmount ?? item.total ?? 0),
+          staffName.toLowerCase(),
+        ].join("|");
+        if (seen.has(signature)) return;
+        seen.add(signature);
+
+        formatted.push({
+          id: String(item.id || `${billId}-${index}`),
+          billId,
+          dateTime: String(saved?.dateTime || item.dateTime || item.timestamp || item.date || ""),
+          serviceName,
+          wallet: String(item.wallet || item.defaultWallet || item.walletName || "N/A"),
+          quantity: Number(item.qty ?? item.quantity ?? 1) || 1,
+          departmentFee: Number(item.walletChg ?? item.deptChg ?? item.deptFee ?? item.departmentFee ?? 0) || 0,
+          serviceCharge: Number(item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0) || 0,
+          totalAmount: Number(item.totalAmount ?? item.total ?? 0) || 0,
+          staffName,
+          customerName: String(saved?.customerName || item.customerName || item.name || "Walk-in Customer"),
+        });
+      });
+
+      // If no detailed service rows exist, retain the existing performance data as a fallback.
+      if (!formatted.length) {
+        records.forEach((record) => {
+          formatted.push({
+            id: record.id,
+            billId: String((record as any).billId || record.id),
+            dateTime: record.timestamp || record.date,
+            serviceName: String((record as any).serviceName || "Service"),
+            wallet: String((record as any).wallet || "N/A"),
+            quantity: Number((record as any).quantity || 1),
+            departmentFee: Number(record.departmentFee || 0),
+            serviceCharge: Number(record.serviceCharge || 0),
+            totalAmount: Number(record.totalAmount || 0),
+            staffName: record.staffName || "Admin User",
+            customerName: record.customerName || "Walk-in Customer",
+          });
+        });
+      }
+
+      setRows(formatted);
+    } catch (error) {
+      console.error("Failed to load Staff Performance billed services:", error);
+      setRows([]);
+    }
+  }, [records]);
+
+  const handleSearch = () => {
+    setDateError("");
     if (fromDate && toDate && fromDate > toDate) {
       setDateError("From Date cannot be after To Date.");
       return;
     }
-
     setAppliedFromDate(fromDate);
     setAppliedToDate(toDate);
   };
 
-  // --------------------------------------------------
-  // CLEAR DATE FILTER
-  // --------------------------------------------------
-  const handleClearDateFilter = () => {
-    setFromDate("");
-    setToDate("");
-    setAppliedFromDate("");
-    setAppliedToDate("");
-    setDateError("");
-  };
+  const filteredRows = useMemo(() => {
+    const q = serviceSearch.trim().toLowerCase();
+    const parentQ = searchQuery.trim().toLowerCase();
 
-  // --------------------------------------------------
-  // CONVERT TIMESTAMP TO LOCAL DATE KEY
-  // YYYY-MM-DD
-  // --------------------------------------------------
-  const getLocalDateKey = (value: unknown): string => {
-    const raw = String(value ?? "").trim();
+    return rows.filter((row) => {
+      const date = localDateKey(row.dateTime);
+      const staffMatch = selectedStaff === "All" || row.staffName.toLowerCase() === selectedStaff.toLowerCase();
+      const fromMatch = !appliedFromDate || date >= appliedFromDate;
+      const toMatch = !appliedToDate || date <= appliedToDate;
+      const searchMatch =
+        !q ||
+        row.serviceName.toLowerCase().includes(q) ||
+        row.billId.toLowerCase().includes(q) ||
+        row.customerName.toLowerCase().includes(q);
 
-    if (!raw) return "";
+      const parentMatch =
+        !parentQ ||
+        row.customerName.toLowerCase().includes(parentQ) ||
+        row.staffName.toLowerCase().includes(parentQ);
 
-    // Already YYYY-MM-DD
-    const isoDateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
-    if (isoDateOnly) {
-      return `${isoDateOnly[1]}-${isoDateOnly[2]}-${isoDateOnly[3]}`;
-    }
-
-    // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
-    const indianDate = raw.match(
-      /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/
-    );
-
-    if (indianDate) {
-      const day = String(Number(indianDate[1])).padStart(2, "0");
-      const month = String(Number(indianDate[2])).padStart(2, "0");
-      const year = indianDate[3];
-
-      return `${year}-${month}-${day}`;
-    }
-
-    // Timestamp / normal date
-    const parsed = new Date(raw);
-
-    if (!Number.isNaN(parsed.getTime())) {
-      const year = parsed.getFullYear();
-      const month = String(parsed.getMonth() + 1).padStart(2, "0");
-      const day = String(parsed.getDate()).padStart(2, "0");
-
-      return `${year}-${month}-${day}`;
-    }
-
-    return "";
-  };
-
-  // --------------------------------------------------
-  // FILTER RECORDS
-  // --------------------------------------------------
-  const staffFilteredRecords = useMemo(() => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
-
-    return records.filter((record) => {
-      // ----------------------------------------------
-      // STAFF FILTER
-      // ----------------------------------------------
-      const matchesStaff =
-        selectedStaff === "All" ||
-        record.staffName?.trim().toLowerCase() ===
-          selectedStaff.trim().toLowerCase();
-
-      if (!matchesStaff) {
-        return false;
-      }
-
-      // ----------------------------------------------
-      // DATE FILTER
-      // ----------------------------------------------
-      const recordDate = getLocalDateKey(record.timestamp);
-
-      if (!recordDate) {
-        return false;
-      }
-
-      if (
-        appliedFromDate &&
-        recordDate < appliedFromDate
-      ) {
-        return false;
-      }
-
-      if (
-        appliedToDate &&
-        recordDate > appliedToDate
-      ) {
-        return false;
-      }
-
-      // ----------------------------------------------
-      // TEXT SEARCH
-      // ----------------------------------------------
-      if (!normalizedSearch) {
-        return true;
-      }
-
-      const customerName =
-        record.customerName?.toLowerCase() || "";
-
-      const staffName =
-        record.staffName?.toLowerCase() || "";
-
-      return (
-        customerName.includes(normalizedSearch) ||
-        staffName.includes(normalizedSearch)
-      );
+      return staffMatch && fromMatch && toMatch && searchMatch && parentMatch;
     });
-  }, [
-    records,
-    selectedStaff,
-    searchQuery,
-    appliedFromDate,
-    appliedToDate,
-  ]);
+  }, [rows, selectedStaff, searchQuery, serviceSearch, appliedFromDate, appliedToDate]);
 
-  // --------------------------------------------------
-  // TOTAL SERVICE CHARGE
-  // --------------------------------------------------
-  const totalServiceCharge =
-    staffFilteredRecords.reduce(
-      (acc, curr) =>
-        acc + Number(curr.serviceCharge || 0),
-      0
-    );
+  const totalDepartmentFee = filteredRows.reduce((sum, row) => sum + row.departmentFee, 0);
+  const totalServiceCharge = filteredRows.reduce((sum, row) => sum + row.serviceCharge, 0);
+  const grandTotal = filteredRows.reduce((sum, row) => sum + row.totalAmount, 0);
 
-  // --------------------------------------------------
-  // TOTAL DEPARTMENT FEE
-  // --------------------------------------------------
-  const totalDepartmentFee =
-    staffFilteredRecords.reduce(
-      (acc, curr) =>
-        acc + Number(curr.departmentFee || 0),
-      0
-    );
-
-  // --------------------------------------------------
-  // TOTAL COLLECTION
-  // --------------------------------------------------
-  const totalFilteredCollection =
-    staffFilteredRecords.reduce(
-      (acc, curr) =>
-        acc + Number(curr.totalAmount || 0),
-      0
-    );
-
-  // --------------------------------------------------
-  // DISPLAY
-  // --------------------------------------------------
   return (
     <div className="space-y-4">
-      {/* ------------------------------------------------
-          DATE FILTER BAR
-      ------------------------------------------------ */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-end gap-3">
-          {/* FROM DATE */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              From Date
-            </label>
-
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => {
-                setFromDate(e.target.value);
-                setDateError("");
-              }}
-              className="h-10 min-w-[170px] rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
-            />
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">From Date</label>
+            <div className="relative">
+              <input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setDateError(""); }} className="h-10 min-w-[170px] rounded-xl border border-slate-200 bg-slate-50 px-3 pr-9 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+              <Calendar size={15} className="pointer-events-none absolute right-3 top-3 text-slate-400" />
+            </div>
           </div>
 
-          {/* TO DATE */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              To Date
-            </label>
-
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => {
-                setToDate(e.target.value);
-                setDateError("");
-              }}
-              className="h-10 min-w-[170px] rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
-            />
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">To Date</label>
+            <div className="relative">
+              <input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setDateError(""); }} className="h-10 min-w-[170px] rounded-xl border border-slate-200 bg-slate-50 px-3 pr-9 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+              <Calendar size={15} className="pointer-events-none absolute right-3 top-3 text-slate-400" />
+            </div>
           </div>
 
-          {/* SEARCH BUTTON */}
-          <button
-            type="button"
-            onClick={handleDateSearch}
-            className="h-10 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]"
-          >
-            <Search size={16} />
-            Search
+          <div className="flex min-w-[230px] flex-1 flex-col gap-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Search</label>
+            <input value={serviceSearch} onChange={(e) => setServiceSearch(e.target.value)} placeholder="Search service / bill / customer" className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+          </div>
+
+          <button type="button" onClick={handleSearch} className="h-10 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]">
+            <Search size={16} /> Search
           </button>
-
-          {/* CLEAR BUTTON */}
-          {(fromDate ||
-            toDate ||
-            appliedFromDate ||
-            appliedToDate) && (
-            <button
-              type="button"
-              onClick={handleClearDateFilter}
-              className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
-            >
-              Clear
-            </button>
-          )}
         </div>
-
-        {/* DATE ERROR */}
-        {dateError && (
-          <p className="mt-2 text-xs font-semibold text-red-500">
-            {dateError}
-          </p>
-        )}
-
-        {/* ACTIVE DATE RANGE */}
-        {(appliedFromDate || appliedToDate) && !dateError && (
-          <div className="mt-3 text-xs font-medium text-slate-500">
-            Showing records from{" "}
-            <span className="font-bold text-indigo-600">
-              {appliedFromDate || "Beginning"}
-            </span>{" "}
-            to{" "}
-            <span className="font-bold text-indigo-600">
-              {appliedToDate || "Today"}
-            </span>
-          </div>
-        )}
+        {dateError && <p className="mt-2 text-xs font-semibold text-red-500">{dateError}</p>}
+        <p className="mt-2 text-[11px] text-slate-400">Default view: Today. Change the dates only when you need older records.</p>
       </div>
 
-      {/* ------------------------------------------------
-          NO RECORDS
-      ------------------------------------------------ */}
-      {staffFilteredRecords.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="text-center py-12 text-slate-400">
-            <ShieldAlert
-              size={40}
-              className="mx-auto mb-2 opacity-40"
-            />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Items</p>
+          <p className="mt-1 text-xl font-black text-slate-800">{filteredRows.length}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Dept. Fee</p>
+          <p className="mt-1 text-xl font-black text-slate-800">{money(totalDepartmentFee)}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Service Charge</p>
+          <p className="mt-1 text-xl font-black text-slate-800">{money(totalServiceCharge)}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Grand Total</p>
+          <p className="mt-1 text-xl font-black text-indigo-600">{money(grandTotal)}</p>
+        </div>
+      </div>
 
-            <p className="text-sm font-semibold">
-              No billed service records found.
-            </p>
-
-            {(appliedFromDate || appliedToDate) && (
-              <p className="mt-1 text-xs text-slate-400">
-                Try selecting a different date range.
-              </p>
-            )}
-          </div>
+      {filteredRows.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 bg-white py-12 text-center shadow-sm">
+          <ShieldAlert size={40} className="mx-auto mb-2 text-slate-300" />
+          <p className="text-sm font-semibold text-slate-500">No billed service records found for today.</p>
+          <p className="mt-1 text-xs text-slate-400">Choose another date and press Search to view older records.</p>
         </div>
       ) : (
-        /* ------------------------------------------------
-           BILLING TABLE
-        ------------------------------------------------ */
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full min-w-[980px] text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/50 text-slate-400 uppercase text-[11px] tracking-wider">
-                  <th className="py-3 px-4">
-                    Date / Time
-                  </th>
-
-                  <th className="py-3 px-4">
-                    Staff Name
-                  </th>
-
-                  <th className="py-3 px-4">
-                    Customer Name
-                  </th>
-
-                  <th className="py-3 px-4 text-right">
-                    Service Chg.
-                  </th>
-
-                  <th className="py-3 px-4 text-right">
-                    Dept Fee
-                  </th>
-
-                  <th className="py-3 px-4 text-right">
-                    Total Amount
-                  </th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3 text-center">#</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Service</th>
+                  <th className="px-4 py-3">Wallet</th>
+                  <th className="px-4 py-3 text-right">Qty</th>
+                  <th className="px-4 py-3 text-right">Dept. Fee</th>
+                  <th className="px-4 py-3 text-right">Svc Charge</th>
+                  <th className="px-4 py-3 text-right">Total</th>
                 </tr>
               </thead>
-
               <tbody className="divide-y divide-slate-100">
-                {staffFilteredRecords.map((rec) => (
-                  <tr
-                    key={rec.id}
-                    className="hover:bg-slate-50/80 transition text-slate-700"
-                  >
-                    <td className="py-3.5 px-4 text-xs font-mono text-slate-500">
-                      {new Date(
-                        rec.timestamp
-                      ).toLocaleString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                {filteredRows.map((row, index) => (
+                  <tr key={row.id + "-" + index} className="text-slate-700 transition hover:bg-slate-50">
+                    <td className="px-4 py-3.5 text-center text-xs text-slate-400">{index + 1}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs font-medium text-slate-600">
+                      {(() => {
+                        const parsed = new Date(row.dateTime);
+                        return Number.isNaN(parsed.getTime())
+                          ? row.dateTime || "-"
+                          : parsed.toLocaleDateString("en-GB");
+                      })()}
                     </td>
-
-                    <td className="py-3.5 px-4 font-bold text-indigo-600">
-                      <span className="bg-indigo-50 px-2.5 py-1 rounded-lg text-xs">
-                        {rec.staffName || "Admin User"}
-                      </span>
+                    <td className="px-4 py-3.5 font-semibold text-slate-800">{row.serviceName}</td>
+                    <td className="px-4 py-3.5">
+                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{row.wallet}</span>
                     </td>
-
-                    <td className="py-3.5 px-4 font-medium">
-                      {rec.customerName ||
-                        "Walk-in Customer"}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right font-semibold text-emerald-600">
-                      ₹
-                      {Number(
-                        rec.serviceCharge || 0
-                      ).toFixed(2)}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right font-semibold text-amber-600">
-                      ₹
-                      {Number(
-                        rec.departmentFee || 0
-                      ).toFixed(2)}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right font-black text-slate-900">
-                      ₹
-                      {Number(
-                        rec.totalAmount || 0
-                      ).toFixed(2)}
-                    </td>
+                    <td className="px-4 py-3.5 text-right font-medium">{row.quantity.toFixed(2)}</td>
+                    <td className="px-4 py-3.5 text-right font-semibold text-amber-600">{money(row.departmentFee)}</td>
+                    <td className="px-4 py-3.5 text-right font-semibold text-emerald-600">{money(row.serviceCharge)}</td>
+                    <td className="px-4 py-3.5 text-right font-black text-slate-900">{money(row.totalAmount)}</td>
                   </tr>
                 ))}
               </tbody>
-
               <tfoot>
-                <tr className="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-200">
-                  <td
-                    colSpan={3}
-                    className="py-3.5 px-4 text-right uppercase text-xs"
-                  >
-                    Total Sum:
-                  </td>
-
-                  <td className="py-3.5 px-4 text-right text-emerald-700">
-                    ₹{totalServiceCharge.toFixed(2)}
-                  </td>
-
-                  <td className="py-3.5 px-4 text-right text-amber-700">
-                    ₹{totalDepartmentFee.toFixed(2)}
-                  </td>
-
-                  <td className="py-3.5 px-4 text-right text-slate-900 text-base">
-                    ₹{totalFilteredCollection.toFixed(2)}
-                  </td>
+                <tr className="border-t-2 border-slate-200 bg-slate-50 font-bold">
+                  <td colSpan={5} className="px-4 py-3.5 text-right text-xs uppercase text-slate-500">Total</td>
+                  <td className="px-4 py-3.5 text-right text-amber-700">{money(totalDepartmentFee)}</td>
+                  <td className="px-4 py-3.5 text-right text-emerald-700">{money(totalServiceCharge)}</td>
+                  <td className="px-4 py-3.5 text-right text-base text-slate-900">{money(grandTotal)}</td>
                 </tr>
               </tfoot>
             </table>
