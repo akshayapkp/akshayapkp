@@ -166,7 +166,7 @@ export default function StaffPerformanceReport({
             <div className="grid grid-cols-7">
               {(() => {
                 const d=new Date(`${appliedFrom}T00:00:00`); const first=new Date(d.getFullYear(),d.getMonth(),1); const days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-                const cells=[] as JSX.Element[];
+                const cells: React.ReactNode[] = [];
                 for(let i=0;i<first.getDay();i++) cells.push(<div key={`e${i}`} className="min-h-10 border-t border-indigo-50 bg-slate-50/50"/>);
                 for(let n=1;n<=days;n++){const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(n).padStart(2,"0")}`; const has=daily.some(([dk])=>dk===k); cells.push(<div key={k} className={`min-h-10 border-t border-indigo-50 p-2 text-xs font-bold ${has?"bg-amber-100":"bg-white"}`}>{n}</div>);}
                 return cells;
