@@ -605,7 +605,7 @@ export default function StaffPerformancePage() {
 
           {activeTab === "salary" && (
 <SalarySection
-  records={attendanceRecords}
+  records={staffRecords}
   salaryHistory={selectedSalaryHistory}
   selectedStaff={selectedStaff}
   selectedMonth={summaryMonth}
