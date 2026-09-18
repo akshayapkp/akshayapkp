@@ -24,6 +24,23 @@ interface SalarySectionProps {
   onOpenHistory: () => void;
 }
 
+const getSalaryDateKey = (value: unknown): string => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  const indian = raw.match(/^(\d{1,2})[\\/.-](\d{1,2})[\\/.-](\d{4})/);
+  if (indian) {
+    return `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
+};
+
 interface StaffPaymentInfo {
   name: string;
   salary: number;
@@ -97,12 +114,9 @@ export default function SalarySection({
 
     billedServiceRows.forEach((item: any, index: number) => {
       const rawDate = item.dateTime || item.timestamp || item.date || item.createdAt;
-      const date = new Date(rawDate);
-      if (
-        Number.isNaN(date.getTime()) ||
-        date.getMonth() !== selectedMonth ||
-        date.getFullYear() !== selectedYear
-      ) return;
+      const dateKey = getSalaryDateKey(rawDate);
+      const expectedMonthKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
+      if (!dateKey || !dateKey.startsWith(expectedMonthKey)) return;
 
       const serviceName = String(item.serviceName || item.service || item.name || "").trim();
       if (!serviceName) return;
