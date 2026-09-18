@@ -86,6 +86,15 @@ export default function SummaryCards({
   const [staffRecords, setStaffRecords] =
     useState<StaffRecord[]>([]);
 
+  // Monthly Performance must use the same completed service-entry source
+  // as Staff Performance → Billed Services / Salary Summary.
+  const [monthlyBilledSummary, setMonthlyBilledSummary] = useState<{
+    services: number;
+    deptFee: number;
+    serviceCharge: number;
+    totalCash: number;
+  } | null>(null);
+
  useEffect(() => {
   const loadStaffData = async () => {
     try {
@@ -127,6 +136,132 @@ export default function SummaryCards({
 
   loadStaffData();
 }, []);
+
+  useEffect(() => {
+    try {
+      const serviceEntriesRaw = JSON.parse(
+        localStorage.getItem("serviceEntries") || "[]"
+      );
+      const billedServicesRaw = JSON.parse(
+        localStorage.getItem("billedServicesData") || "[]"
+      );
+
+      const serviceEntries = Array.isArray(serviceEntriesRaw)
+        ? serviceEntriesRaw
+        : [];
+      const billedServices = Array.isArray(billedServicesRaw)
+        ? billedServicesRaw
+        : [];
+
+      const source = [...serviceEntries, ...billedServices];
+      const seen = new Set<string>();
+      const expectedMonthKey =
+        `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
+
+      const rows = source.filter((item: any, index: number) => {
+        if (!item || typeof item !== "object") return false;
+
+        const rawDate =
+          item.dateTime ||
+          item.timestamp ||
+          item.date ||
+          item.createdAt ||
+          "";
+        const raw = String(rawDate).trim();
+
+        let dateKey = "";
+        const iso = raw.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);
+        const indian = raw.match(
+          /^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})/
+        );
+
+        if (iso) {
+          dateKey = `${iso[1]}-${iso[2]}-${iso[3]}`;
+        } else if (indian) {
+          dateKey =
+            `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
+        } else if (raw) {
+          const parsed = new Date(raw);
+          if (!Number.isNaN(parsed.getTime())) {
+            dateKey =
+              `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
+          }
+        }
+
+        if (!dateKey || !dateKey.startsWith(expectedMonthKey)) return false;
+
+        const serviceName = String(
+          item.serviceName || item.service || item.name || ""
+        ).trim();
+        if (!serviceName) return false;
+
+        const staffName = String(
+          item.staffName || item.staff || "Admin User"
+        ).trim();
+
+        const staffMatches =
+          selectedStaff === "All" ||
+          staffName.toLowerCase() === selectedStaff.toLowerCase();
+        if (!staffMatches) return false;
+
+        const billId = String(
+          item.billId ||
+            item.billID ||
+            item.invoiceId ||
+            item.id ||
+            `row-${index}`
+        ).trim();
+
+        const signature = [
+          billId,
+          serviceName.toLowerCase(),
+          Number(item.qty ?? item.quantity ?? 1),
+          Number(item.totalAmount ?? item.total ?? 0),
+          staffName.toLowerCase(),
+        ].join("|");
+
+        if (seen.has(signature)) return false;
+        seen.add(signature);
+        return true;
+      });
+
+      setMonthlyBilledSummary({
+        services: rows.length,
+        deptFee: rows.reduce(
+          (sum: number, item: any) =>
+            sum +
+            (Number(
+              item.walletChg ??
+                item.deptChg ??
+                item.deptFee ??
+                item.departmentFee ??
+                0
+            ) || 0),
+          0
+        ),
+        serviceCharge: rows.reduce(
+          (sum: number, item: any) =>
+            sum +
+            (Number(
+              item.srvChg ??
+                item.srvCharge ??
+                item.serviceCharge ??
+                0
+            ) || 0),
+          0
+        ),
+        totalCash: rows.reduce(
+          (sum: number, item: any) =>
+            sum +
+            (Number(item.totalAmount ?? item.total ?? 0) || 0),
+          0
+        ),
+      });
+    } catch (error) {
+      console.error("Failed to build monthly billed summary:", error);
+      setMonthlyBilledSummary(null);
+    }
+  }, [selectedStaff, selectedMonth, selectedYear]);
 
   const dailyRecords = useMemo(
     () =>
@@ -292,10 +427,18 @@ console.log({
     getCredit(dailyBills)
   );
 
-  const monthly = createSummary(
-    monthlyRecords,
-    getCredit(monthlyBills)
-  );
+  const monthly = monthlyBilledSummary
+    ? {
+        services: monthlyBilledSummary.services,
+        deptFee: monthlyBilledSummary.deptFee,
+        serviceCharge: monthlyBilledSummary.serviceCharge,
+        credit: getCredit(monthlyBills),
+        totalCash: monthlyBilledSummary.totalCash,
+      }
+    : createSummary(
+        monthlyRecords,
+        getCredit(monthlyBills)
+      );
 
   const yearly = createSummary(
     yearlyRecords,
