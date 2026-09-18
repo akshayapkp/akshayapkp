@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { PerformanceRecord, Holiday } from "../types";
 
@@ -47,6 +47,60 @@ export default function AttendanceCalendar({
   const staffMatches = (staffName?: string) =>
     selectedStaff === "All" ||
     String(staffName || "").trim().toLowerCase() === selectedStaff.trim().toLowerCase();
+
+  const [billedTotals, setBilledTotals] = useState<Record<string, { departmentFee: number; serviceCharge: number; totalAmount: number; count: number }>>({});
+
+  useEffect(() => {
+    try {
+      const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
+      const billedServices = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
+      const sources = [
+        ...(Array.isArray(serviceEntries) ? serviceEntries : []),
+        ...(Array.isArray(billedServices) ? billedServices : []),
+      ];
+
+      const totals: Record<string, { departmentFee: number; serviceCharge: number; totalAmount: number; count: number }> = {};
+      const seen = new Set<string>();
+
+      sources.forEach((item: any, index: number) => {
+        if (!item || typeof item !== "object") return;
+
+        const rawDate = String(item.dateTime || item.date || item.createdAt || item.timestamp || "").trim();
+        const match = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})/) || rawDate.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+        let key = "";
+        if (match) {
+          key = match.length === 4
+            ? `${match[1]}-${match[2]}-${match[3]}`
+            : `${match[4]}-${String(Number(match[2])).padStart(2, "0")}-${String(Number(match[1])).padStart(2, "0")}`;
+        } else {
+          const parsed = new Date(rawDate);
+          if (!Number.isNaN(parsed.getTime())) {
+            key = dateKey(parsed);
+          }
+        }
+        if (!key || !staffMatches(item.staffName || item.staff)) return;
+
+        const signature = [
+          item.billId || item.billID || item.invoiceId || item.id || index,
+          item.serviceName || item.service || item.name || "",
+          item.quantity ?? item.qty ?? 1,
+          item.totalAmount ?? item.total ?? 0,
+        ].join("|");
+        if (seen.has(signature)) return;
+        seen.add(signature);
+
+        if (!totals[key]) totals[key] = { departmentFee: 0, serviceCharge: 0, totalAmount: 0, count: 0 };
+        totals[key].departmentFee += Number(item.walletChg ?? item.deptChg ?? item.deptFee ?? item.departmentFee ?? 0) || 0;
+        totals[key].serviceCharge += Number(item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0) || 0;
+        totals[key].totalAmount += Number(item.totalAmount ?? item.total ?? 0) || 0;
+        totals[key].count += Number(item.quantity ?? item.qty ?? 1) || 1;
+      });
+
+      setBilledTotals(totals);
+    } catch {
+      setBilledTotals({});
+    }
+  }, [selectedStaff, records]);
 
   const hasAttendance = (date: Date) => {
     const key = dateKey(date);
@@ -226,9 +280,29 @@ export default function AttendanceCalendar({
                     <div className="text-[10px] font-medium leading-tight text-slate-600">
                       Svc: ₹{Number(attendance.serviceCharge || 0).toFixed(2)}
                     </div>
-                    <div className="text-[10px] font-medium leading-tight text-slate-600">
-                      Svc#: {Number(attendance.totalServices || 0)}
-                    </div>
+                    {(() => {
+                      const totals = billedTotals[dateKey(date)];
+                      const departmentFee = totals?.departmentFee || Number(attendance.departmentFee || 0);
+                      const serviceCharge = totals?.serviceCharge || Number(attendance.serviceCharge || 0);
+                      const totalAmount = totals?.totalAmount || Number(attendance.totalAmount || 0);
+                      const serviceCount = totals?.count || Number(attendance.totalServices || 0);
+                      return (
+                        <>
+                          <div className="text-[10px] font-medium leading-tight text-slate-600">
+                            Dept: ₹{departmentFee.toFixed(2)}
+                          </div>
+                          <div className="text-[10px] font-medium leading-tight text-slate-600">
+                            Svc: ₹{serviceCharge.toFixed(2)}
+                          </div>
+                          <div className="text-[10px] font-medium leading-tight text-slate-600">
+                            Total: ₹{totalAmount.toFixed(2)}
+                          </div>
+                          <div className="text-[10px] font-medium leading-tight text-slate-600">
+                            Svc#: {serviceCount}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : isFuture ? (
                   <div className="flex h-[58px] items-center justify-center">
