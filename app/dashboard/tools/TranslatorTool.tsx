@@ -19,6 +19,7 @@ export default function TranslatorTool({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     try { const x = localStorage.getItem(HISTORY_KEY); if (x) setHistory(JSON.parse(x)); } catch {}
+    return () => { if (timer.current) clearTimeout(timer.current); };
   }, []);
 
   const save = (item: any) => {
@@ -46,7 +47,7 @@ export default function TranslatorTool({ onClose }: { onClose: () => void }) {
   const changeInput = (v: string) => {
     setInput(v);
     if (timer.current) clearTimeout(timer.current);
-    if (auto && v.trim()) timer.current = setTimeout(() => run("translate", v), 800);
+    if (auto && v.trim().length >= 2) timer.current = setTimeout(() => run("translate", v), 1200);
   };
 
   const sentenceCase = (v: string) => v.toLowerCase().replace(/(^\s*\p{L}|[.!?]\s+\p{L})/gu, m => m.toUpperCase());
@@ -70,7 +71,7 @@ export default function TranslatorTool({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
           <div>
             <h2 className="text-lg font-black text-slate-900">🌐 Smart Text Assistant</h2>
-            <p className="text-xs text-slate-500">English ↔ Malayalam • Grammar • Text Case Tools</p>
+            <p className="text-xs text-slate-500">English ↔ Malayalam • Free Translation • No API Key</p>
           </div>
           <button onClick={onClose} className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200">Close</button>
         </div>
@@ -103,8 +104,9 @@ export default function TranslatorTool({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="mb-2 text-xs font-black uppercase tracking-wider text-slate-500">AI Text Tools</div>
+            <div className="mb-2 text-xs font-black uppercase tracking-wider text-slate-500">Free Text Tools</div>
             <div className="flex flex-wrap gap-2">{actions.map(([label, action, icon]) => <button key={action} onClick={()=>run(action)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50">{icon}{label}</button>)}</div>
+            <p className="mt-2 text-[11px] text-slate-400">Translation uses a free public service. Grammar and other text tools use local processing and do not need an API key.</p>
           </div>
 
           <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
