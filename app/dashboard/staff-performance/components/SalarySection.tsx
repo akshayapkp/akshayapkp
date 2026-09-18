@@ -105,14 +105,34 @@ export default function SalarySection({
     [billedServiceRows, selectedStaff, selectedMonth, selectedYear]
   );
 
+  const commissionByService = useMemo(() => {
+    try {
+      const managed = JSON.parse(localStorage.getItem("managedServices") || "[]");
+      const map = new Map<string, number>();
+      if (Array.isArray(managed)) {
+        managed.forEach((service: any) => {
+          const name = String(service?.name || "").trim().toLowerCase();
+          if (name) map.set(name, Number(service?.commission ?? 0) || 0);
+        });
+      }
+      return map;
+    } catch {
+      return new Map<string, number>();
+    }
+  }, [selectedMonth, selectedYear]);
+
   const useBilledData = monthlyBilledRows.length > 0;
 
   const totalCommission = useBilledData
-    ? monthlyBilledRows.reduce(
-        (sum, row) =>
-          sum + Number(row.commission ?? row.commissionAmount ?? 0),
-        0
-      )
+    ? monthlyBilledRows.reduce((sum, row: any) => {
+        const direct = Number(row.commission ?? row.commissionAmount ?? NaN);
+        if (Number.isFinite(direct)) return sum + direct;
+
+        const serviceName = String(row.serviceName || row.service || row.name || "").trim().toLowerCase();
+        const commissionRate = commissionByService.get(serviceName) ?? 0;
+        const qty = Number(row.qty ?? row.quantity ?? 1) || 1;
+        return sum + commissionRate * qty;
+      }, 0)
     : monthlyRecords.reduce(
         (sum, record) => sum + Number(record.commission || 0),
         0
@@ -121,7 +141,9 @@ export default function SalarySection({
   const totalDepartmentFee = useBilledData
     ? monthlyBilledRows.reduce(
         (sum, row) =>
-          sum + Number(row.walletChg ?? row.deptChg ?? row.deptFee ?? row.departmentFee ?? 0),
+          sum +
+          (Number(row.walletChg ?? row.deptChg ?? row.deptFee ?? row.departmentFee ?? 0) || 0) *
+            (Number(row.qty ?? row.quantity ?? 1) || 1),
         0
       )
     : monthlyRecords.reduce(
@@ -132,7 +154,9 @@ export default function SalarySection({
   const totalServiceCharge = useBilledData
     ? monthlyBilledRows.reduce(
         (sum, row) =>
-          sum + Number(row.srvChg ?? row.srvCharge ?? row.serviceCharge ?? 0),
+          sum +
+          (Number(row.srvChg ?? row.srvCharge ?? row.serviceCharge ?? 0) || 0) *
+            (Number(row.qty ?? row.quantity ?? 1) || 1),
         0
       )
     : monthlyRecords.reduce(
@@ -140,11 +164,9 @@ export default function SalarySection({
         0
       );
 
+  // Match the Billed Services screen: Total Items means billed line items, not quantity.
   const totalServices = useBilledData
-    ? monthlyBilledRows.reduce(
-        (sum, row) => sum + (Number(row.qty ?? row.quantity ?? 1) || 1),
-        0
-      )
+    ? monthlyBilledRows.length
     : monthlyRecords.reduce(
         (sum, record) => sum + Number(record.totalServices || 0),
         0
@@ -256,7 +278,33 @@ export default function SalarySection({
           </div>
         </div>
 
-        <button
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-cyan-400"
+            aria-label="Salary summary month"
+          >
+            {[
+              "January","February","March","April","May","June",
+              "July","August","September","October","November","December",
+            ].map((month, index) => (
+              <option key={month} value={index}>{month}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-cyan-400"
+            aria-label="Salary summary year"
+          >
+            {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i).map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+
+          <button
           onClick={onOpenHistory}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-slate-50"
         >
