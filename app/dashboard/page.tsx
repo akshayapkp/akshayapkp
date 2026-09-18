@@ -1606,7 +1606,8 @@ setServiceDirectory(filteredWithUrls);
       let left = rect.right - popupWidth;
       left = Math.max(sidePadding, Math.min(left, window.innerWidth - popupWidth - sidePadding));
 
-      const top = rect.bottom + gap;
+      // Keep the popup clearly below the topbar so the trigger icon remains visible.
+      const top = rect.bottom + 14;
       setLatestEntryPopupPosition({ top, left });
     };
 
@@ -2124,17 +2125,17 @@ setServiceDirectory(filteredWithUrls);
             </div>
 
             {canViewLatestEntry && (
-            <div className="relative" ref={latestEntryRef}>
+            <div className="relative z-[5]" ref={latestEntryRef}>
               <button
                 ref={latestEntryButtonRef}
                 onClick={handleLatestEntryToggle}
-                className="relative rounded-2xl border border-slate-200/80 bg-white/70 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                className={`relative flex h-10 items-center gap-2 rounded-2xl border border-blue-200/80 bg-white/90 px-3 text-blue-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white hover:shadow-md ${isLatestEntryOpen ? "ring-2 ring-blue-100" : ""}`}
                 aria-label="Latest billed entry"
                 title="Latest billed entry"
               >
-                <History size={19} />
+                <History size={19} strokeWidth={2.2} />
+                <span className="hidden text-xs font-bold sm:inline">Latest</span>
               </button>
-
             </div>
             )}
           </div>
