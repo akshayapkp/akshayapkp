@@ -23,9 +23,7 @@ function localProcess(text: string, action: Action) {
     return value.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n");
   }
 
-  if (action === "explain") {
-    return value;
-  }
+  if (action === "explain") return value;
 
   if (action === "summarize") {
     const sentences = value.split(/(?<=[.!?])\s+/).filter(Boolean);
@@ -39,35 +37,66 @@ function languageCode(language: string) {
   return language === "Malayalam" ? "ml" : "en";
 }
 
-async function translateWithMyMemory(text: string, sourceLanguage: string, targetLanguage: string) {
-  const source = languageCode(sourceLanguage);
-  const target = languageCode(targetLanguage);
+function splitIntoRequests(text: string, maxBytes = 450) {
+  const encoder = new TextEncoder();
+  const parts: string[] = [];
 
-  if (source === target) return text;
+  // Split paragraphs/sentences first, then split oversized pieces by Unicode code points.
+  const pieces = text.split(/(?<=[.!?。！？])\s+|\n+/).filter(Boolean);
 
-  // MyMemory's public endpoint is used server-side, so no browser CORS/API-key setup is needed.
+  for (const piece of pieces) {
+    let current = "";
+    for (const char of Array.from(piece)) {
+      const candidate = current + char;
+      if (encoder.encode(candidate).length > maxBytes && current) {
+        parts.push(current);
+        current = char;
+      } else {
+        current = candidate;
+      }
+    }
+    if (current) parts.push(current);
+  }
+
+  return parts.length ? parts : [text];
+}
+
+async function translateChunk(text: string, source: string, target: string) {
   const url = new URL("https://api.mymemory.translated.net/get");
   url.searchParams.set("q", text);
   url.searchParams.set("langpair", `${source}|${target}`);
 
   const response = await fetch(url.toString(), {
-    method: "GET",
     headers: { Accept: "application/json" },
     cache: "no-store",
   });
 
   const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error("Free translation service is temporarily unavailable.");
+  if (!response.ok || data?.responseStatus !== 200) {
+    throw new Error(data?.responseDetails || "Free translation service is temporarily unavailable.");
   }
 
   const translated = data?.responseData?.translatedText;
-  if (!translated) {
-    throw new Error(data?.responseDetails || "Translation failed.");
-  }
+  if (!translated) throw new Error("Translation result was empty.");
 
   return String(translated);
+}
+
+async function translateWithMyMemory(text: string, sourceLanguage: string, targetLanguage: string) {
+  const source = languageCode(sourceLanguage);
+  const target = languageCode(targetLanguage);
+
+  if (source === target) return text;
+
+  const chunks = splitIntoRequests(text);
+  const translated: string[] = [];
+
+  for (const chunk of chunks) {
+    translated.push(await translateChunk(chunk, source, target));
+  }
+
+  return translated.join(" ");
 }
 
 export async function POST(req: NextRequest) {
@@ -87,10 +116,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "translate") {
-      // Keep the free provider request reasonably sized.
       if (text.length > 4500) {
         return NextResponse.json(
-          { error: "For free translation, please translate up to 4,500 characters at a time." },
+          { error: "For the free translator, please keep each translation under 4,500 characters." },
           { status: 413 }
         );
       }
@@ -110,7 +138,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // These tools now work without OpenAI/API billing by using local text processing.
     return NextResponse.json({
       result: localProcess(text, action as Action),
       mode: "local",
