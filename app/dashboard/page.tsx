@@ -1270,6 +1270,7 @@ export default function DashboardPage() {
       isInternal: true,
     },
     {
+      id: "pdf-tool",
       name: "PDF Tool",
       url: "pdf-toolkit-modal",
       bgColor: "from-indigo-600 to-violet-700",
