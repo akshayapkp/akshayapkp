@@ -610,6 +610,8 @@ export default function StaffPerformancePage() {
   selectedStaff={selectedStaff}
   selectedMonth={summaryMonth}
   selectedYear={summaryYear}
+  setSelectedMonth={setSummaryMonth}
+  setSelectedYear={setSummaryYear}
   onOpenHistory={() =>
     setSalaryHistoryOpen(true)
   }
