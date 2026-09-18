@@ -13,6 +13,7 @@ import ResumeBuilder from "./tools/ResumeBuilder";
 import AadhaarStatusPage from "./tools/aadhaar-status/page";
 import AadhaarNameChangePage from "./tools/aadhaar-name-change/page";
 import PanStatusPage from "./tools/pan-status/page";
+import TranslatorTool from "./tools/TranslatorTool";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -1176,6 +1177,7 @@ export default function DashboardPage() {
   const [showPassportToolModal, setShowPassportToolModal] = useState(false);
   const [showPscModal, setShowPscModal] = useState(false);
   const [showPdfToolkitModal, setShowPdfToolkitModal] = useState(false);
+  const [showTranslatorModal, setShowTranslatorModal] = useState(false);
   const [showConverterModal, setShowConverterModal] = useState(false);
   const [showImageToTextModal, setShowImageToTextModal] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
@@ -1262,6 +1264,12 @@ export default function DashboardPage() {
     },
     {
       id: 8,
+      name: "Translator",
+      url: "translator-modal",
+      bgColor: "from-blue-600 to-cyan-600",
+      isInternal: true,
+    },
+    {
       name: "PDF Tool",
       url: "pdf-toolkit-modal",
       bgColor: "from-indigo-600 to-violet-700",
@@ -1852,6 +1860,7 @@ setServiceDirectory(filteredWithUrls);
         {showPassportToolModal && <PassportSize onClose={() => setShowPassportToolModal(false)} />}
         {showPscModal && <PSCPhotoTool onClose={() => setShowPscModal(false)} />}
         {showPdfToolkitModal && <PDFToolkitTool onClose={() => setShowPdfToolkitModal(false)} />}
+        {showTranslatorModal && <TranslatorTool onClose={() => setShowTranslatorModal(false)} />}
         {showConverterModal && <LandAreaConverterTool onClose={() => setShowConverterModal(false)} />}
         {showImageToTextModal && <ImageToTextTool onClose={() => setShowImageToTextModal(false)} />}
         {showCalculatorModal && (
@@ -2237,6 +2246,7 @@ setServiceDirectory(filteredWithUrls);
               const isPsc = tool.name.toLowerCase().includes("psc") || (tool.url && tool.url.toLowerCase().includes("psc"));
               const isPassport = tool.name.toLowerCase().includes("passport") || (tool.url && tool.url.toLowerCase().includes("passport"));
               const isPdfTool = tool.name.toLowerCase().includes("pdf") || tool.url === "pdf-toolkit-modal";
+              const isTranslatorTool = tool.name.toLowerCase().includes("translator") || tool.url === "translator-modal";
               const isConverterTool = tool.name.toLowerCase().includes("converter") || tool.url === "converter-modal";
               const isImageToTextTool = tool.name.toLowerCase().includes("image") || tool.url === "image-to-text-modal";
               const isCalculatorTool = tool.name.toLowerCase().includes("calculator") || tool.url === "calculator-modal";
@@ -2291,6 +2301,9 @@ setServiceDirectory(filteredWithUrls);
                       } else if (isPdfTool) {
                         e.preventDefault();
                         setShowPdfToolkitModal(true);
+                      } else if (isTranslatorTool) {
+                        e.preventDefault();
+                        setShowTranslatorModal(true);
                       } else if (isConverterTool) {
                         e.preventDefault();
                         setShowConverterModal(true);
