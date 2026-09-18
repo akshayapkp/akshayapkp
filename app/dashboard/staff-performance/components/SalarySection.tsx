@@ -24,23 +24,6 @@ interface SalarySectionProps {
   onOpenHistory: () => void;
 }
 
-const getSalaryDateKey = (value: unknown): string => {
-  const raw = String(value ?? "").trim();
-  if (!raw) return "";
-
-  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-
-  const indian = raw.match(/^(\d{1,2})[\\/.-](\d{1,2})[\\/.-](\d{4})/);
-  if (indian) {
-    return `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
-  }
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
-};
-
 interface StaffPaymentInfo {
   name: string;
   salary: number;
@@ -61,36 +44,6 @@ export default function SalarySection({
     useState<StaffPaymentInfo | null>(null);
   const [staffLoading, setStaffLoading] = useState(false);
   const [showSalaryQr, setShowSalaryQr] = useState(false);
-  const [billedServiceRows, setBilledServiceRows] = useState<any[]>([]);
-
-  useEffect(() => {
-    try {
-      const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
-      const billedServices = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
-      const source = [
-        ...(Array.isArray(serviceEntries) ? serviceEntries : []),
-        ...(Array.isArray(billedServices) ? billedServices : []),
-      ];
-
-      const seen = new Set<string>();
-      const rows = source.filter((item: any, index: number) => {
-        if (!item || typeof item !== "object") return false;
-        const billId = String(item.billId || item.billID || item.invoiceId || "").trim();
-        const service = String(item.serviceName || item.service || item.name || "").trim();
-        const signature = billId
-          ? `${billId}|${service}|${Number(item.qty ?? item.quantity ?? 1)}|${Number(item.totalAmount ?? item.total ?? 0)}`
-          : `${item.id || index}|${service}|${Number(item.qty ?? item.quantity ?? 1)}|${Number(item.totalAmount ?? item.total ?? 0)}`;
-        if (seen.has(signature)) return false;
-        seen.add(signature);
-        return true;
-      });
-
-      setBilledServiceRows(rows);
-    } catch {
-      setBilledServiceRows([]);
-    }
-  }, [selectedStaff, selectedMonth, selectedYear]);
-
   const monthlyRecords = useMemo(
     () =>
       records.filter((record) => {
@@ -108,96 +61,44 @@ export default function SalarySection({
     [records, selectedStaff, selectedMonth, selectedYear]
   );
 
-  const monthlyBilledRows = useMemo(() => {
-    const monthRows: any[] = [];
-    const seen = new Set<string>();
+  // IMPORTANT: Salary Summary uses the exact same PerformanceRecord dataset
+  // as Monthly Performance. Do not substitute serviceEntries/billedServicesData here.
+  const monthlyRecords = useMemo(
+    () =>
+      records.filter((record) => {
+        const date = new Date(record.date || record.timestamp);
+        if (Number.isNaN(date.getTime())) return false;
 
-    billedServiceRows.forEach((item: any, index: number) => {
-      const rawDate = item.dateTime || item.timestamp || item.date || item.createdAt;
-      const dateKey = getSalaryDateKey(rawDate);
-      const expectedMonthKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
-      if (!dateKey || !dateKey.startsWith(expectedMonthKey)) return;
+        const staffMatches =
+          selectedStaff === "All" ||
+          record.staffName?.toLowerCase().trim() ===
+            selectedStaff.toLowerCase().trim();
 
-      const serviceName = String(item.serviceName || item.service || item.name || "").trim();
-      if (!serviceName) return;
+        return (
+          staffMatches &&
+          date.getMonth() === selectedMonth &&
+          date.getFullYear() === selectedYear
+        );
+      }),
+    [records, selectedStaff, selectedMonth, selectedYear]
+  );
 
-      const staffName = String(item.staffName || item.staff || "Admin User").trim();
+  const totalServices = monthlyRecords.length;
 
-      // Salary Summary must use the same staff scope as Staff Performance → Billed Services.
-      const staffMatches =
-        selectedStaff === "All" ||
-        staffName.toLowerCase() === selectedStaff.toLowerCase();
-      if (!staffMatches) return;
+  const totalCommission = monthlyRecords.reduce(
+    (sum, record) => sum + Number(record.commission || 0),
+    0
+  );
 
-      const billId = String(
-        item.billId || item.billID || item.invoiceId || item.id || `row-${index}`
-      ).trim();
+  const totalDepartmentFee = monthlyRecords.reduce(
+    (sum, record) => sum + Number(record.departmentFee || 0),
+    0
+  );
 
-      const signature = [
-        billId,
-        serviceName.toLowerCase(),
-        Number(item.qty ?? item.quantity ?? 1),
-        Number(item.totalAmount ?? item.total ?? 0),
-        staffName.toLowerCase(),
-      ].join("|");
-
-      if (seen.has(signature)) return;
-      seen.add(signature);
-
-      monthRows.push({
-        ...item,
-        quantity: Number(item.qty ?? item.quantity ?? 1) || 1,
-        departmentFee: Number(
-          item.walletChg ?? item.deptChg ?? item.deptFee ?? item.departmentFee ?? 0
-        ) || 0,
-        serviceCharge: Number(
-          item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0
-        ) || 0,
-        totalAmount: Number(item.totalAmount ?? item.total ?? 0) || 0,
-        staffName,
-      });
-    });
-
-    return monthRows;
-  }, [billedServiceRows, selectedStaff, selectedMonth, selectedYear]);
-
-  const commissionByService = useMemo(() => {
-    try {
-      const managed = JSON.parse(localStorage.getItem("managedServices") || "[]");
-      const map = new Map<string, number>();
-      if (Array.isArray(managed)) {
-        managed.forEach((service: any) => {
-          const name = String(service?.name || "").trim().toLowerCase();
-          if (name) map.set(name, Number(service?.commission ?? 0) || 0);
-        });
-      }
-      return map;
-    } catch {
-      return new Map<string, number>();
-    }
-  }, [selectedMonth, selectedYear]);
-
-  const useBilledData = monthlyBilledRows.length > 0;
-
-  const totalCommission = useBilledData
-    ? monthlyBilledRows.reduce((sum, row: any) => {
-        const direct = Number(row.commission ?? row.commissionAmount ?? NaN);
-        if (Number.isFinite(direct)) return sum + direct;
-
-        const serviceName = String(row.serviceName || row.service || row.name || "").trim().toLowerCase();
-        const commissionRate = commissionByService.get(serviceName) ?? 0;
-        const qty = Number(row.qty ?? row.quantity ?? 1) || 1;
-        return sum + commissionRate * qty;
-      }, 0)
-    : monthlyRecords.reduce((sum, record) => sum + Number(record.commission || 0), 0);
-
-  const totalDepartmentFee = useBilledData
-    ? monthlyBilledRows.reduce((sum, row: any) => sum + Number(row.departmentFee || 0), 0)
-    : monthlyRecords.reduce((sum, record) => sum + Number(record.departmentFee || 0), 0);
-
-  const totalServiceCharge = useBilledData
-    ? monthlyBilledRows.reduce((sum, row: any) => sum + Number(row.serviceCharge || 0), 0)
-    : monthlyRecords.reduce((sum, record) => sum + Number(record.serviceCharge || 0), 0);
+  const totalServiceCharge = monthlyRecords.reduce(
+    (sum, record) => sum + Number(record.serviceCharge || 0),
+    0
+  );
 
   const latestSalary = salaryHistory.length > 0 ? salaryHistory[0] : null;
 
@@ -282,11 +183,6 @@ export default function SalarySection({
       upiPaymentUrl
     )}`;
   }, [upiPaymentUrl]);
-
-  // Match Billed Services exactly: one displayed service row = one item.
-  const totalServices = useBilledData
-    ? monthlyBilledRows.length
-    : monthlyRecords.reduce((sum, record) => sum + Number(record.totalServices || 0), 0);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
