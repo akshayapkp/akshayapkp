@@ -44,23 +44,6 @@ export default function SalarySection({
     useState<StaffPaymentInfo | null>(null);
   const [staffLoading, setStaffLoading] = useState(false);
   const [showSalaryQr, setShowSalaryQr] = useState(false);
-  const monthlyRecords = useMemo(
-    () =>
-      records.filter((record) => {
-        const date = new Date(record.date || record.timestamp);
-        const matchesStaff =
-          selectedStaff === "All" ||
-          record.staffName?.toLowerCase() === selectedStaff.toLowerCase();
-
-        return (
-          matchesStaff &&
-          date.getMonth() === selectedMonth &&
-          date.getFullYear() === selectedYear
-        );
-      }),
-    [records, selectedStaff, selectedMonth, selectedYear]
-  );
-
   // IMPORTANT: Salary Summary uses the exact same PerformanceRecord dataset
   // as Monthly Performance. Do not substitute serviceEntries/billedServicesData here.
   const monthlyRecords = useMemo(
