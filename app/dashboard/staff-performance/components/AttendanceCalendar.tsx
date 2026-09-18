@@ -304,7 +304,6 @@ export default function AttendanceCalendar({
                           <div className="text-[10px] font-medium leading-tight text-slate-600">Dept: ₹{departmentFee.toFixed(2)}</div>
                           <div className="text-[10px] font-medium leading-tight text-slate-600">Svc: ₹{serviceCharge.toFixed(2)}</div>
                           <div className="text-[10px] font-medium leading-tight text-slate-600">Total: ₹{totalAmount.toFixed(2)}</div>
-                          <div className="text-[10px] font-medium leading-tight text-slate-600">Svc#: {serviceCount}</div>
                         </>
                       );
                     })()}
