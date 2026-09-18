@@ -9,6 +9,7 @@ import AttendanceCalendar from "./components/AttendanceCalendar";
 import AttendanceModal from "./components/AttendanceModal";
 import SalarySection from "./components/SalarySection";
 import SalaryHistoryModal from "./components/SalaryHistoryModal";
+import StaffPerformanceReport from "./components/Report";
 
 import {
   PerformanceRecord,
@@ -99,7 +100,7 @@ export default function StaffPerformancePage() {
   /* ---------------- TAB ---------------- */
 
   const [activeTab, setActiveTab] = useState<
-    "pending" | "billed" | "attendance" | "salary"
+    "pending" | "billed" | "attendance" | "salary" | "report"
   >("pending");
 
   /* ---------------- INITIAL LOAD ---------------- */
@@ -571,6 +572,17 @@ export default function StaffPerformancePage() {
             }`}
           >
             Salary Summary
+          </button>
+
+          <button
+            onClick={() =>
+              setActiveTab("report")
+            }
+            className={activeTab === "report"
+              ? "border-b-2 border-cyan-500 text-cyan-700 bg-cyan-50/50 px-5 py-4 text-sm font-black transition-all"
+              : "px-5 py-4 text-sm font-black text-slate-500 transition-all hover:bg-white hover:text-slate-800"}
+          >
+            Report
           </button>
 
         </div>
