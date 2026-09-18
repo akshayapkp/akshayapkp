@@ -12,6 +12,7 @@ import {
 
 import { supabase } from "@/lib/supabase";
 import { PerformanceRecord, SalaryHistory } from "../types";
+import { getDate } from "./SummaryHelpers";
 
 interface SalarySectionProps {
   records: PerformanceRecord[];
@@ -49,8 +50,7 @@ export default function SalarySection({
   const monthlyRecords = useMemo(
     () =>
       records.filter((record) => {
-        const date = new Date(record.date || record.timestamp);
-        if (Number.isNaN(date.getTime())) return false;
+        const date = getDate(record);
 
         const staffMatches =
           selectedStaff === "All" ||
@@ -58,6 +58,7 @@ export default function SalarySection({
             selectedStaff.toLowerCase().trim();
 
         return (
+          !Number.isNaN(date.getTime()) &&
           staffMatches &&
           date.getMonth() === selectedMonth &&
           date.getFullYear() === selectedYear
