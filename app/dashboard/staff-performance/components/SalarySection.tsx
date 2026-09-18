@@ -173,6 +173,90 @@ export default function SalarySection({
     ? monthlyBilledRows.reduce((sum, row: any) => sum + Number(row.serviceCharge || 0), 0)
     : monthlyRecords.reduce((sum, record) => sum + Number(record.serviceCharge || 0), 0);
 
+  const latestSalary = salaryHistory.length > 0 ? salaryHistory[0] : null;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadStaffPaymentInfo = async () => {
+      if (!selectedStaff || selectedStaff === "All") {
+        setStaffPaymentInfo(null);
+        return;
+      }
+
+      setStaffLoading(true);
+
+      const { data, error } = await supabase
+        .from("staff")
+        .select("name, salary, upi_id")
+        .ilike("name", selectedStaff)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Failed to load staff payment details:", error);
+        setStaffPaymentInfo(null);
+      } else if (data) {
+        setStaffPaymentInfo({
+          name: String(data.name ?? selectedStaff),
+          salary: Number(data.salary ?? 0),
+          upiId: String(data.upi_id ?? "").trim(),
+        });
+      } else {
+        setStaffPaymentInfo(null);
+      }
+
+      setStaffLoading(false);
+    };
+
+    loadStaffPaymentInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStaff]);
+
+  const currentMonthPaidAmount =
+    latestSalary &&
+    latestSalary.paymentDate &&
+    (() => {
+      const paymentDate = new Date(latestSalary.paymentDate);
+      return (
+        paymentDate.getMonth() === selectedMonth &&
+        paymentDate.getFullYear() === selectedYear
+      );
+    })()
+      ? Number(latestSalary.amount || 0)
+      : 0;
+
+  const salaryAmount =
+    currentMonthPaidAmount > 0
+      ? currentMonthPaidAmount
+      : Number(staffPaymentInfo?.salary || 0);
+
+  const upiId = staffPaymentInfo?.upiId || "";
+
+  const upiPaymentUrl = useMemo(() => {
+    if (!upiId || salaryAmount <= 0 || selectedStaff === "All") return "";
+
+    const params = new URLSearchParams({
+      pa: upiId,
+      pn: staffPaymentInfo?.name || selectedStaff,
+      am: salaryAmount.toFixed(2),
+      cu: "INR",
+    });
+
+    return `upi://pay?${params.toString()}`;
+  }, [upiId, salaryAmount, selectedStaff, staffPaymentInfo?.name]);
+
+  const qrImageUrl = useMemo(() => {
+    if (!upiPaymentUrl) return "";
+
+    return `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=10&data=${encodeURIComponent(
+      upiPaymentUrl
+    )}`;
+  }, [upiPaymentUrl]);
+
   // Match Billed Services exactly: one displayed service row = one item.
   const totalServices = useBilledData
     ? monthlyBilledRows.length
