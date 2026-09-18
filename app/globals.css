@@ -918,7 +918,8 @@ body {
 .dashboard-topbar { border-color: #e1ebf8 !important; box-shadow: 0 8px 22px rgba(38,76,132,.07) !important; }
 .dashboard-welcome { min-height: 90px; background-image: linear-gradient(100deg, rgba(7,27,76,.98), rgba(31,45,117,.95)), url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%2013%2C%202026%2C%2010_06_59%20PM-oaXTU0VazrqLY8FXkuNaXpx4yDEvQ5.png') !important; background-position: center !important; background-size: cover !important; }
 .dashboard-welcome::before { z-index: 0 !important; background: linear-gradient(90deg, rgba(4,18,55,.15), rgba(32,64,180,.25)) !important; }
-.dashboard-welcome > * { position: relative; z-index: 2; }
+/* Keep the welcome content above the decorative layer without overriding the role badge's absolute positioning. */
+.dashboard-welcome > * { z-index: 2; }
 .dashboard-stat-grid > * { border-color: #e0eafa !important; background: rgba(255,255,255,.92) !important; box-shadow: 0 8px 22px rgba(43,79,134,.08) !important; }
 .dashboard-quick-launch { border-color: #e1eaf7 !important; background: rgba(255,255,255,.9) !important; box-shadow: 0 14px 34px rgba(43,79,134,.09) !important; }
 .dashboard-tool-card { border-radius: 15px !important; min-height: 96px; box-shadow: 0 10px 22px rgba(24,58,113,.16) !important; }
