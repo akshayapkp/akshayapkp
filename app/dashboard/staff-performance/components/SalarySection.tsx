@@ -40,12 +40,40 @@ export default function SalarySection({
     useState<StaffPaymentInfo | null>(null);
   const [staffLoading, setStaffLoading] = useState(false);
   const [showSalaryQr, setShowSalaryQr] = useState(false);
+  const [billedServiceRows, setBilledServiceRows] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
+      const billedServices = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
+      const source = [
+        ...(Array.isArray(serviceEntries) ? serviceEntries : []),
+        ...(Array.isArray(billedServices) ? billedServices : []),
+      ];
+
+      const seen = new Set<string>();
+      const rows = source.filter((item: any, index: number) => {
+        if (!item || typeof item !== "object") return false;
+        const billId = String(item.billId || item.billID || item.invoiceId || "").trim();
+        const service = String(item.serviceName || item.service || item.name || "").trim();
+        const signature = billId
+          ? `${billId}|${service}|${Number(item.qty ?? item.quantity ?? 1)}|${Number(item.totalAmount ?? item.total ?? 0)}`
+          : `${item.id || index}|${service}|${Number(item.qty ?? item.quantity ?? 1)}|${Number(item.totalAmount ?? item.total ?? 0)}`;
+        if (seen.has(signature)) return false;
+        seen.add(signature);
+        return true;
+      });
+
+      setBilledServiceRows(rows);
+    } catch {
+      setBilledServiceRows([]);
+    }
+  }, [selectedStaff, selectedMonth, selectedYear]);
 
   const monthlyRecords = useMemo(
     () =>
       records.filter((record) => {
-        const date = new Date(record.date);
-
+        const date = new Date(record.date || record.timestamp);
         const matchesStaff =
           selectedStaff === "All" ||
           record.staffName?.toLowerCase() === selectedStaff.toLowerCase();
@@ -59,25 +87,68 @@ export default function SalarySection({
     [records, selectedStaff, selectedMonth, selectedYear]
   );
 
-  const totalCommission = monthlyRecords.reduce(
-    (sum, record) => sum + Number(record.commission || 0),
-    0
+  const monthlyBilledRows = useMemo(
+    () =>
+      billedServiceRows.filter((row: any) => {
+        const raw = row.dateTime || row.date || row.createdAt || row.timestamp;
+        const date = new Date(raw);
+        const staffName = String(row.staffName || row.staff || "").trim();
+
+        return (
+          !Number.isNaN(date.getTime()) &&
+          date.getMonth() === selectedMonth &&
+          date.getFullYear() === selectedYear &&
+          (selectedStaff === "All" ||
+            staffName.toLowerCase() === selectedStaff.toLowerCase())
+        );
+      }),
+    [billedServiceRows, selectedStaff, selectedMonth, selectedYear]
   );
 
-  const totalDepartmentFee = monthlyRecords.reduce(
-    (sum, record) => sum + Number(record.departmentFee || 0),
-    0
-  );
+  const useBilledData = monthlyBilledRows.length > 0;
 
-  const totalServiceCharge = monthlyRecords.reduce(
-    (sum, record) => sum + Number(record.serviceCharge || 0),
-    0
-  );
+  const totalCommission = useBilledData
+    ? monthlyBilledRows.reduce(
+        (sum, row) =>
+          sum + Number(row.commission ?? row.commissionAmount ?? 0),
+        0
+      )
+    : monthlyRecords.reduce(
+        (sum, record) => sum + Number(record.commission || 0),
+        0
+      );
 
-  const totalServices = monthlyRecords.reduce(
-    (sum, record) => sum + Number(record.totalServices || 0),
-    0
-  );
+  const totalDepartmentFee = useBilledData
+    ? monthlyBilledRows.reduce(
+        (sum, row) =>
+          sum + Number(row.walletChg ?? row.deptChg ?? row.deptFee ?? row.departmentFee ?? 0),
+        0
+      )
+    : monthlyRecords.reduce(
+        (sum, record) => sum + Number(record.departmentFee || 0),
+        0
+      );
+
+  const totalServiceCharge = useBilledData
+    ? monthlyBilledRows.reduce(
+        (sum, row) =>
+          sum + Number(row.srvChg ?? row.srvCharge ?? row.serviceCharge ?? 0),
+        0
+      )
+    : monthlyRecords.reduce(
+        (sum, record) => sum + Number(record.serviceCharge || 0),
+        0
+      );
+
+  const totalServices = useBilledData
+    ? monthlyBilledRows.reduce(
+        (sum, row) => sum + (Number(row.qty ?? row.quantity ?? 1) || 1),
+        0
+      )
+    : monthlyRecords.reduce(
+        (sum, record) => sum + Number(record.totalServices || 0),
+        0
+      );
 
   const latestSalary =
     salaryHistory.length > 0 ? salaryHistory[0] : null;
