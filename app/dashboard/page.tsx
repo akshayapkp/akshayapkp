@@ -1347,7 +1347,15 @@ const loadDashboardData = () => {
         try {
           const parsedOrder = JSON.parse(savedQuickLinksOrder);
           if (Array.isArray(parsedOrder) && parsedOrder.length > 0) {
-            baseTools = parsedOrder;
+            // Preserve the user's saved order, but merge in any tools added
+            // in a newer version so new dashboard cards never disappear.
+            const savedKeys = new Set(
+              parsedOrder.map((item: any) => String(item?.url || item?.id || ""))
+            );
+            const newlyAddedTools = quickLinks.filter(
+              (item: any) => !savedKeys.has(String(item?.url || item?.id || ""))
+            );
+            baseTools = [...parsedOrder, ...newlyAddedTools];
           }
         } catch (e) {}
       }
