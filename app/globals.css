@@ -1278,3 +1278,38 @@ html.dark [data-latest-entry-popup] .text-slate-800,
 html.dark .dashboard-page-frame .fixed.bg-white .text-slate-800 {
   color: #f8fafc !important;
 }
+
+/* Explicit latest-bill trigger: keep it visible beside notifications. */
+.dashboard-topbar .latest-billed-entry-trigger {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  z-index: 20 !important;
+  color: #334155 !important;
+  background: rgba(255,255,255,.92) !important;
+  border: 1px solid rgba(203,213,225,.9) !important;
+}
+.dashboard-topbar .latest-billed-entry-trigger svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: #334155 !important;
+  stroke: #334155 !important;
+}
+html.dark .dashboard-topbar .latest-billed-entry-trigger {
+  color: #e2e8f0 !important;
+  background: rgba(15,23,42,.92) !important;
+  border-color: rgba(71,85,105,.7) !important;
+}
+html.dark .dashboard-topbar .latest-billed-entry-trigger svg {
+  color: #e2e8f0 !important;
+  stroke: #e2e8f0 !important;
+}
