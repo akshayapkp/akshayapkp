@@ -19,6 +19,8 @@ interface SalarySectionProps {
   selectedStaff: string;
   selectedMonth: number;
   selectedYear: number;
+  setSelectedMonth: (month: number) => void;
+  setSelectedYear: (year: number) => void;
   onOpenHistory: () => void;
 }
 
@@ -34,6 +36,8 @@ export default function SalarySection({
   selectedStaff,
   selectedMonth,
   selectedYear,
+  setSelectedMonth,
+  setSelectedYear,
   onOpenHistory,
 }: SalarySectionProps) {
   const [staffPaymentInfo, setStaffPaymentInfo] =
@@ -311,6 +315,7 @@ export default function SalarySection({
           <History size={18} />
           Salary History
         </button>
+        </div>
       </div>
 
       <div className="grid gap-5 p-6 md:grid-cols-2 xl:grid-cols-4">
