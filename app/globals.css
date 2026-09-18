@@ -1124,3 +1124,157 @@ html.dark .bg-white [class*="text-slate-400"],
 html.dark .bg-white [class*="text-gray-400"] {
   color: #9fb7d6 !important;
 }
+
+
+/* =========================================================
+   DASHBOARD — COMPLETE DARK MODE FINISH
+   ========================================================= */
+html.dark .dashboard-page-frame {
+  color: #e5eefc;
+}
+
+html.dark .dashboard-page-frame .dashboard-topbar {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border-color: rgba(71, 85, 105, 0.65) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-topbar h2,
+html.dark .dashboard-page-frame .dashboard-quick-launch h4,
+html.dark .dashboard-page-frame .dashboard-quick-launch .text-slate-800,
+html.dark .dashboard-page-frame .dashboard-stat-grid .text-slate-800,
+html.dark .dashboard-page-frame .dashboard-stat-grid p:not(.text-slate-400) {
+  color: #f8fafc !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-topbar button,
+html.dark .dashboard-page-frame .dashboard-quick-launch button:not(.bg-emerald-600) {
+  background: rgba(30, 41, 59, 0.92) !important;
+  border-color: rgba(71, 85, 105, 0.65) !important;
+  color: #dbeafe !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-topbar button:hover,
+html.dark .dashboard-page-frame .dashboard-quick-launch button:not(.bg-emerald-600):hover {
+  background: rgba(51, 65, 85, 0.95) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-welcome {
+  border-color: rgba(96, 165, 250, 0.25) !important;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-stat-grid > div,
+html.dark .dashboard-page-frame .dashboard-quick-launch,
+html.dark .dashboard-page-frame .dashboard-quick-launch > div {
+  border-color: rgba(71, 85, 105, 0.62) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-stat-grid > div {
+  background: rgba(15, 23, 42, 0.92) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-stat-grid > div > div:first-child > p:first-child,
+html.dark .dashboard-page-frame .dashboard-quick-launch p.text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-quick-launch {
+  background: rgba(15, 23, 42, 0.90) !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-quick-launch .bg-slate-100 {
+  background: rgba(30, 41, 59, 0.95) !important;
+  color: #dbeafe !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-quick-launch .bg-slate-100:hover {
+  background: rgba(51, 65, 85, 0.98) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-tool-card {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-tool-card:hover {
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.48) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-quick-launch .bg-white,
+html.dark .dashboard-page-frame .dashboard-quick-launch .bg-white\/85,
+html.dark .dashboard-page-frame .dashboard-quick-launch .bg-white\/80,
+html.dark .dashboard-page-frame .dashboard-quick-launch .bg-white\/65 {
+  background: rgba(15, 23, 42, 0.92) !important;
+}
+
+html.dark .dashboard-page-frame .dashboard-quick-launch .border-white\/80,
+html.dark .dashboard-page-frame .dashboard-quick-launch .border-white\/70 {
+  border-color: rgba(71, 85, 105, 0.62) !important;
+}
+
+/* Wallet details and other expandable dashboard cards */
+html.dark .dashboard-page-frame .bg-white.p-4.rounded-xl,
+html.dark .dashboard-page-frame .bg-white\/65 {
+  background: rgba(15, 23, 42, 0.94) !important;
+  border-color: rgba(71, 85, 105, 0.58) !important;
+}
+
+html.dark .dashboard-page-frame .text-slate-800,
+html.dark .dashboard-page-frame .text-slate-700 {
+  color: #e5eefc !important;
+}
+
+/* Sidebar */
+html.dark .dashboard-sidebar-shell {
+  background: linear-gradient(180deg, #0b1730 0%, #071225 55%, #050b18 100%) !important;
+  color: #dbeafe !important;
+  border-color: #1e3a5f !important;
+  box-shadow: 8px 0 30px rgba(0, 0, 0, 0.28) !important;
+}
+
+html.dark .dashboard-sidebar-shell::before {
+  background: linear-gradient(180deg, rgba(30, 64, 175, 0.28), rgba(2, 6, 23, 0.18)) !important;
+}
+
+html.dark .dashboard-sidebar-shell .dashboard-sidebar-brand h1 {
+  color: #f8fafc !important;
+}
+
+html.dark .dashboard-sidebar-shell .dashboard-sidebar-brand p,
+html.dark .dashboard-sidebar-shell nav > div > p {
+  color: #8fa8c8 !important;
+}
+
+html.dark .dashboard-sidebar-shell .dashboard-nav-item {
+  color: #cbd5e1 !important;
+}
+
+html.dark .dashboard-sidebar-shell .dashboard-nav-item:hover {
+  background: rgba(37, 99, 235, 0.22) !important;
+  color: #fff !important;
+}
+
+html.dark .dashboard-sidebar-shell .border-t {
+  border-color: rgba(71, 85, 105, 0.55) !important;
+}
+
+/* Portal dropdowns */
+html.dark [data-latest-entry-popup],
+html.dark .dashboard-page-frame .fixed.bg-white {
+  background: #0f172a !important;
+  color: #e5eefc !important;
+  border-color: #334155 !important;
+}
+
+html.dark [data-latest-entry-popup] .border-slate-100,
+html.dark .dashboard-page-frame .fixed.bg-white .border-slate-100 {
+  border-color: #334155 !important;
+}
+
+html.dark [data-latest-entry-popup] .text-slate-800,
+html.dark .dashboard-page-frame .fixed.bg-white .text-slate-800 {
+  color: #f8fafc !important;
+}
