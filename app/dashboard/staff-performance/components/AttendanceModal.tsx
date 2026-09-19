@@ -20,6 +20,7 @@ interface AttendanceModalProps {
   record: PerformanceRecord | null;
   holiday: Holiday | null;
   onHolidayChange: () => void;
+  selectedStaff: string;
 }
 
 export default function AttendanceModal({
@@ -29,6 +30,7 @@ export default function AttendanceModal({
   record,
   holiday,
   onHolidayChange,
+  selectedStaff,
 }: AttendanceModalProps) {
 
   const [holidayName, setHolidayName] =
@@ -65,8 +67,13 @@ export default function AttendanceModal({
 
   if (!open || !date) return null;
 
-  const dateString =
-    date.toISOString().split("T")[0];
+  const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  const billedTotals = getDailyBilledTotals(dateString, selectedStaff);
+  const hasBilledTotals = billedTotals.count > 0;
+  const totalServices = hasBilledTotals ? billedTotals.count : Number(record?.totalServices || 0);
+  const departmentFee = hasBilledTotals ? billedTotals.departmentFee : Number(record?.departmentFee || 0);
+  const serviceCharge = hasBilledTotals ? billedTotals.serviceCharge : Number(record?.serviceCharge || 0);
+  const totalAmount = hasBilledTotals ? billedTotals.totalAmount : Number(record?.totalAmount || 0);
 
 const saveHoliday = () => {
   if (!holidayName.trim()) return;
@@ -218,7 +225,7 @@ onClose();
                     Total Services
                   </p>
                   <p className="mt-1 text-xl font-bold">
-                    {record.totalServices}
+                    {totalServices}
                   </p>
                 </div>
 
@@ -227,7 +234,7 @@ onClose();
                     Department Fee
                   </p>
                   <p className="mt-1 text-xl font-bold">
-                    ₹{Number(record.departmentFee || 0).toFixed(2)}
+                    ₹{departmentFee.toFixed(2)}
                   </p>
                 </div>
 
@@ -236,7 +243,16 @@ onClose();
                     Service Charge
                   </p>
                   <p className="mt-1 text-xl font-bold">
-                    ₹{Number(record.serviceCharge || 0).toFixed(2)}
+                    ₹{serviceCharge.toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border bg-slate-50 p-4">
+                  <p className="text-xs text-slate-500">
+                    Total Amount
+                  </p>
+                  <p className="mt-1 text-xl font-bold">
+                    ₹{totalAmount.toFixed(2)}
                   </p>
                 </div>
 
