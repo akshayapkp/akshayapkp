@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalendarDays, Download, FileText, Search, Users } from "lucide-react";
 import { PerformanceRecord } from "../types";
+import jsPDF from "jspdf";
 
 interface ReportProps {
   records: PerformanceRecord[];
@@ -96,7 +97,152 @@ export default function StaffPerformanceReport({
 
   const monthLabel = new Date(`${appliedFrom}T00:00:00`).toLocaleString("en-IN", { month:"long", year:"numeric" });
 
-  const downloadPdf = () => window.print();
+  const downloadPdf = () => {
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    let y = 18;
+
+    const addPageIfNeeded = (height = 8) => {
+      if (y + height > pageHeight - 14) {
+        doc.addPage();
+        y = 18;
+      }
+    };
+
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, 0, pageWidth, 13, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Staff Performance Report", margin, 9);
+    doc.setFontSize(9);
+    doc.text(
+      selectedStaff === "All" ? "All Staff Members" : selectedStaff,
+      pageWidth - margin,
+      9,
+      { align: "right" }
+    );
+
+    y = 22;
+    doc.setTextColor(31, 41, 55);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(
+      `Period: ${new Date(`${appliedFrom}T00:00:00`).toLocaleDateString("en-GB")} - ${new Date(`${appliedTo}T00:00:00`).toLocaleDateString("en-GB")}`,
+      margin,
+      y
+    );
+    y += 9;
+
+    const summary = [
+      ["Total Services", String(totals.services)],
+      ["Department Fee", money(totals.dept)],
+      ["Service Charge", money(totals.charge)],
+      ["UPI / GPAY", money(totals.upi)],
+      ["Cash", money(totals.cash)],
+      ["Total Bills", String(totals.bills)],
+      ["Days Present", String(presentDays)],
+      ["Attendance", `${attendancePercent}%`],
+    ];
+
+    doc.setFontSize(9);
+    const boxW = (pageWidth - margin * 2 - 6) / 2;
+    summary.forEach(([label, value], index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      const x = margin + col * (boxW + 6);
+      const yy = y + row * 14;
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(224, 231, 239);
+      doc.roundedRect(x, yy - 5, boxW, 11, 2, 2, "FD");
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "normal");
+      doc.text(label, x + 4, yy);
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
+      doc.text(value, x + boxW - 4, yy, { align: "right" });
+    });
+    y += 64;
+
+    doc.setTextColor(30, 41, 59);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Daily Performance Breakdown", margin, y);
+    y += 7;
+
+    const columns = [
+      { title: "DATE", x: margin, w: 30 },
+      { title: "SERVICES", x: margin + 30, w: 22 },
+      { title: "DEPT FEE", x: margin + 52, w: 31 },
+      { title: "SVC CHARGE", x: margin + 83, w: 31 },
+      { title: "UPI", x: margin + 114, w: 30 },
+      { title: "CASH", x: margin + 144, w: 38 },
+    ];
+
+    const drawHeader = () => {
+      doc.setFillColor(238, 242, 255);
+      doc.setDrawColor(199, 210, 254);
+      doc.rect(margin, y - 5, pageWidth - margin * 2, 8, "FD");
+      doc.setTextColor(71, 85, 105);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      columns.forEach((col) => doc.text(col.title, col.x + 2, y));
+      y += 8;
+    };
+
+    drawHeader();
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+
+    daily.forEach(([date, row]) => {
+      addPageIfNeeded(9);
+      if (y === 18) drawHeader();
+      doc.setTextColor(51, 65, 85);
+      const values = [
+        new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        String(row.services),
+        money(row.dept),
+        money(row.charge),
+        money(row.upi),
+        money(row.cash),
+      ];
+      columns.forEach((col, i) => doc.text(values[i], col.x + 2, y));
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, y + 2, pageWidth - margin, y + 2);
+      y += 7;
+    });
+
+    addPageIfNeeded(16);
+    y += 3;
+    doc.setFillColor(238, 242, 255);
+    doc.rect(margin, y - 5, pageWidth - margin * 2, 10, "F");
+    doc.setTextColor(30, 41, 59);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    const totalValues = [
+      "TOTAL",
+      String(totals.services),
+      money(totals.dept),
+      money(totals.charge),
+      money(totals.upi),
+      money(totals.cash),
+    ];
+    columns.forEach((col, i) => doc.text(totalValues[i], col.x + 2, y));
+    y += 16;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(
+      `Generated on ${new Date().toLocaleString("en-IN")}`,
+      margin,
+      pageHeight - 8
+    );
+
+    doc.save(`staff-performance-${appliedFrom}-to-${appliedTo}.pdf`);
+  };
 
   return (
     <div className="space-y-4 text-slate-700">
