@@ -144,7 +144,10 @@ export default function StaffPerformanceReport({
       ["Cash", money(totals.cash)],
       ["Total Bills", String(totals.bills)],
       ["Days Present", String(presentDays)],
-      ["Days Absent", String(Math.max(workingDays - presentDays, 0))],
+      ["Days Absent", String(Math.max(
+    Math.floor((new Date(`${appliedTo}T00:00:00`).getTime() - new Date(`${appliedFrom}T00:00:00`).getTime()) / 86400000) + 1 - presentDays,
+    0
+  ))],
       ["Attendance", `${attendancePercent}%`],
     ];
 
@@ -302,7 +305,10 @@ export default function StaffPerformanceReport({
           <div className="grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-xl border border-indigo-100 bg-white p-3 text-center"><b className="block text-2xl text-emerald-500">{presentDays}</b><span className="text-xs font-bold text-slate-500">PRESENT</span></div>
             <div className="rounded-xl border border-indigo-100 bg-white p-3 text-center"><b className="block text-2xl text-indigo-500">{workingDays}</b><span className="text-xs font-bold text-slate-500">WORKING DAYS</span></div>
-            <div className="rounded-xl border border-indigo-100 bg-white p-3 text-center"><b className="block text-2xl text-rose-500">{Math.max(workingDays - presentDays, 0)}</b><span className="text-xs font-bold text-slate-500">ABSENT</span></div>
+            <div className="rounded-xl border border-indigo-100 bg-white p-3 text-center"><b className="block text-2xl text-rose-500">{Math.max(
+    Math.floor((new Date(`${appliedTo}T00:00:00`).getTime() - new Date(`${appliedFrom}T00:00:00`).getTime()) / 86400000) + 1 - presentDays,
+    0
+  )}</b><span className="text-xs font-bold text-slate-500">ABSENT</span></div>
             <div className="rounded-xl border border-indigo-100 bg-white p-3 text-center"><b className="block text-2xl text-indigo-500">{attendancePercent}%</b><span className="text-xs font-bold text-slate-500">ATTENDANCE %</span></div>
           </div>
         </div>
