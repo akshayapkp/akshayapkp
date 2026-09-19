@@ -12,6 +12,138 @@ export const STORAGE_KEYS = {
   SALARY_HISTORY: "salaryHistory",
 };
 
+export interface DailyBilledTotals {
+  departmentFee: number;
+  serviceCharge: number;
+  totalAmount: number;
+  count: number;
+}
+
+export function normalizeLocalDateKey(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const iso = raw.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const indian = raw.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})/);
+  if (indian) {
+    return `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
+}
+
+export function getDailyBilledTotals(
+  date: string,
+  selectedStaff: string = "All"
+): DailyBilledTotals {
+  if (typeof window === "undefined") {
+    return { departmentFee: 0, serviceCharge: 0, totalAmount: 0, count: 0 };
+  }
+
+  try {
+    const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
+    const billedServices = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
+    const performance = JSON.parse(localStorage.getItem("performanceRecords") || "[]");
+
+    const sources = [
+      ...(Array.isArray(serviceEntries) ? serviceEntries : []),
+      ...(Array.isArray(billedServices) ? billedServices : []),
+    ];
+
+    const totals: DailyBilledTotals = {
+      departmentFee: 0,
+      serviceCharge: 0,
+      totalAmount: 0,
+      count: 0,
+    };
+    const seen = new Set<string>();
+
+    sources.forEach((item: any, index: number) => {
+      if (!item || typeof item !== "object") return;
+
+      const key = normalizeLocalDateKey(
+        item.dateTime || item.date || item.createdAt || item.timestamp
+      );
+      if (key !== date) return;
+
+      const staffName = String(item.staffName || item.staff || "").trim();
+      if (
+        selectedStaff !== "All" &&
+        staffName &&
+        staffName.toLowerCase() !== selectedStaff.trim().toLowerCase()
+      ) {
+        return;
+      }
+
+      const billId = String(
+        item.billId || item.billID || item.invoiceId || ""
+      ).trim();
+      const serviceName = String(
+        item.serviceName || item.service || item.name || ""
+      ).trim();
+      const qty = Number(item.qty ?? item.quantity ?? 1) || 1;
+      const total = Number(item.totalAmount ?? item.total ?? 0) || 0;
+      const signature = billId
+        ? `${billId}|${serviceName}|${qty}|${total}`
+        : `${key}|${staffName}|${serviceName}|${qty}|${total}|${index}`;
+
+      if (seen.has(signature)) return;
+      seen.add(signature);
+
+      totals.departmentFee += Number(
+        item.walletChg ??
+          item.deptChg ??
+          item.deptFee ??
+          item.departmentFee ??
+          0
+      ) || 0;
+      totals.serviceCharge += Number(
+        item.srvChg ??
+          item.srvCharge ??
+          item.serviceCharge ??
+          0
+      ) || 0;
+      totals.totalAmount += total;
+      totals.count += qty;
+    });
+
+    if (!sources.length || totals.count === 0) {
+      const fallback = (Array.isArray(performance) ? performance : []).filter(
+        (record: any) => {
+          const key = normalizeLocalDateKey(record.date || record.timestamp);
+          const staffName = String(record.staffName || record.staff || "").trim();
+          return (
+            key === date &&
+            (selectedStaff === "All" ||
+              staffName.toLowerCase() === selectedStaff.trim().toLowerCase())
+          );
+        }
+      );
+
+      if (fallback.length) {
+        return fallback.reduce(
+          (sum, record: any) => ({
+            departmentFee:
+              sum.departmentFee + Number(record.departmentFee || 0),
+            serviceCharge:
+              sum.serviceCharge + Number(record.serviceCharge || 0),
+            totalAmount:
+              sum.totalAmount + Number(record.totalAmount || 0),
+            count:
+              sum.count + Number(record.totalServices || 0),
+          }),
+          { departmentFee: 0, serviceCharge: 0, totalAmount: 0, count: 0 }
+        );
+      }
+    }
+
+    return totals;
+  } catch {
+    return { departmentFee: 0, serviceCharge: 0, totalAmount: 0, count: 0 };
+  }
+}
+
 export function loadPerformanceRecords(): PerformanceRecord[] {
   if (typeof window === "undefined") return [];
 
