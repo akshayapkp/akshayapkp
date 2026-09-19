@@ -646,6 +646,7 @@ export default function StaffPerformancePage() {
   date={selectedDate}
   record={selectedRecord}
   holiday={selectedHoliday}
+  selectedStaff={selectedStaff}
   onHolidayChange={() => {
     setHolidays(loadHolidays());
 
