@@ -42,9 +42,60 @@ export function getDailyBilledTotals(
   }
 
   try {
-    const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
-    const billedServices = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
-    const performance = JSON.parse(localStorage.getItem("performanceRecords") || "[]");
+    /*
+     * Staff Performance is the source used by the Daily/Monthly/Yearly
+     * summary cards. Use the same records here so the calendar and
+     * Attendance Details never show a different total for the same day.
+     */
+    const performance = JSON.parse(
+      localStorage.getItem("performanceRecords") || "[]"
+    );
+
+    const matching = (Array.isArray(performance) ? performance : []).filter(
+      (record: any) => {
+        const key = normalizeLocalDateKey(record.date || record.timestamp);
+        const staffName = String(record.staffName || record.staff || "").trim();
+
+        return (
+          key === date &&
+          (selectedStaff === "All" ||
+            staffName.toLowerCase() === selectedStaff.trim().toLowerCase())
+        );
+      }
+    );
+
+    if (matching.length > 0) {
+      const hasAttendanceSummary = matching.length === 1 &&
+        Number(matching[0]?.totalServices || 0) > 0;
+
+      return matching.reduce(
+        (sum, record: any) => ({
+          departmentFee:
+            sum.departmentFee + Number(record.departmentFee || 0),
+          serviceCharge:
+            sum.serviceCharge + Number(record.serviceCharge || 0),
+          totalAmount:
+            sum.totalAmount + Number(record.totalAmount || 0),
+          count:
+            sum.count +
+            (hasAttendanceSummary
+              ? Number(record.totalServices || 0)
+              : 1),
+        }),
+        { departmentFee: 0, serviceCharge: 0, totalAmount: 0, count: 0 }
+      );
+    }
+
+    /*
+     * Fallback for installations where performanceRecords has not yet
+     * been created: use the detailed billed-service data.
+     */
+    const serviceEntries = JSON.parse(
+      localStorage.getItem("serviceEntries") || "[]"
+    );
+    const billedServices = JSON.parse(
+      localStorage.getItem("billedServicesData") || "[]"
+    );
 
     const sources = [
       ...(Array.isArray(serviceEntries) ? serviceEntries : []),
@@ -77,7 +128,7 @@ export function getDailyBilledTotals(
       }
 
       const billId = String(
-        item.billId || item.billID || item.invoiceId || ""
+        item.billId || item.billID || item.invoiceId || item.id || ""
       ).trim();
       const serviceName = String(
         item.serviceName || item.service || item.name || ""
@@ -105,38 +156,8 @@ export function getDailyBilledTotals(
           0
       ) || 0;
       totals.totalAmount += total;
-      totals.count += qty;
+      totals.count += 1;
     });
-
-    if (!sources.length || totals.count === 0) {
-      const fallback = (Array.isArray(performance) ? performance : []).filter(
-        (record: any) => {
-          const key = normalizeLocalDateKey(record.date || record.timestamp);
-          const staffName = String(record.staffName || record.staff || "").trim();
-          return (
-            key === date &&
-            (selectedStaff === "All" ||
-              staffName.toLowerCase() === selectedStaff.trim().toLowerCase())
-          );
-        }
-      );
-
-      if (fallback.length) {
-        return fallback.reduce(
-          (sum, record: any) => ({
-            departmentFee:
-              sum.departmentFee + Number(record.departmentFee || 0),
-            serviceCharge:
-              sum.serviceCharge + Number(record.serviceCharge || 0),
-            totalAmount:
-              sum.totalAmount + Number(record.totalAmount || 0),
-            count:
-              sum.count + Number(record.totalServices || 0),
-          }),
-          { departmentFee: 0, serviceCharge: 0, totalAmount: 0, count: 0 }
-        );
-      }
-    }
 
     return totals;
   } catch {
