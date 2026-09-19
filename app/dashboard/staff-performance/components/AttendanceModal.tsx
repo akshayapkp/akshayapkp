@@ -12,6 +12,7 @@ import {
   PerformanceRecord,
   Holiday,
 } from "../types";
+import { getDailyBilledTotals } from "../utils";
 
 interface AttendanceModalProps {
   open: boolean;
