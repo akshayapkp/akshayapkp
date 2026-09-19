@@ -75,12 +75,66 @@ export default function StaffPerformanceReport({
   }), [reportRows]);
 
   const presentDays = useMemo(() => {
+    /*
+     * Attendance count must come from the actual dashboard attendance logs.
+     * performanceRecords can contain billing/performance rows for a day even
+     * when the staff member was not marked Present, so counting those rows
+     * inflated Present from 13 to 15.
+     */
     const wanted = String(selectedStaff || "All").trim().toLowerCase();
-    return new Set(attendanceRecords.filter(r => {
-      const key = dateKey(r.date || r.timestamp);
-      const staff = String(r.staffName || "").trim().toLowerCase();
-      return key >= appliedFrom && key <= appliedTo && (wanted === "all" || staff === wanted);
-    }).map(r=>dateKey(r.date || r.timestamp))).size;
+
+    try {
+      const raw =
+        typeof window !== "undefined"
+          ? localStorage.getItem("staff_attendance_logs")
+          : null;
+
+      const logs = raw ? JSON.parse(raw) : [];
+
+      if (Array.isArray(logs) && logs.length > 0) {
+        const presentDates = new Set<string>();
+
+        logs.forEach((log: any) => {
+          if (!log || !log.staffName) return;
+
+          const staff = String(log.staffName).trim().toLowerCase();
+          if (wanted !== "all" && staff !== wanted) return;
+
+          const key = dateKey(log.timestamp || log.date);
+          if (!key) return;
+
+          const loginTime = String(log.loginTime || "").trim();
+          if (!loginTime || loginTime === "--") return;
+
+          if (key >= appliedFrom && key <= appliedTo) {
+            presentDates.add(key);
+          }
+        });
+
+        return presentDates.size;
+      }
+    } catch (error) {
+      console.error("Failed to calculate report attendance:", error);
+    }
+
+    // Fallback for older data that does not have staff_attendance_logs.
+    return new Set(
+      attendanceRecords
+        .filter((r) => {
+          const key = dateKey(r.date || r.timestamp);
+          const staff = String(r.staffName || "").trim().toLowerCase();
+          const loginTime = String(r.loginTime || "").trim();
+
+          return (
+            key >= appliedFrom &&
+            key <= appliedTo &&
+            (wanted === "all" || staff === wanted) &&
+            loginTime !== "" &&
+            loginTime !== "--"
+          );
+        })
+        .map((r) => dateKey(r.date || r.timestamp))
+    ).size;
   }, [attendanceRecords, selectedStaff, appliedFrom, appliedTo]);
 
   const workingDays = useMemo(() => {
