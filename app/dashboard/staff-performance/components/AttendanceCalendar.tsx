@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { PerformanceRecord, Holiday } from "../types";
+import { getDailyBilledTotals } from "../utils";
 
 interface AttendanceCalendarProps {
   records: PerformanceRecord[];
@@ -48,78 +49,14 @@ export default function AttendanceCalendar({
     selectedStaff === "All" ||
     String(staffName || "").trim().toLowerCase() === selectedStaff.trim().toLowerCase();
 
-  const [billedTotals, setBilledTotals] = useState<Record<string, { departmentFee: number; serviceCharge: number; totalAmount: number; count: number }>>({});
-
-  useEffect(() => {
-    try {
-      const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
-      const billedServices = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
-      const performance = JSON.parse(localStorage.getItem("performanceRecords") || "[]");
-
-      const sources = [
-        ...(Array.isArray(serviceEntries) ? serviceEntries : []),
-        ...(Array.isArray(billedServices) ? billedServices : []),
-      ];
-
-      const totals: Record<string, { departmentFee: number; serviceCharge: number; totalAmount: number; count: number }> = {};
-      const seen = new Set<string>();
-
-      const toDateKey = (value: unknown) => {
-        const raw = String(value ?? "").trim();
-        if (!raw) return "";
-        const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-        const indian = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
-        if (indian) return `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
-        const parsed = new Date(raw);
-        return Number.isNaN(parsed.getTime()) ? "" : dateKey(parsed);
-      };
-
-      sources.forEach((item: any, index: number) => {
-        if (!item || typeof item !== "object") return;
-
-        const key = toDateKey(item.dateTime || item.date || item.createdAt || item.timestamp);
-        if (!key) return;
-
-        const staffName = String(item.staffName || item.staff || "").trim();
-        if (selectedStaff !== "All" && staffName && staffName.toLowerCase() !== selectedStaff.trim().toLowerCase()) return;
-
-        const billId = String(item.billId || item.billID || item.invoiceId || "").trim();
-        const serviceName = String(item.serviceName || item.service || item.name || "").trim();
-        const signature = billId
-          ? `${billId}|${serviceName}|${Number(item.qty ?? item.quantity ?? 1)}|${Number(item.totalAmount ?? item.total ?? 0)}`
-          : `${key}|${staffName}|${serviceName}|${Number(item.qty ?? item.quantity ?? 1)}|${Number(item.totalAmount ?? item.total ?? 0)}|${index}`;
-        if (seen.has(signature)) return;
-        seen.add(signature);
-
-        if (!totals[key]) totals[key] = { departmentFee: 0, serviceCharge: 0, totalAmount: 0, count: 0 };
-        totals[key].departmentFee += Number(item.walletChg ?? item.deptChg ?? item.deptFee ?? item.departmentFee ?? 0) || 0;
-        totals[key].serviceCharge += Number(item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0) || 0;
-        totals[key].totalAmount += Number(item.totalAmount ?? item.total ?? 0) || 0;
-        totals[key].count += Number(item.quantity ?? item.qty ?? 1) || 1;
-      });
-
-      // If service-level stores are empty, use the daily performance record as a fallback.
-      if (!Object.keys(totals).length && Array.isArray(performance)) {
-        performance.forEach((record: any) => {
-          const key = toDateKey(record.date || record.timestamp);
-          if (!key) return;
-          const staffName = String(record.staffName || record.staff || "").trim();
-          if (selectedStaff !== "All" && staffName.toLowerCase() !== selectedStaff.trim().toLowerCase()) return;
-          totals[key] = {
-            departmentFee: Number(record.departmentFee || 0),
-            serviceCharge: Number(record.serviceCharge || 0),
-            totalAmount: Number(record.totalAmount || 0),
-            count: Number(record.totalServices || 0),
-          };
-        });
-      }
-
-      setBilledTotals(totals);
-    } catch {
-      setBilledTotals({});
+  const billedTotals = useMemo(() => {
+    const totals: Record<string, ReturnType<typeof getDailyBilledTotals>> = {};
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      totals[dateKey(date)] = getDailyBilledTotals(dateKey(date), selectedStaff);
     }
-  }, [selectedStaff, records]);
+    return totals;
+  }, [month, year, selectedStaff]);
 
   const hasAttendance = (date: Date) => {
     const key = dateKey(date);
