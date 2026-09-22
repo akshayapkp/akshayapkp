@@ -237,8 +237,13 @@ export default function HomePage() {
   async function submitApplication() {
     if (!selected || !flow) return;
     setSubmitError("");
-    if (!audience || !form.name.trim() || !form.mobile.trim()) {
-      setSubmitError("ദയവായി ആർക്കാണ് സേവനം, പേര്, മൊബൈൽ നമ്പർ എന്നിവ പൂരിപ്പിക്കുക.");
+    if (!audience) {
+      setSubmitError("ദയവായി ആർക്കാണ് സേവനം എന്ന് തിരഞ്ഞെടുക്കുക.");
+      return;
+    }
+    const missingFields = flow.fields.filter((key) => !String(form[key] || "").trim());
+    if (missingFields.length > 0) {
+      setSubmitError("ദയവായി ആവശ്യമായ എല്ലാ വിവരങ്ങളും പൂരിപ്പിക്കുക.");
       return;
     }
     if (files.length === 0) {
