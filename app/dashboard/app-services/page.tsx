@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, FileText, Search, Save, UserRound, Hash, Filter, RotateCcw, ShieldAlert, Trash2 } from "lucide-react";
+import { CalendarDays, FileText, Search, Save, UserRound, Hash, Filter, RotateCcw, ShieldAlert, Trash2, MessageCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -32,6 +32,17 @@ const APPLICATION_STATUSES = [
   "Rejected",
   "Completed",
 ];
+
+function whatsappUrl(mobile: string) {
+  const digits = String(mobile || "").replace(/\D/g, "");
+  if (!digits) return "#";
+  const normalized = digits.startsWith("91") && digits.length >= 12
+    ? digits
+    : digits.replace(/^0+/, "").length === 10
+      ? `91${digits.replace(/^0+/, "")}`
+      : digits.replace(/^0+/, "");
+  return `https://wa.me/${normalized}`;
+}
 
 function formatDate(value: string) {
   if (!value) return "—";
@@ -448,7 +459,21 @@ export default function AppServicesPage() {
                       </h2>
 
                       <div className="mt-3 grid gap-2 text-xs font-semibold text-slate-500 sm:grid-cols-2">
-                        <p><span className="text-slate-400">Mobile:</span> {application.customer?.mobile || "—"}</p>
+                        <div className="flex items-center gap-2">
+                          <span><span className="text-slate-400">Mobile:</span> {application.customer?.mobile || "—"}</span>
+                          {application.customer?.mobile && (
+                            <a
+                              href={whatsappUrl(application.customer.mobile)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`WhatsApp ${application.customer.name || "customer"}`}
+                              title="Open WhatsApp chat"
+                              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                            >
+                              <MessageCircle size={16} strokeWidth={2.4} />
+                            </a>
+                          )}
+                        </div>
                         <p><span className="text-slate-400">Service:</span> {application.service}</p>
                         <p><span className="text-slate-400">For:</span> {application.audience || "—"}</p>
                         <p><span className="text-slate-400">Documents:</span> {application.documentNames?.length || 0}</p>
