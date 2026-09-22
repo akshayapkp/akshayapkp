@@ -53,8 +53,9 @@ const serviceCategory = (name: string) => {
 const maskMobile = (mobile: string) => {
   const digits = String(mobile || "").replace(/\D/g, "");
   if (!digits) return "—";
-  const lastThree = digits.slice(-3);
-  return digits.length > 3 ? `XXX XXX ${lastThree}` : lastThree;
+  const local = digits.slice(-10);
+  const lastThree = local.slice(-3);
+  return local.length >= 3 ? `+91 XXX XXX ${lastThree}` : `+91 XXX XXX ${lastThree}`;
 };
 
 function getFlow(name: string): { audiences: string[]; fields: FieldKey[]; docs: string[] } {
