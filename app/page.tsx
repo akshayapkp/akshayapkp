@@ -81,6 +81,9 @@ export default function HomePage() {
   const [audience, setAudience] = useState("");
   const [form, setForm] = useState<Record<FieldKey, string>>({ name: "", mobile: "", address: "", dob: "", aadhaar: "", parentName: "" });
   const [files, setFiles] = useState<File[]>([]);
+  const [applicationNumber, setApplicationNumber] = useState("");
+  const [showApplicationPopup, setShowApplicationPopup] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const whatsappNumber = process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
 
@@ -137,14 +140,53 @@ export default function HomePage() {
     return <label className={styles.formField}><span>{label}</span><input type={type} value={form[key]} placeholder={placeholder} onChange={e => setForm(v => ({ ...v, [key]: e.target.value }))}/></label>;
   }
 
-  function sendToWhatsApp() {
+  function createApplicationNumber() {
+    const now = new Date();
+    const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("");
+    const random = typeof crypto !== "undefined" && "getRandomValues" in crypto
+      ? Array.from(crypto.getRandomValues(new Uint32Array(2))).map(v => v.toString(36)).join("").slice(0, 7).toUpperCase()
+      : Math.random().toString(36).slice(2, 9).toUpperCase();
+    return "AKP-" + date + "-" + random;
+  }
+
+  function submitApplication() {
     if (!selected || !flow) return;
-    const name = serviceName(selected);
+    setSubmitError("");
+    if (!audience || !form.name.trim() || !form.mobile.trim()) {
+      setSubmitError("ദയവായി ആർക്കാണ് സേവനം, പേര്, മൊബൈൽ നമ്പർ എന്നിവ പൂരിപ്പിക്കുക.");
+      return;
+    }
+    if (files.length === 0) {
+      setSubmitError("ദയവായി ആവശ്യമായ രേഖകൾ Upload ചെയ്ത ശേഷം Submit ചെയ്യുക.");
+      return;
+    }
+    const generated = createApplicationNumber();
+    setApplicationNumber(generated);
+    setShowApplicationPopup(true);
+    try {
+      const existing = JSON.parse(localStorage.getItem("akshaya_customer_applications") || "[]");
+      const applications = Array.isArray(existing) ? existing : [];
+      applications.unshift({
+        applicationNumber: generated,
+        service: serviceName(selected),
+        audience,
+        customer: form,
+        documentNames: files.map(f => f.name),
+        submittedAt: new Date().toISOString(),
+        status: "Submitted",
+      });
+      localStorage.setItem("akshaya_customer_applications", JSON.stringify(applications.slice(0, 200)));
+    } catch {}
+  }
+
+  function openApplicationWhatsApp() {
+    if (!selected || !flow || !applicationNumber) return;
     const lines = [
       "അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്",
-      "സേവന അപേക്ഷ",
+      "പുതിയ സേവന അപേക്ഷ",
       "--------------------",
-      "സേവനം: " + name,
+      "അപേക്ഷ നമ്പർ: " + applicationNumber,
+      "സേവനം: " + serviceName(selected),
       "ആർക്കായി: " + audience,
       form.name && "പേര്: " + form.name,
       form.mobile && "മൊബൈൽ: " + form.mobile,
@@ -153,12 +195,16 @@ export default function HomePage() {
       form.aadhaar && "ആധാർ: " + form.aadhaar,
       form.parentName && "രക്ഷിതാവിന്റെ പേര്: " + form.parentName,
       "",
-      "തിരഞ്ഞെടുത്ത രേഖകൾ:",
-      ...flow.docs.map(d => "• " + d),
+      "Upload ചെയ്യേണ്ട രേഖകൾ:",
+      ...files.map(f => "• " + f.name),
       "",
-      files.length ? "രേഖകൾ WhatsApp-ൽ attach ചെയ്യുന്നു: " + files.map(f => f.name).join(", ") : "രേഖകൾ WhatsApp-ൽ attach ചെയ്യുന്നതാണ്.",
+      "ഈ അപേക്ഷയുടെ രേഖകൾ WhatsApp-ൽ attach ചെയ്ത് അയയ്ക്കുന്നു.",
     ].filter(Boolean).join("\n");
     window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(lines), "_blank", "noopener,noreferrer");
+  }
+
+  function closeApplicationPopup() {
+    setShowApplicationPopup(false);
   }
 
   return <main className={styles.page}>
@@ -205,8 +251,25 @@ export default function HomePage() {
           <div className={styles.modalSection}><h3>നിങ്ങളുടെ വിവരങ്ങൾ</h3><div className={styles.formGrid}>{field("പേര്","name","text","പൂർണ്ണ പേര്")}{field("മൊബൈൽ നമ്പർ","mobile","tel","10 അക്ക മൊബൈൽ നമ്പർ")}{field("വിലാസം","address","text","പൂർണ്ണ വിലാസം")}{field("ജനന തീയതി","dob","date")}{field("ആധാർ നമ്പർ","aadhaar","text","12 അക്ക ആധാർ നമ്പർ")}{field("രക്ഷിതാവിന്റെ പേര്","parentName","text","കുട്ടിയാണെങ്കിൽ")}</div></div>
           <div className={styles.modalSection}><h3>രേഖകൾ തിരഞ്ഞെടുക്കുക</h3><label className={styles.uploadBox}><Upload size={22}/><b>Upload Documents</b><span>രേഖകൾ തിരഞ്ഞെടുക്കാൻ ഇവിടെ ക്ലിക്ക് ചെയ്യുക</span><input type="file" multiple onChange={e => setFiles(Array.from(e.target.files || []))}/></label>{files.length > 0 && <div className={styles.fileList}>{files.map(f => <span key={f.name}>{f.name}</span>)}</div>}</div>
         </div>
-        <div className={styles.modalFooter}><button className={styles.secondaryButton} onClick={closeService}>Cancel</button><button className={styles.whatsappButton} onClick={sendToWhatsApp}><MessageCircle size={18}/> WhatsApp-ലേക്ക് തുടരുക</button></div>
+        <div className={styles.modalFooter}>{submitError && <span className={styles.submitError}>{submitError}</span>}<button className={styles.secondaryButton} onClick={closeService}>Cancel</button><button className={styles.primaryButton} onClick={submitApplication}><CheckCircle2 size={18}/> Submit അപേക്ഷ</button></div>
       </div>
     </div>}
-  </main>;
+
+
+    {showApplicationPopup && selected && <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) closeApplicationPopup(); }}>
+      <div className={styles.applicationPopup}>
+        <div className={styles.successIcon}><CheckCircle2 size={32}/></div>
+        <span className={styles.popupEyebrow}>Application Submitted</span>
+        <h2>നിങ്ങളുടെ അപേക്ഷ നമ്പർ</h2>
+        <div className={styles.applicationNumber}>{applicationNumber}</div>
+        <p>ഈ നമ്പർ സൂക്ഷിച്ച് വെക്കുക. അപേക്ഷയുടെ തുടർനടപടികൾക്കും status അറിയാനും ഇത് ആവശ്യമാണ്.</p>
+        <div className={styles.applicationSummary}>
+          <span>സേവനം</span><strong>{serviceName(selected)}</strong>
+          <span>രേഖകൾ</span><strong>{files.length} എണ്ണം</strong>
+        </div>
+        <button className={styles.whatsappButton} onClick={openApplicationWhatsApp}><MessageCircle size={18}/> WhatsApp-ൽ രേഖകൾ Upload ചെയ്യുക</button>
+        <small>WhatsApp തുറന്ന ശേഷം തിരഞ്ഞെടുക്കപ്പെട്ട രേഖകൾ attach ചെയ്ത് അയയ്ക്കുക. അപേക്ഷ നമ്പറും സേവന വിവരവും മെസ്സേജിൽ സ്വയം വരും.</small>
+        <button className={styles.popupCloseButton} onClick={closeApplicationPopup}>പിന്നീട് Upload ചെയ്യാം</button>
+      </div>
+    </div>}  </main>;
 }
