@@ -307,7 +307,46 @@ export default function HomePage() {
       </div>
     </section>
 
-    <section id="status" className={styles.statusSection}><div className={styles.container}><div className={styles.statusCard}><div className={styles.statusCopy}><span className={styles.statusBadge}>അപേക്ഷാ സ്റ്റാറ്റസ്</span><h2>അപേക്ഷയുടെ നിലവിലെ സ്ഥിതി അറിയാം</h2><p>നിങ്ങൾക്ക് ലഭിച്ച 4 അക്ക അപേക്ഷ നമ്പർ നൽകൂ. സ്റ്റാഫ് update ചെയ്തിരിക്കുന്ന status ഇവിടെ കാണാം.</p><div className={styles.statusSearch}><input inputMode="numeric" maxLength={4} value={statusNumber} onChange={e => setStatusNumber(e.target.value.replace(/\D/g, "").slice(0,4))} placeholder="4 അക്ക അപേക്ഷ നമ്പർ" onKeyDown={e => { if (e.key === "Enter") trackApplication(); }}/><button onClick={trackApplication} disabled={statusLoading}>{statusLoading ? "തിരയുന്നു..." : "Status നോക്കുക"}</button></div>{statusMessage && <p className={styles.statusMessage}>{statusMessage}</p>}{statusResult && <div className={styles.statusResult}><div><span>അപേക്ഷ നമ്പർ</span><strong>{statusResult.applicationNumber}</strong></div><div><span>പേര്</span><strong>{statusResult.customer?.name || "—"}</strong></div><div><span>മൊബൈൽ</span><strong>{maskMobile(statusResult.customer?.mobile || "")}</strong></div><div><span>സേവനം</span><strong>{statusResult.service}</strong></div><div><span>നിലവിലെ സ്ഥിതി</span><strong className={styles.liveStatus}>{statusResult.status}</strong></div>{statusResult.note && <div className={styles.statusNote}><span>കുറിപ്പ് / Note</span><strong>{statusResult.note}</strong></div></div>}</div></div></div></section>
+    <section id="status" className={styles.statusSection}>
+      <div className={styles.container}>
+        <div className={styles.statusCard}>
+          <div className={styles.statusCopy}>
+            <span className={styles.statusBadge}>അപേക്ഷാ സ്റ്റാറ്റസ്</span>
+            <h2>അപേക്ഷയുടെ നിലവിലെ സ്ഥിതി അറിയാം</h2>
+            <p>നിങ്ങൾക്ക് ലഭിച്ച 4 അക്ക അപേക്ഷ നമ്പർ നൽകൂ. സ്റ്റാഫ് update ചെയ്തിരിക്കുന്ന status ഇവിടെ കാണാം.</p>
+            <div className={styles.statusSearch}>
+              <input
+                inputMode="numeric"
+                maxLength={4}
+                value={statusNumber}
+                onChange={e => setStatusNumber(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                placeholder="4 അക്ക അപേക്ഷ നമ്പർ"
+                onKeyDown={e => { if (e.key === "Enter") trackApplication(); }}
+              />
+              <button onClick={trackApplication} disabled={statusLoading}>
+                {statusLoading ? "തിരയുന്നു..." : "Status നോക്കുക"}
+              </button>
+            </div>
+            {statusMessage && <p className={styles.statusMessage}>{statusMessage}</p>}
+            {statusResult && (
+              <div className={styles.statusResult}>
+                <div><span>അപേക്ഷ നമ്പർ</span><strong>{statusResult.applicationNumber}</strong></div>
+                <div><span>പേര്</span><strong>{statusResult.customer?.name || "—"}</strong></div>
+                <div><span>മൊബൈൽ</span><strong>{maskMobile(statusResult.customer?.mobile || "")}</strong></div>
+                <div><span>സേവനം</span><strong>{statusResult.service}</strong></div>
+                <div><span>നിലവിലെ സ്ഥിതി</span><strong className={styles.liveStatus}>{statusResult.status}</strong></div>
+                {statusResult.note && (
+                  <div className={styles.statusNote}>
+                    <span>കുറിപ്പ് / Note</span>
+                    <strong>{statusResult.note}</strong>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section id="contact" className={styles.infoSection}><div className={styles.container + " " + styles.infoGrid}><div><div className={styles.sectionHeading}><span>Contact · ബന്ധപ്പെടുക</span><h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2><p>സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.</p></div><div className={styles.points}><div><Phone/><span>WhatsApp / Phone വഴി ബന്ധപ്പെടുക</span></div><div><MapPin/><span>പൂക്കിപ്പറമ്പ്, കേരളം</span></div><div><FileText/><span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span></div></div></div><div className={styles.contactCard}><h2>നേരിട്ട് സഹായം വേണോ?</h2><p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p><a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className={styles.whatsappButton}><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a></div></div></section>
 
