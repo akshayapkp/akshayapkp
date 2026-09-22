@@ -20,7 +20,7 @@ type FieldKey = "name" | "mobile" | "address" | "dob" | "aadhaar" | "parentName"
 type CustomerApplication = { applicationNumber: string; service: string; audience: string; customer: Record<string, string>; documentNames: string[]; submittedAt: string; status: string; note?: string; updatedAt?: string; };
 type HomepagePoster = { id: string; title: string; subtitle: string; image: string; serviceName: string; apply: boolean };
 type HomepageSettings = {
-  contact: { email: string; mobile: string; whatsapp: string; address: string };
+  contact: { email: string; mobile: string; mobile2: string; whatsapp: string; address: string };
   theme: { primary: string; accent: string; background: string };
   posters: HomepagePoster[];
   serviceConfigs: Record<string, { fields: string[]; documents: string[] }>;
@@ -129,13 +129,13 @@ export default function HomePage() {
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredPaused, setFeaturedPaused] = useState(false);
   const [homepageSettings, setHomepageSettings] = useState<HomepageSettings>({
-    contact: { email: "", mobile: "", whatsapp: "", address: "" },
+    contact: { email: "", mobile: "", mobile2: "", whatsapp: "", address: "" },
     theme: { primary: "#155eef", accent: "#06b6d4", background: "#f7fbff" },
     posters: [],
     serviceConfigs: {},
   });
 
-  const whatsappNumber = homepageSettings.contact.whatsapp.replace(/\D/g, "") || process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
+  const whatsappNumber = homepageSettings.contact.whatsapp.replace(/\D/g, "") || homepageSettings.contact.mobile.replace(/\D/g, "") || process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
   const featuredServices = homepageSettings.posters.length ? homepageSettings.posters : defaultFeaturedServices;
 
   useEffect(() => {
@@ -519,7 +519,56 @@ export default function HomePage() {
       </div>
     )}
 
-    <section id="contact" className={styles.infoSection}><div className={styles.container + " " + styles.infoGrid}><div><div className={styles.sectionHeading}><span>Contact · ബന്ധപ്പെടുക</span><h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2><p>സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.{homepageSettings.contact.email ? " Email: " + homepageSettings.contact.email : ""}</p></div><div className={styles.points}><div><Phone/><span>{homepageSettings.contact.mobile || homepageSettings.contact.whatsapp ? "WhatsApp / Phone വഴി ബന്ധപ്പെടുക" : "WhatsApp / Phone വഴി ബന്ധപ്പെടുക"}</span></div><div><MapPin/><span>{homepageSettings.contact.address || "പൂക്കിപ്പറമ്പ്, കേരളം"}</span></div><div><FileText/><span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span></div></div></div><div className={styles.contactCard}><h2>നേരിട്ട് സഹായം വേണോ?</h2><p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p><a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className={styles.whatsappButton}><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a></div></div></section>
+    <section id="contact" className={styles.infoSection}>
+      <div className={styles.container + " " + styles.infoGrid}>
+        <div>
+          <div className={styles.sectionHeading}>
+            <span>Contact · ബന്ധപ്പെടുക</span>
+            <h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2>
+            <p>സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.</p>
+          </div>
+          <div className={styles.points}>
+            {homepageSettings.contact.whatsapp && (
+              <div>
+                <MessageCircle/>
+                <a href={"https://wa.me/" + homepageSettings.contact.whatsapp.replace(/\D/g, "")} target="_blank" rel="noopener noreferrer">WhatsApp: {homepageSettings.contact.whatsapp}</a>
+              </div>
+            )}
+            {homepageSettings.contact.mobile && (
+              <div>
+                <Phone/>
+                <a href={"tel:" + homepageSettings.contact.mobile.replace(/\D/g, "")}>Mobile: {homepageSettings.contact.mobile}</a>
+              </div>
+            )}
+            {homepageSettings.contact.mobile2 && (
+              <div>
+                <Phone/>
+                <a href={"tel:" + homepageSettings.contact.mobile2.replace(/\D/g, "")}>Mobile 2: {homepageSettings.contact.mobile2}</a>
+              </div>
+            )}
+            {homepageSettings.contact.email && (
+              <div>
+                <FileText/>
+                <a href={"mailto:" + homepageSettings.contact.email}>Email: {homepageSettings.contact.email}</a>
+              </div>
+            )}
+            <div>
+              <MapPin/>
+              <span>{homepageSettings.contact.address || "പൂക്കിപ്പറമ്പ്, കേരളം"}</span>
+            </div>
+            <div>
+              <FileText/>
+              <span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span>
+            </div>
+          </div>
+        </div>
+        <div className={styles.contactCard}>
+          <h2>നേരിട്ട് സഹായം വേണോ?</h2>
+          <p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p>
+          <a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className={styles.whatsappButton}><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a>
+        </div>
+      </div>
+    </section>
 
     <footer className={styles.footer}><div className={styles.container + " " + styles.footerInner}><div className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></div><div className={styles.footerLinks}><a href="#services">സേവനങ്ങൾ</a><a href="#status">സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a><Link href="/login">Official Login</Link></div></div></footer>
 

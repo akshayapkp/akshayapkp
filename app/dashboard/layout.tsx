@@ -134,13 +134,7 @@ const allMenuItems: MenuItem[] = [
     section: "System",
     permissionKey: "Service Management",
   },
-  {
-  name: "Staff Management",
-  path: "/dashboard/staff-management",
-    icon: Users,
-    section: "System",
-    permissionKey: "Staff Management",
-  },
+
   {
     name: "Staff Performance",
     path: "/dashboard/staff-performance",
@@ -162,13 +156,7 @@ const allMenuItems: MenuItem[] = [
     section: "System",
     permissionKey: "Quick Hub",
   },
-  {
-    name: "Feature Permissions",
-    path: "/dashboard/feature-permissions",
-    icon: ShieldAlert,
-    section: "System",
-    permissionKey: "Feature Permissions",
-  },
+
   {
     name: "Settings",
     path: "/dashboard/settings",
