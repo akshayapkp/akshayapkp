@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, FileText, Search, Save, UserRound, Phone, Hash } from "lucide-react";
+import { CalendarDays, FileText, Search, Save, UserRound, Hash, Filter, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -56,7 +56,9 @@ function dateKey(value: string) {
 export default function AppServicesPage() {
   const [applications, setApplications] = useState<CustomerApplication[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("All");
   const [loading, setLoading] = useState(true);
   const [savingNumber, setSavingNumber] = useState("");
   const [message, setMessage] = useState("");
@@ -113,12 +115,15 @@ export default function AppServicesPage() {
         mobile.includes(query) ||
         service.includes(query);
 
-      const matchesDate =
-        !selectedDate || dateKey(application.submittedAt) === selectedDate;
+      const submittedDate = dateKey(application.submittedAt);
+      const matchesFromDate = !fromDate || submittedDate >= fromDate;
+      const matchesToDate = !toDate || submittedDate <= toDate;
+      const matchesStatus =
+        selectedStatus === "All" || String(application.status || "Submitted") === selectedStatus;
 
-      return matchesSearch && matchesDate;
+      return matchesSearch && matchesFromDate && matchesToDate && matchesStatus;
     });
-  }, [applications, searchQuery, selectedDate]);
+  }, [applications, searchQuery, fromDate, toDate, selectedStatus]);
 
   async function saveApplication(application: CustomerApplication) {
     setSavingNumber(application.applicationNumber);
@@ -229,7 +234,7 @@ export default function AppServicesPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_auto]">
+          <div className="mt-6 grid gap-3 xl:grid-cols-[minmax(280px,1fr)_auto_auto_auto]">
             <div className="relative">
               <Search
                 size={18}
@@ -243,16 +248,62 @@ export default function AppServicesPage() {
               />
             </div>
 
-            <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5">
+            <label className="flex min-w-[170px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5">
               <CalendarDays size={18} className="text-slate-500" />
-              <span className="text-xs font-bold text-slate-500">Date</span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">From</span>
               <input
                 type="date"
-                value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
-                className="bg-transparent text-sm font-bold text-slate-700 outline-none"
+                value={fromDate}
+                onChange={(event) => setFromDate(event.target.value)}
+                className="min-w-0 bg-transparent text-sm font-bold text-slate-700 outline-none"
               />
             </label>
+
+            <label className="flex min-w-[170px] items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5">
+              <CalendarDays size={18} className="text-slate-500" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">To</span>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(event) => setToDate(event.target.value)}
+                className="min-w-0 bg-transparent text-sm font-bold text-slate-700 outline-none"
+              />
+            </label>
+
+            <div className="flex items-center gap-2 rounded-2xl border border-cyan-200 bg-cyan-50/60 px-4 py-2.5">
+              <Filter size={17} className="text-cyan-700" />
+              <select
+                value={selectedStatus}
+                onChange={(event) => setSelectedStatus(event.target.value)}
+                className="min-w-[145px] bg-transparent text-sm font-black text-cyan-800 outline-none"
+              >
+                <option value="All">All Applications</option>
+                {APPLICATION_STATUSES.map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] font-bold text-slate-400">
+              Showing <span className="text-slate-700">{filteredApplications.length}</span> of {applications.length} applications
+            </p>
+            {(fromDate || toDate || selectedStatus !== "All" || searchQuery) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setFromDate("");
+                  setToDate("");
+                  setSelectedStatus("All");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-black text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+              >
+                <RotateCcw size={13} />
+                Clear Filters
+              </button>
+            )}
           </div>
 
           {message && (
@@ -274,7 +325,7 @@ export default function AppServicesPage() {
                 No Applications Found
               </h2>
               <p className="mt-1 text-xs font-medium text-slate-400">
-                Search / date filter മാറ്റി വീണ്ടും നോക്കൂ.
+                Search / date / status filter മാറ്റി വീണ്ടും നോക്കൂ.
               </p>
             </div>
           ) : (
