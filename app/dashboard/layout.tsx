@@ -26,6 +26,7 @@ import {
   Moon,
   Home,
   ClipboardList,
+  Smartphone,
   Menu,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -90,6 +91,13 @@ const allMenuItems: MenuItem[] = [
   section: "Services",
   permissionKey: "Work Status",
 },
+  {
+    name: "App Services",
+    path: "/dashboard/app-services",
+    icon: Smartphone,
+    section: "Services",
+    permissionKey: "App Services",
+  },
   {
     name: "Wallet Management",
     path: "/dashboard/wallet-management",
