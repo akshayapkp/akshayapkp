@@ -169,6 +169,13 @@ const allMenuItems: MenuItem[] = [
     section: "System",
     permissionKey: "Feature Permissions",
   },
+  {
+    name: "Settings",
+    path: "/dashboard/settings",
+    icon: Settings2,
+    section: "System",
+    permissionKey: "Settings",
+  },
 ];
 
 export default function DashboardLayout({
