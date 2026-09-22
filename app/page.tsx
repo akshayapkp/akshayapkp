@@ -306,25 +306,13 @@ export default function HomePage() {
       </div>
     </header>
 
-    <section className={styles.hero}>
-      <div className={styles.container + " " + styles.heroSingle}>
-        <div className={styles.heroCopy}>
-          <div className={styles.eyebrow}><ShieldCheck size={15}/> Customer Portal · കസ്റ്റമർ പോർട്ടൽ</div>
-          <h1>സർക്കാർ സേവനങ്ങൾ<br/><span>എളുപ്പത്തിൽ.</span></h1>
-          <p>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പിലൂടെ ആവശ്യമായ സേവനം തിരഞ്ഞെടുക്കൂ. ആവശ്യമായ വിവരങ്ങളും രേഖകളും നൽകി WhatsApp വഴി അപേക്ഷയുടെ തുടർനടപടികൾ പൂർത്തിയാക്കാം.</p>
-          <div className={styles.heroActions}><a href="#services" className={styles.primaryButton}>സേവനം തിരഞ്ഞെടുക്കൂ <ArrowRight size={18}/></a><a href="#contact" className={styles.secondaryButton}><MessageCircle size={18}/> WhatsApp സഹായം</a></div>
-          <div className={styles.trustRow}><span><CheckCircle2 size={17}/> വ്യക്തിഗത സഹായം</span><span><CheckCircle2 size={17}/> വ്യക്തമായ രേഖാ ലിസ്റ്റ്</span><span><CheckCircle2 size={17}/> വേഗത്തിലുള്ള പിന്തുണ</span></div>
-        </div>
-      </div>
-    </section>
-
     <section className={styles.updatesSection}>
       <div className={styles.container}>
         <div className={styles.updatesHeading}>
           <div>
-            <span><Sparkles size={14}/> പുതിയ സർക്കാർ സേവനങ്ങൾ</span>
+            <span><Sparkles size={13}/> സർക്കാർ സേവനങ്ങൾ</span>
             <h2>പുതിയ സേവനങ്ങളും അറിയിപ്പുകളും</h2>
-            <p>പുതിയതായി ലഭിക്കുന്ന സേവനങ്ങൾ ഇവിടെ കാണാം. Poster-ൽ hover ചെയ്ത് Apply ചെയ്യാം.</p>
+            <p>പുതിയതായി ലഭിക്കുന്ന സേവനങ്ങൾ ഇവിടെ കാണാം.</p>
           </div>
           <div className={styles.sliderDots}>
             {featuredServices.map((item, i) => <button key={item.title} aria-label={item.title} className={i === featuredIndex ? styles.sliderDotActive : styles.sliderDot} onClick={() => setFeaturedIndex(i)} />)}
