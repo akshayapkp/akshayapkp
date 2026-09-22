@@ -99,6 +99,8 @@ export default function HomePage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [showAllServices, setShowAllServices] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ServiceItem | null>(null);
   const [audience, setAudience] = useState("");
@@ -294,15 +296,65 @@ export default function HomePage() {
     <section id="services" className={styles.serviceSection}>
       <div className={styles.container}>
         <div className={styles.sectionHeading}><span>Services · സേവനങ്ങൾ</span><h2>ഒരു സേവനം തിരഞ്ഞെടുക്കൂ</h2><p>നിങ്ങളുടെ ആവശ്യമായ സേവനം Search ചെയ്ത് തിരഞ്ഞെടുക്കാം.</p></div>
-        <div className={styles.serviceToolbar}>
-          <div className={styles.serviceCategoryBar}>
-            <button className={!selectedCategory ? styles.categoryButtonActive : styles.categoryButton} onClick={() => setSelectedCategory("")}>All List</button>
-            {categories.map(category => <button key={category} className={selectedCategory === category ? styles.categoryButtonActive : styles.categoryButton} onClick={() => setSelectedCategory(category)}>{category}</button>)}
+        <div className={styles.serviceControls}>
+          <div className={styles.categoryPickerWrap}>
+            <button
+              type="button"
+              className={styles.categoryPicker}
+              onClick={() => setShowCategoryMenu(v => !v)}
+            >
+              <span className={styles.controlIcon}>☰</span>
+              <span>
+                <small>Category</small>
+                <strong>{selectedCategory || "Select Category"}</strong>
+              </span>
+              <span className={styles.controlChevron}>⌄</span>
+            </button>
+            {showCategoryMenu && (
+              <div className={styles.categoryMenu}>
+                <button type="button" onClick={() => { setSelectedCategory(""); setShowCategoryMenu(false); }}>All Categories</button>
+                {categories.map(category => (
+                  <button key={category} type="button" onClick={() => { setSelectedCategory(category); setShowCategoryMenu(false); }}>
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <div className={styles.searchBox}><Search size={19}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="സേവനം തിരയുക... / Search service..."/></div>
+
+          <button
+            type="button"
+            className={styles.allServicesCard}
+            onClick={() => setShowAllServices(true)}
+          >
+            <span className={styles.allServicesIcon}>☷</span>
+            <span>
+              <small>Service List</small>
+              <strong>All Services</strong>
+            </span>
+            <ArrowRight size={17} />
+          </button>
+
+          <div className={styles.searchBox}>
+            <Search size={19}/>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="സേവനം തിരയുക... / Search service..."/>
+          </div>
         </div>
-        {!loading && !selectedCategory && !search && <div className={styles.servicePrompt}><div className={styles.servicePromptIcon}>☰</div><div><strong>Service List</strong><span>ഒരു Category തിരഞ്ഞെടുക്കുക. എല്ലാ സേവനങ്ങളും കാണാൻ <b>All List</b> തിരഞ്ഞെടുക്കാം.</span></div></div>}
-        {loading ? <div className={styles.emptyState}>സേവനങ്ങളുടെ ലിസ്റ്റ് ലോഡ് ചെയ്യുന്നു...</div> : (selectedCategory || search) && <div className={styles.serviceGrid}>{filtered.map((s, i) => <button key={String(s.id || i)} onClick={() => openService(s)} className={styles.serviceCard}><div className={styles.serviceEmoji}>{iconFor(serviceName(s))}</div><div className={styles.serviceText}><h3>{serviceName(s)}</h3><p>സേവനത്തിന്റെ ആവശ്യകതകളും രേഖകളും കാണാൻ ക്ലിക്ക് ചെയ്യുക</p><span>വിശദാംശങ്ങൾ കാണുക <ArrowRight size={15}/></span></div></button>)}</div>}
+
+        {!loading && (selectedCategory || search) && (
+          <div className={styles.serviceGrid}>
+            {filtered.map((s, i) => (
+              <button key={String(s.id || i)} onClick={() => openService(s)} className={styles.serviceCard}>
+                <div className={styles.serviceEmoji}>{iconFor(serviceName(s))}</div>
+                <div className={styles.serviceText}>
+                  <h3>{serviceName(s)}</h3>
+                  <p>സേവനത്തിന്റെ ആവശ്യകതകളും രേഖകളും കാണാൻ ക്ലിക്ക് ചെയ്യുക</p>
+                  <span>വിശദാംശങ്ങൾ കാണുക <ArrowRight size={15}/></span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
         {!loading && filtered.length === 0 && <div className={styles.emptyState}>സേവനം കണ്ടെത്താനായില്ല. മറ്റൊരു പേര് Search ചെയ്യൂ.</div>}
       </div>
     </section>
@@ -347,6 +399,44 @@ export default function HomePage() {
         </div>
       </div>
     </section>
+
+    {showAllServices && (
+      <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) setShowAllServices(false); }}>
+        <div className={styles.allServicesModal}>
+          <div className={styles.allServicesModalHeader}>
+            <div>
+              <span>All Services</span>
+              <h2>സേവനങ്ങളുടെ മുഴുവൻ ലിസ്റ്റ്</h2>
+              <p>ഒരു service തിരഞ്ഞെടുക്കാൻ താഴെയുള്ള card ക്ലിക്ക് ചെയ്യുക.</p>
+            </div>
+            <button type="button" onClick={() => setShowAllServices(false)}><X/></button>
+          </div>
+          <div className={styles.allServicesModalBody}>
+            {loading ? (
+              <div className={styles.emptyState}>സേവനങ്ങളുടെ ലിസ്റ്റ് ലോഡ് ചെയ്യുന്നു...</div>
+            ) : (
+              <div className={styles.allServicesGrid}>
+                {services.map((s, i) => (
+                  <button
+                    key={String(s.id || i)}
+                    type="button"
+                    className={styles.allServiceItem}
+                    onClick={() => { setShowAllServices(false); openService(s); }}
+                  >
+                    <div className={styles.allServiceIcon}>{iconFor(serviceName(s))}</div>
+                    <div>
+                      <strong>{serviceName(s)}</strong>
+                      <span>{serviceCategory(serviceName(s))}</span>
+                    </div>
+                    <ArrowRight size={16}/>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
 
     <section id="contact" className={styles.infoSection}><div className={styles.container + " " + styles.infoGrid}><div><div className={styles.sectionHeading}><span>Contact · ബന്ധപ്പെടുക</span><h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2><p>സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.</p></div><div className={styles.points}><div><Phone/><span>WhatsApp / Phone വഴി ബന്ധപ്പെടുക</span></div><div><MapPin/><span>പൂക്കിപ്പറമ്പ്, കേരളം</span></div><div><FileText/><span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span></div></div></div><div className={styles.contactCard}><h2>നേരിട്ട് സഹായം വേണോ?</h2><p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p><a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className={styles.whatsappButton}><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a></div></div></section>
 
