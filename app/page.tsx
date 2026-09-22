@@ -333,7 +333,7 @@ export default function HomePage() {
     setShowApplicationPopup(false);
   }
 
-  return <main className={styles.page} style={{ "--home-primary": homepageSettings.theme.primary, "--home-accent": homepageSettings.theme.accent, "--home-background": homepageSettings.theme.background } as React.CSSProperties}>
+  return <main className={styles.page} style={{ "--home-primary": homepageSettings.theme.primary, "--home-accent": homepageSettings.theme.accent, "--home-background": homepageSettings.theme.background } as any}>
     <header className={styles.header}>
       <div className={styles.container + " " + styles.headerInner}>
         <Link href="/" className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></Link>
