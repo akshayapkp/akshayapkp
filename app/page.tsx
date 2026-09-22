@@ -37,6 +37,27 @@ const iconFor = (name: string) => {
 
 const serviceName = (s: ServiceItem) => String(s.name || s.title || s.serviceName || "").trim();
 
+const serviceCategory = (name: string) => {
+  const n = name.toLowerCase();
+  if (n.includes("aadhaar") || n.includes("aadhar")) return "Aadhaar";
+  if (n.includes("pan")) return "PAN";
+  if (n.includes("passport")) return "Passport";
+  if (n.includes("certificate") || n.includes("birth") || n.includes("death") || n.includes("income") || n.includes("caste") || n.includes("community") || n.includes("residence")) return "Certificates";
+  if (n.includes("ration") || n.includes("food card")) return "Ration";
+  if (n.includes("driving") || n.includes("licence") || n.includes("license") || n.includes("vehicle") || n.includes("rc")) return "Driving / Vehicle";
+  if (n.includes("scholarship") || n.includes("exam") || n.includes("psc") || n.includes("neet") || n.includes("keam") || n.includes("education")) return "Education / Exam";
+  if (n.includes("bill") || n.includes("recharge") || n.includes("utility") || n.includes("electricity")) return "Bill / Recharge";
+  return "Other";
+};
+
+const maskMobile = (mobile: string) => {
+  const digits = String(mobile || "").replace(/\D/g, "");
+  if (!digits) return "—";
+  const local = digits.slice(-10);
+  const lastThree = local.slice(-3);
+  return local.length >= 3 ? `+91 XXX XXX ${lastThree}` : `+91 XXX XXX ${lastThree}`;
+};
+
 function getFlow(name: string): { audiences: string[]; fields: FieldKey[]; docs: string[] } {
   const n = name.toLowerCase();
   if (n.includes("aadhaar")) {
@@ -77,6 +98,7 @@ function getFlow(name: string): { audiences: string[]; fields: FieldKey[]; docs:
 export default function HomePage() {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ServiceItem | null>(null);
   const [audience, setAudience] = useState("");
@@ -119,11 +141,16 @@ export default function HomePage() {
     return () => { cancelled = true; };
   }, []);
 
+  const categories = useMemo(() => Array.from(new Set(services.map(s => serviceCategory(serviceName(s))))), [services]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return services;
-    return services.filter(s => serviceName(s).toLowerCase().includes(q));
-  }, [services, search]);
+    return services.filter(s => {
+      const matchesCategory = !selectedCategory || serviceCategory(serviceName(s)) === selectedCategory;
+      const matchesSearch = !q || serviceName(s).toLowerCase().includes(q);
+      return matchesCategory && matchesSearch;
+    });
+  }, [services, search, selectedCategory]);
 
   const flow = selected ? getFlow(serviceName(selected)) : null;
 
@@ -267,13 +294,20 @@ export default function HomePage() {
     <section id="services" className={styles.serviceSection}>
       <div className={styles.container}>
         <div className={styles.sectionHeading}><span>Services · സേവനങ്ങൾ</span><h2>ഒരു സേവനം തിരഞ്ഞെടുക്കൂ</h2><p>നിങ്ങളുടെ ആവശ്യമായ സേവനം Search ചെയ്ത് തിരഞ്ഞെടുക്കാം.</p></div>
-        <div className={styles.searchBox}><Search size={19}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="സേവനം തിരയുക... / Search service..."/></div>
-        {loading ? <div className={styles.emptyState}>സേവനങ്ങളുടെ ലിസ്റ്റ് ലോഡ് ചെയ്യുന്നു...</div> : <div className={styles.serviceGrid}>{filtered.map((s, i) => <button key={String(s.id || i)} onClick={() => openService(s)} className={styles.serviceCard}><div className={styles.serviceEmoji}>{iconFor(serviceName(s))}</div><div className={styles.serviceText}><h3>{serviceName(s)}</h3><p>സേവനത്തിന്റെ ആവശ്യകതകളും രേഖകളും കാണാൻ ക്ലിക്ക് ചെയ്യുക</p><span>വിശദാംശങ്ങൾ കാണുക <ArrowRight size={15}/></span></div></button>)}</div>}
+        <div className={styles.serviceToolbar}>
+          <div className={styles.serviceCategoryBar}>
+            <button className={!selectedCategory ? styles.categoryButtonActive : styles.categoryButton} onClick={() => setSelectedCategory("")}>All List</button>
+            {categories.map(category => <button key={category} className={selectedCategory === category ? styles.categoryButtonActive : styles.categoryButton} onClick={() => setSelectedCategory(category)}>{category}</button>)}
+          </div>
+          <div className={styles.searchBox}><Search size={19}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="സേവനം തിരയുക... / Search service..."/></div>
+        </div>
+        {!loading && !selectedCategory && !search && <div className={styles.servicePrompt}><div className={styles.servicePromptIcon}>☰</div><div><strong>Service List</strong><span>ഒരു Category തിരഞ്ഞെടുക്കുക. എല്ലാ സേവനങ്ങളും കാണാൻ <b>All List</b> തിരഞ്ഞെടുക്കാം.</span></div></div>}
+        {loading ? <div className={styles.emptyState}>സേവനങ്ങളുടെ ലിസ്റ്റ് ലോഡ് ചെയ്യുന്നു...</div> : (selectedCategory || search) && <div className={styles.serviceGrid}>{filtered.map((s, i) => <button key={String(s.id || i)} onClick={() => openService(s)} className={styles.serviceCard}><div className={styles.serviceEmoji}>{iconFor(serviceName(s))}</div><div className={styles.serviceText}><h3>{serviceName(s)}</h3><p>സേവനത്തിന്റെ ആവശ്യകതകളും രേഖകളും കാണാൻ ക്ലിക്ക് ചെയ്യുക</p><span>വിശദാംശങ്ങൾ കാണുക <ArrowRight size={15}/></span></div></button>)}</div>}
         {!loading && filtered.length === 0 && <div className={styles.emptyState}>സേവനം കണ്ടെത്താനായില്ല. മറ്റൊരു പേര് Search ചെയ്യൂ.</div>}
       </div>
     </section>
 
-    <section id="status" className={styles.statusSection}><div className={styles.container}><div className={styles.statusCard}><div className={styles.statusCopy}><span className={styles.statusBadge}>അപേക്ഷാ സ്റ്റാറ്റസ്</span><h2>അപേക്ഷയുടെ നിലവിലെ സ്ഥിതി അറിയാം</h2><p>നിങ്ങൾക്ക് ലഭിച്ച 4 അക്ക അപേക്ഷ നമ്പർ നൽകൂ. സ്റ്റാഫ് update ചെയ്തിരിക്കുന്ന status ഇവിടെ കാണാം.</p><div className={styles.statusSearch}><input inputMode="numeric" maxLength={4} value={statusNumber} onChange={e => setStatusNumber(e.target.value.replace(/\D/g, "").slice(0,4))} placeholder="4 അക്ക അപേക്ഷ നമ്പർ" onKeyDown={e => { if (e.key === "Enter") trackApplication(); }}/><button onClick={trackApplication} disabled={statusLoading}>{statusLoading ? "തിരയുന്നു..." : "Status നോക്കുക"}</button></div>{statusMessage && <p className={styles.statusMessage}>{statusMessage}</p>}{statusResult && <div className={styles.statusResult}><div><span>അപേക്ഷ നമ്പർ</span><strong>{statusResult.applicationNumber}</strong></div><div><span>സേവനം</span><strong>{statusResult.service}</strong></div><div><span>നിലവിലെ സ്ഥിതി</span><strong className={styles.liveStatus}>{statusResult.status}</strong></div>{statusResult.note && <div className={styles.statusNote}><span>കുറിപ്പ് / Note</span><strong>{statusResult.note}</strong></div>}</div>}</div></div></div></section>
+    <section id="status" className={styles.statusSection}><div className={styles.container}><div className={styles.statusCard}><div className={styles.statusCopy}><span className={styles.statusBadge}>അപേക്ഷാ സ്റ്റാറ്റസ്</span><h2>അപേക്ഷയുടെ നിലവിലെ സ്ഥിതി അറിയാം</h2><p>നിങ്ങൾക്ക് ലഭിച്ച 4 അക്ക അപേക്ഷ നമ്പർ നൽകൂ. സ്റ്റാഫ് update ചെയ്തിരിക്കുന്ന status ഇവിടെ കാണാം.</p><div className={styles.statusSearch}><input inputMode="numeric" maxLength={4} value={statusNumber} onChange={e => setStatusNumber(e.target.value.replace(/\D/g, "").slice(0,4))} placeholder="4 അക്ക അപേക്ഷ നമ്പർ" onKeyDown={e => { if (e.key === "Enter") trackApplication(); }}/><button onClick={trackApplication} disabled={statusLoading}>{statusLoading ? "തിരയുന്നു..." : "Status നോക്കുക"}</button></div>{statusMessage && <p className={styles.statusMessage}>{statusMessage}</p>}{statusResult && <div className={styles.statusResult}><div><span>അപേക്ഷ നമ്പർ</span><strong>{statusResult.applicationNumber}</strong></div><div><span>പേര്</span><strong>{statusResult.customer?.name || "—"}</strong></div><div><span>മൊബൈൽ</span><strong>{maskMobile(statusResult.customer?.mobile || "")}</strong></div><div><span>സേവനം</span><strong>{statusResult.service}</strong></div><div><span>നിലവിലെ സ്ഥിതി</span><strong className={styles.liveStatus}>{statusResult.status}</strong></div>{statusResult.note && <div className={styles.statusNote}><span>കുറിപ്പ് / Note</span><strong>{statusResult.note}</strong></div></div>}</div></div></div></section>
 
     <section id="contact" className={styles.infoSection}><div className={styles.container + " " + styles.infoGrid}><div><div className={styles.sectionHeading}><span>Contact · ബന്ധപ്പെടുക</span><h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2><p>സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.</p></div><div className={styles.points}><div><Phone/><span>WhatsApp / Phone വഴി ബന്ധപ്പെടുക</span></div><div><MapPin/><span>പൂക്കിപ്പറമ്പ്, കേരളം</span></div><div><FileText/><span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span></div></div></div><div className={styles.contactCard}><h2>നേരിട്ട് സഹായം വേണോ?</h2><p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p><a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className={styles.whatsappButton}><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a></div></div></section>
 
