@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Check, ImagePlus, Palette, Phone, Save, Settings2, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, ImagePlus, Palette, Save, Settings2, Trash2, Upload, X, UsersRound, ShieldCheck, Home, LayoutGrid, FileCog } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const ROW_ID = 999999;
@@ -18,7 +18,7 @@ const FIELD_OPTIONS = [
 ] as const;
 
 const DEFAULT_SETTINGS = {
-  contact: { email: "", mobile: "", whatsapp: "", address: "" },
+  contact: { email: "", mobile: "", mobile2: "", whatsapp: "", address: "" },
   theme: { primary: "#155eef", accent: "#06b6d4", background: "#f7fbff" },
   posters: [] as Poster[],
   serviceConfigs: {} as Record<string, ServiceConfig>,
@@ -39,7 +39,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [tab, setTab] = useState<"home"|"posters"|"forms"|"appearance">("home");
+  const [tab, setTab] = useState<"overview"|"home"|"posters"|"forms"|"appearance">("overview");
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [selectedService, setSelectedService] = useState("");
@@ -153,31 +153,50 @@ export default function SettingsPage() {
             <h1 className="mt-2 text-3xl font-black text-slate-900">Website & Service Settings</h1>
             <p className="mt-1 text-sm font-medium text-slate-500">Homepage, posters, service forms, contact details and theme — Admin only.</p>
           </div>
-          <button onClick={() => router.push("/dashboard")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600"><ArrowLeft size={16}/> Dashboard</button>
+          {tab !== "overview" && <button onClick={() => setTab("overview")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600"><ArrowLeft size={16}/> All Settings</button>}
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[250px_1fr]">
-          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-3 shadow-sm">
-            {[
-              ["home","Homepage","Homepage & Contact",Settings2],
-              ["posters","Posters","New services & notices",ImagePlus],
-              ["forms","Service Forms","Fields & documents",Upload],
-              ["appearance","Appearance","Colors & theme",Palette],
-            ].map(([key,label,sub,Icon]) => (
-              <button key={String(key)} onClick={() => setTab(key as any)} className={`mb-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${tab===key ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg" : "text-slate-600 hover:bg-slate-50"}`}>
-                <Icon size={18}/><span><b className="block text-sm">{String(label)}</b><small className={tab===key ? "text-white/75" : "text-slate-400"}>{String(sub)}</small></span>
-              </button>
-            ))}
-          </aside>
+          {tab === "overview" ? (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {[
+                ["home","Customer Homepage","Homepage, contact numbers, email, address","Homepage settings",Home,"cyan"],
+                ["staff","Staff Management","Staff accounts, roles, salary and login","Open staff settings",UsersRound,"violet"],
+                ["permissions","Feature Permissions","Staff / Accountant feature access","Open access settings",ShieldCheck,"amber"],
+                ["posters","Posters & Notices","Homepage posters and new service notices","Manage posters",ImagePlus,"pink"],
+                ["forms","Service Forms","Customer fields and required documents","Manage service forms",FileCog,"blue"],
+                ["appearance","Appearance","Homepage colours and visual theme","Customize theme",Palette,"emerald"],
+              ].map(([key,title,desc,sub,Icon,tone]) => (
+                <button
+                  key={String(key)}
+                  type="button"
+                  onClick={() => {
+                    if (key === "staff") router.push("/dashboard/staff-management");
+                    else if (key === "permissions") router.push("/dashboard/feature-permissions");
+                    else setTab(key as any);
+                  }}
+                  className="group rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-cyan-200 hover:shadow-xl"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="rounded-2xl bg-slate-100 p-3 text-slate-700 transition group-hover:bg-cyan-50 group-hover:text-cyan-700"><Icon size={22}/></div>
+                    <span className="rounded-full bg-slate-50 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400">Settings</span>
+                  </div>
+                  <h2 className="mt-5 text-lg font-black text-slate-900">{String(title)}</h2>
+                  <p className="mt-1 min-h-10 text-xs font-medium leading-5 text-slate-500">{String(desc)}</p>
+                  <div className="mt-4 flex items-center gap-2 text-xs font-black text-cyan-700">{String(sub)} <span className="transition group-hover:translate-x-1">→</span></div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             {tab==="home" && (
               <div>
                 <h2 className="text-xl font-black text-slate-900">Customer Homepage</h2>
                 <p className="mt-1 text-sm text-slate-500">Homepage-ൽ കാണിക്കേണ്ട contact details ഇവിടെ update ചെയ്യാം.</p>
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   {[
-                    ["email","Email ID","example@email.com"],["mobile","Mobile Number","+91 98XXXXXXXX"],["whatsapp","WhatsApp Number","+91 98XXXXXXXX"],["address","Address","Akshaya Centre, Pookiparamba"]
+                    ["email","Email ID","example@email.com"],["mobile","Mobile Number 1","+91 98XXXXXXXX"],["mobile2","Mobile Number 2","+91 98XXXXXXXX"],["whatsapp","WhatsApp Number","+91 98XXXXXXXX"],["address","Address","Akshaya Centre, Pookiparamba"]
                   ].map(([key,label,placeholder]) => (
                     <label key={key} className="block">
                       <span className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">{label}</span>
@@ -272,7 +291,8 @@ export default function SettingsPage() {
               {message ? <p className="text-sm font-bold text-cyan-700">{message}</p> : <span/>}
               <button disabled={saving} onClick={()=>saveSettings()} className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3.5 text-sm font-black text-white shadow-lg disabled:opacity-60"><Save size={17}/>{saving ? "Saving..." : "Save Settings"}</button>
             </div>
-          </section>
+            </section>
+          )}
         </div>
       </div>
     </main>
