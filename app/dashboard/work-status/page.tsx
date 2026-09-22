@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { WorkItem } from "./types";
+import { supabase } from "@/lib/supabase";
 import { getWorks, updateWork, deleteWork } from "./storage";
 
 type WorkStatus =
@@ -19,6 +20,8 @@ type WorkStatus =
   | "Completed"
   | "Delivered";
 
+type CustomerApplication = { applicationNumber: string; service: string; audience: string; customer: Record<string, string>; documentNames: string[]; submittedAt: string; status: string; };\nconst CENTRAL_STORAGE_ROW_ID = 999999;\nconst CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";\nconst APPLICATION_STATUSES = ["Submitted", "Under Review", "Processing", "Approved", "Ready for Collection", "Rejected", "Completed"];
+
 export default function WorkStatusPage() {
   const [works, setWorks] = useState<WorkItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,6 +29,9 @@ export default function WorkStatusPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [editingWork, setEditingWork] = useState<WorkItem | null>(null);
+  const [customerApplications, setCustomerApplications] = useState<CustomerApplication[]>([]);
+  const [applicationSearch, setApplicationSearch] = useState("");
+  const [applicationsLoading, setApplicationsLoading] = useState(true);
 
 const [previewReceipt, setPreviewReceipt] = useState<{
   url: string;
@@ -33,6 +39,22 @@ const [previewReceipt, setPreviewReceipt] = useState<{
 } | null>(null);
     useEffect(() => {
     setWorks(getWorks());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCustomerApplications() {
+      setApplicationsLoading(true);
+      try {
+        const { data } = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+        const stored = Array.isArray(data?.permissions?.data?.customerApplications) ? data.permissions.data.customerApplications as CustomerApplication[] : [];
+        if (!cancelled) setCustomerApplications(stored);
+      } finally {
+        if (!cancelled) setApplicationsLoading(false);
+      }
+    }
+    loadCustomerApplications();
+    return () => { cancelled = true; };
   }, []);
 
   const categories = useMemo(() => {
@@ -83,6 +105,42 @@ const [previewReceipt, setPreviewReceipt] = useState<{
 
     setWorks(getWorks());
   };
+
+  const handleCustomerApplicationStatus = async (applicationNumber: string, status: string) => {
+    const updated = customerApplications.map((application) =>
+      application.applicationNumber === applicationNumber ? { ...application, status } : application
+    );
+    setCustomerApplications(updated);
+    try {
+      const { data, error } = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+      if (error) throw error;
+      const permissions = data?.permissions && typeof data.permissions === "object" ? data.permissions : { storageKey: CENTRAL_STORAGE_KEY, data: {} };
+      const updatedPermissions = {
+        storageKey: permissions.storageKey || CENTRAL_STORAGE_KEY,
+        data: { ...(permissions.data || {}), customerApplications: updated },
+      };
+      await supabase.from("feature_permissions").upsert(
+        { id: CENTRAL_STORAGE_ROW_ID, permissions: updatedPermissions, updated_at: new Date().toISOString() },
+        { onConflict: "id" }
+      );
+    } catch {
+      alert("Status save ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.");
+      const { data } = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+      const stored = Array.isArray(data?.permissions?.data?.customerApplications) ? data.permissions.data.customerApplications as CustomerApplication[] : [];
+      setCustomerApplications(stored);
+    }
+  };
+
+  const filteredCustomerApplications = useMemo(() => {
+    const q = applicationSearch.trim().toLowerCase();
+    if (!q) return customerApplications;
+    return customerApplications.filter((application) =>
+      application.applicationNumber.includes(q) ||
+      application.service.toLowerCase().includes(q) ||
+      String(application.customer?.name || "").toLowerCase().includes(q) ||
+      String(application.customer?.mobile || "").includes(q)
+    );
+  }, [customerApplications, applicationSearch]);
 
   const handleDelete = (id: string) => {
     if (!confirm("ഈ വർക്ക് ഡിലീറ്റ് ചെയ്യണമെന്നുണ്ടോ?")) return;
@@ -314,6 +372,43 @@ const [previewReceipt, setPreviewReceipt] = useState<{
             {status}
           </button>
         ))}
+      </div>
+
+      <div className="mt-5 rounded-3xl border border-cyan-200/80 bg-white/95 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-black tracking-tight text-slate-800">Customer Applications</h2>
+            <p className="mt-1 text-xs font-medium text-slate-500">Website വഴി വന്ന അപേക്ഷകൾക്കും customer-visible status-നും ഇവിടെ update ചെയ്യാം.</p>
+          </div>
+          <div className="relative w-full sm:w-72">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+            <input value={applicationSearch} onChange={e => setApplicationSearch(e.target.value)} placeholder="Application No / Name / Service" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs font-semibold outline-none focus:border-cyan-400 focus:bg-white"/>
+          </div>
+        </div>
+        <div className="mt-4 space-y-3">
+          {applicationsLoading ? <div className="rounded-2xl bg-slate-50 p-8 text-center text-xs text-slate-400">Applications loading...</div> :
+          filteredCustomerApplications.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-xs text-slate-400">No customer applications found.</div> :
+          filteredCustomerApplications.map(application => (
+            <div key={application.applicationNumber} className="rounded-2xl border border-slate-200 bg-gradient-to-r from-white to-cyan-50/30 p-4">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-lg bg-cyan-600 px-3 py-1.5 text-sm font-black tracking-widest text-white">{application.applicationNumber}</span>
+                    <span className="rounded-full bg-cyan-50 px-3 py-1 text-[10px] font-black text-cyan-700">{application.service}</span>
+                  </div>
+                  <p className="mt-2 text-sm font-black text-slate-800">{application.customer?.name || "Customer"}</p>
+                  <p className="text-xs text-slate-500">{application.customer?.mobile || ""} · {application.audience}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Customer Status</span>
+                  <select value={application.status} onChange={e => handleCustomerApplicationStatus(application.applicationNumber, e.target.value)} className="min-w-44 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2.5 text-xs font-black text-cyan-700 outline-none">
+                    {APPLICATION_STATUSES.map(status => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Works */}
