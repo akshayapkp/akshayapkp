@@ -20,7 +20,10 @@ type WorkStatus =
   | "Completed"
   | "Delivered";
 
-type CustomerApplication = { applicationNumber: string; service: string; audience: string; customer: Record<string, string>; documentNames: string[]; submittedAt: string; status: string; };\nconst CENTRAL_STORAGE_ROW_ID = 999999;\nconst CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";\nconst APPLICATION_STATUSES = ["Submitted", "Under Review", "Processing", "Approved", "Ready for Collection", "Rejected", "Completed"];
+type CustomerApplication = { applicationNumber: string; service: string; audience: string; customer: Record<string, string>; documentNames: string[]; submittedAt: string; status: string; };
+const CENTRAL_STORAGE_ROW_ID = 999999;
+const CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";
+const APPLICATION_STATUSES = ["Submitted", "Under Review", "Processing", "Approved", "Ready for Collection", "Rejected", "Completed"];
 
 export default function WorkStatusPage() {
   const [works, setWorks] = useState<WorkItem[]>([]);
