@@ -8,6 +8,7 @@ import {
   FilePlus,
   Receipt,
   Settings,
+  Settings2,
   Wallet,
   FileSpreadsheet,
   History,
