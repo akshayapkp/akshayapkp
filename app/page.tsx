@@ -18,6 +18,13 @@ type ServiceItem = {
 
 type FieldKey = "name" | "mobile" | "address" | "dob" | "aadhaar" | "parentName";
 type CustomerApplication = { applicationNumber: string; service: string; audience: string; customer: Record<string, string>; documentNames: string[]; submittedAt: string; status: string; note?: string; updatedAt?: string; };
+type HomepagePoster = { id: string; title: string; subtitle: string; image: string; serviceName: string; apply: boolean };
+type HomepageSettings = {
+  contact: { email: string; mobile: string; whatsapp: string; address: string };
+  theme: { primary: string; accent: string; background: string };
+  posters: HomepagePoster[];
+  serviceConfigs: Record<string, { fields: string[]; documents: string[] }>;
+};
 
 const CENTRAL_STORAGE_ROW_ID = 999999;
 const CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";
@@ -50,10 +57,10 @@ const serviceCategory = (name: string) => {
   return "Other";
 };
 
-const featuredServices = [
-  { title: "Aadhaar Services", subtitle: "Update • Correction • Enrolment", image: "/demo-posters/aadhaar-update.svg", keywords: ["aadhaar", "aadhar"] },
-  { title: "PAN Card Service", subtitle: "New PAN • Correction • Reprint", image: "/demo-posters/pan-card.svg", keywords: ["pan"] },
-  { title: "Passport Services", subtitle: "New Passport • Renewal • Support", image: "/demo-posters/passport.svg", keywords: ["passport"] },
+const defaultFeaturedServices = [
+  { id: "demo-aadhaar", title: "Aadhaar Services", subtitle: "Update • Correction • Enrolment", image: "/demo-posters/aadhaar-update.svg", serviceName: "", apply: true },
+  { id: "demo-pan", title: "PAN Card Service", subtitle: "New PAN • Correction • Reprint", image: "/demo-posters/pan-card.svg", serviceName: "", apply: true },
+  { id: "demo-passport", title: "Passport Services", subtitle: "New Passport • Renewal • Support", image: "/demo-posters/passport.svg", serviceName: "", apply: true },
 ];
 
 const maskMobile = (mobile: string) => {
@@ -121,8 +128,15 @@ export default function HomePage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredPaused, setFeaturedPaused] = useState(false);
+  const [homepageSettings, setHomepageSettings] = useState<HomepageSettings>({
+    contact: { email: "", mobile: "", whatsapp: "", address: "" },
+    theme: { primary: "#155eef", accent: "#06b6d4", background: "#f7fbff" },
+    posters: [],
+    serviceConfigs: {},
+  });
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
+  const whatsappNumber = homepageSettings.contact.whatsapp.replace(/\D/g, "") || process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
+  const featuredServices = homepageSettings.posters.length ? homepageSettings.posters : defaultFeaturedServices;
 
   useEffect(() => {
     let cancelled = false;
@@ -133,6 +147,17 @@ export default function HomePage() {
         const localList = Array.isArray(local) ? local : [];
         const { data } = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).limit(1);
         const payload = data?.[0]?.permissions;
+        const savedSettings = payload?.data?.homepageSettings;
+        if (savedSettings) {
+          setHomepageSettings(prev => ({
+            ...prev,
+            ...savedSettings,
+            contact: { ...prev.contact, ...(savedSettings.contact || {}) },
+            theme: { ...prev.theme, ...(savedSettings.theme || {}) },
+            posters: Array.isArray(savedSettings.posters) ? savedSettings.posters : [],
+            serviceConfigs: savedSettings.serviceConfigs || {},
+          }));
+        }
         const central = payload?.storageKey === CENTRAL_STORAGE_KEY && payload?.data?.managedServices;
         const list = Array.isArray(central) && central.length ? central : localList;
         if (!cancelled) setServices(list.filter((s: ServiceItem) => serviceName(s)));
@@ -163,23 +188,33 @@ export default function HomePage() {
   }, [services, search, selectedCategory]);
 
   useEffect(() => {
-    if (featuredPaused) return;
+    if (featuredPaused || featuredServices.length < 2) return;
     const timer = window.setInterval(() => {
       setFeaturedIndex(current => (current + 1) % featuredServices.length);
     }, 3800);
     return () => window.clearInterval(timer);
   }, [featuredPaused]);
 
-  function applyFeatured(keywords: string[]) {
-    const service = services.find(item => {
-      const name = serviceName(item).toLowerCase();
-      return keywords.some(keyword => name.includes(keyword));
-    });
+  function applyFeatured(item: HomepagePoster) {
+    if (item.serviceName) {
+      const service = services.find(s => serviceName(s).toLowerCase() === item.serviceName.toLowerCase());
+      if (service) { openService(service); return; }
+    }
+    const keywords = item.title.toLowerCase().split(/\s+/).filter(Boolean);
+    const service = services.find(s => keywords.some(k => k.length > 3 && serviceName(s).toLowerCase().includes(k)));
     if (service) openService(service);
     else document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
   }
 
-  const flow = selected ? getFlow(serviceName(selected)) : null;
+  function getConfiguredFlow(name: string) {
+    const fallback = getFlow(name);
+    const config = homepageSettings.serviceConfigs[name];
+    if (!config) return fallback;
+    const fields = config.fields.filter(Boolean) as FieldKey[];
+    return { audiences: fallback.audiences, fields: fields.length ? fields : fallback.fields, docs: config.documents.length ? config.documents : fallback.docs };
+  }
+
+  const flow = selected ? getConfiguredFlow(serviceName(selected)) : null;
 
   function openService(s: ServiceItem) {
     setSelected(s);
@@ -298,7 +333,7 @@ export default function HomePage() {
     setShowApplicationPopup(false);
   }
 
-  return <main className={styles.page}>
+  return <main className={styles.page} style={{ "--home-primary": homepageSettings.theme.primary, "--home-accent": homepageSettings.theme.accent, "--home-background": homepageSettings.theme.background } as React.CSSProperties}>
     <header className={styles.header}>
       <div className={styles.container + " " + styles.headerInner}>
         <Link href="/" className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></Link>
@@ -315,17 +350,17 @@ export default function HomePage() {
             <p>പുതിയതായി ലഭിക്കുന്ന സേവനങ്ങൾ ഇവിടെ കാണാം.</p>
           </div>
           <div className={styles.sliderDots}>
-            {featuredServices.map((item, i) => <button key={item.title} aria-label={item.title} className={i === featuredIndex ? styles.sliderDotActive : styles.sliderDot} onClick={() => setFeaturedIndex(i)} />)}
+            {featuredServices.map((item, i) => <button key={item.id} aria-label={item.title} className={i === featuredIndex ? styles.sliderDotActive : styles.sliderDot} onClick={() => setFeaturedIndex(i)} />)}
           </div>
         </div>
         <div className={styles.posterViewport} onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
           <div className={styles.posterTrack} style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>
             {featuredServices.map((item) => (
-              <article className={styles.servicePoster} key={item.title}>
+              <article className={styles.servicePoster} key={item.id}>
                 <img src={item.image} alt={item.title} />
                 <div className={styles.posterOverlay}>
                   <div><span>New Service</span><h3>{item.title}</h3><p>{item.subtitle}</p></div>
-                  <button type="button" onClick={() => applyFeatured(item.keywords)}>Apply Now <ArrowRight size={16}/></button>
+                  {item.apply !== false && <button type="button" onClick={() => applyFeatured(item)}>Apply Now <ArrowRight size={16}/></button>}
                 </div>
               </article>
             ))}
@@ -479,7 +514,7 @@ export default function HomePage() {
       </div>
     )}
 
-    <section id="contact" className={styles.infoSection}><div className={styles.container + " " + styles.infoGrid}><div><div className={styles.sectionHeading}><span>Contact · ബന്ധപ്പെടുക</span><h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2><p>സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.</p></div><div className={styles.points}><div><Phone/><span>WhatsApp / Phone വഴി ബന്ധപ്പെടുക</span></div><div><MapPin/><span>പൂക്കിപ്പറമ്പ്, കേരളം</span></div><div><FileText/><span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span></div></div></div><div className={styles.contactCard}><h2>നേരിട്ട് സഹായം വേണോ?</h2><p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p><a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className={styles.whatsappButton}><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a></div></div></section>
+    <section id="contact" className={styles.infoSection}><div className={styles.container + " " + styles.infoGrid}><div><div className={styles.sectionHeading}><span>Contact · ബന്ധപ്പെടുക</span><h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2><p>സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.{homepageSettings.contact.email ? " Email: " + homepageSettings.contact.email : ""}</p></div><div className={styles.points}><div><Phone/><span>{homepageSettings.contact.mobile || homepageSettings.contact.whatsapp ? "WhatsApp / Phone വഴി ബന്ധപ്പെടുക" : "WhatsApp / Phone വഴി ബന്ധപ്പെടുക"}</span></div><div><MapPin/><span>{homepageSettings.contact.address || "പൂക്കിപ്പറമ്പ്, കേരളം"}</span></div><div><FileText/><span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span></div></div></div><div className={styles.contactCard}><h2>നേരിട്ട് സഹായം വേണോ?</h2><p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p><a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className={styles.whatsappButton}><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a></div></div></section>
 
     <footer className={styles.footer}><div className={styles.container + " " + styles.footerInner}><div className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></div><div className={styles.footerLinks}><a href="#services">സേവനങ്ങൾ</a><a href="#status">സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a><Link href="/login">Official Login</Link></div></div></footer>
 
