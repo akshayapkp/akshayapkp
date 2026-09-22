@@ -1,7 +1,8 @@
 "use client";
 
-import { CalendarDays, FileText, Search, Save, UserRound, Hash, Filter, RotateCcw } from "lucide-react";
+import { CalendarDays, FileText, Search, Save, UserRound, Hash, Filter, RotateCcw, ShieldAlert, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type CustomerApplication = {
@@ -54,7 +55,11 @@ function dateKey(value: string) {
 }
 
 export default function AppServicesPage() {
+  const router = useRouter();
   const [applications, setApplications] = useState<CustomerApplication[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [deletingNumber, setDeletingNumber] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -65,6 +70,17 @@ export default function AppServicesPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const storedUser = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+    const role = String(storedUser.role || "").toLowerCase();
+    const admin = role === "admin";
+    setIsAdmin(admin);
+    setAuthChecked(true);
+    if (!admin) {
+      router.replace("/dashboard");
+      return () => {
+        cancelled = true;
+      };
+    }
 
     async function loadApplications() {
       setLoading(true);
@@ -97,7 +113,7 @@ export default function AppServicesPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   const filteredApplications = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -193,6 +209,73 @@ export default function AppServicesPage() {
     }
   }
 
+  async function deleteApplication(applicationNumber: string) {
+    if (!isAdmin) return;
+    const confirmed = window.confirm(
+      `Application ${applicationNumber} permanently delete ചെയ്യണോ? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeletingNumber(applicationNumber);
+    setMessage("");
+
+    try {
+      const { data, error } = await supabase
+        .from("feature_permissions")
+        .select("permissions")
+        .eq("id", CENTRAL_STORAGE_ROW_ID)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const permissions =
+        data?.permissions && typeof data.permissions === "object"
+          ? data.permissions
+          : { storageKey: CENTRAL_STORAGE_KEY, data: {} };
+
+      const stored = Array.isArray(permissions?.data?.customerApplications)
+        ? (permissions.data.customerApplications as CustomerApplication[])
+        : applications;
+
+      const updatedApplications = stored.filter(
+        (item) => item.applicationNumber !== applicationNumber
+      );
+
+      const updatedPermissions = {
+        storageKey: permissions.storageKey || CENTRAL_STORAGE_KEY,
+        data: {
+          ...(permissions.data || {}),
+          customerApplications: updatedApplications,
+        },
+      };
+
+      const { error: saveError } = await supabase
+        .from("feature_permissions")
+        .upsert(
+          {
+            id: CENTRAL_STORAGE_ROW_ID,
+            permissions: updatedPermissions,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
+
+      if (saveError) throw saveError;
+
+      setApplications(updatedApplications);
+      localStorage.setItem(
+        "akshaya_customer_applications",
+        JSON.stringify(updatedApplications)
+      );
+      setMessage(`Application ${applicationNumber} deleted.`);
+    } catch (error) {
+      console.error("App Services delete error:", error);
+      setMessage("Application delete ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.");
+    } finally {
+      setDeletingNumber("");
+    }
+  }
+
   function updateLocal(
     applicationNumber: string,
     patch: Partial<CustomerApplication>
@@ -203,6 +286,18 @@ export default function AppServicesPage() {
           ? { ...application, ...patch }
           : application
       )
+    );
+  }
+
+  if (!authChecked || !isAdmin) {
+    return (
+      <main className="min-h-screen w-full bg-slate-50 p-8">
+        <div className="mx-auto mt-20 max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <ShieldAlert className="mx-auto text-rose-500" size={40} />
+          <h1 className="mt-4 text-xl font-black text-slate-900">Admin Only</h1>
+          <p className="mt-2 text-sm font-medium text-slate-500">App Services access is restricted to Admin.</p>
+        </div>
+      </main>
     );
   }
 
@@ -400,6 +495,16 @@ export default function AppServicesPage() {
                         >
                           <Save size={16} />
                           {savingNumber === application.applicationNumber ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteApplication(application.applicationNumber)}
+                          disabled={deletingNumber === application.applicationNumber}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-black text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          title="Admin only: permanently delete this application"
+                        >
+                          <Trash2 size={16} />
+                          {deletingNumber === application.applicationNumber ? "Deleting..." : "Delete"}
                         </button>
                       </div>
 
