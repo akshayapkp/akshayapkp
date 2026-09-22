@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, FileText, MapPin, MessageCircle, Phone, Search, ShieldCheck, Upload, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileText, MapPin, MessageCircle, Phone, Search, ShieldCheck, Upload, X, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import styles from "./home.module.css";
 
@@ -49,6 +49,12 @@ const serviceCategory = (name: string) => {
   if (n.includes("bill") || n.includes("recharge") || n.includes("utility") || n.includes("electricity")) return "Bill / Recharge";
   return "Other";
 };
+
+const featuredServices = [
+  { title: "Aadhaar Services", subtitle: "Update • Correction • Enrolment", image: "/demo-posters/aadhaar-update.svg", keywords: ["aadhaar", "aadhar"] },
+  { title: "PAN Card Service", subtitle: "New PAN • Correction • Reprint", image: "/demo-posters/pan-card.svg", keywords: ["pan"] },
+  { title: "Passport Services", subtitle: "New Passport • Renewal • Support", image: "/demo-posters/passport.svg", keywords: ["passport"] },
+];
 
 const maskMobile = (mobile: string) => {
   const digits = String(mobile || "").replace(/\D/g, "");
@@ -113,6 +119,8 @@ export default function HomePage() {
   const [statusResult, setStatusResult] = useState<CustomerApplication | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [featuredPaused, setFeaturedPaused] = useState(false);
 
   const whatsappNumber = process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
 
@@ -153,6 +161,23 @@ export default function HomePage() {
       return matchesCategory && matchesSearch;
     });
   }, [services, search, selectedCategory]);
+
+  useEffect(() => {
+    if (featuredPaused) return;
+    const timer = window.setInterval(() => {
+      setFeaturedIndex(current => (current + 1) % featuredServices.length);
+    }, 3800);
+    return () => window.clearInterval(timer);
+  }, [featuredPaused]);
+
+  function applyFeatured(keywords: string[]) {
+    const service = services.find(item => {
+      const name = serviceName(item).toLowerCase();
+      return keywords.some(keyword => name.includes(keyword));
+    });
+    if (service) openService(service);
+    else document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
+  }
 
   const flow = selected ? getFlow(serviceName(selected)) : null;
 
@@ -289,6 +314,34 @@ export default function HomePage() {
           <p>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പിലൂടെ ആവശ്യമായ സേവനം തിരഞ്ഞെടുക്കൂ. ആവശ്യമായ വിവരങ്ങളും രേഖകളും നൽകി WhatsApp വഴി അപേക്ഷയുടെ തുടർനടപടികൾ പൂർത്തിയാക്കാം.</p>
           <div className={styles.heroActions}><a href="#services" className={styles.primaryButton}>സേവനം തിരഞ്ഞെടുക്കൂ <ArrowRight size={18}/></a><a href="#contact" className={styles.secondaryButton}><MessageCircle size={18}/> WhatsApp സഹായം</a></div>
           <div className={styles.trustRow}><span><CheckCircle2 size={17}/> വ്യക്തിഗത സഹായം</span><span><CheckCircle2 size={17}/> വ്യക്തമായ രേഖാ ലിസ്റ്റ്</span><span><CheckCircle2 size={17}/> വേഗത്തിലുള്ള പിന്തുണ</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section className={styles.updatesSection}>
+      <div className={styles.container}>
+        <div className={styles.updatesHeading}>
+          <div>
+            <span><Sparkles size={14}/> പുതിയ സർക്കാർ സേവനങ്ങൾ</span>
+            <h2>പുതിയ സേവനങ്ങളും അറിയിപ്പുകളും</h2>
+            <p>പുതിയതായി ലഭിക്കുന്ന സേവനങ്ങൾ ഇവിടെ കാണാം. Poster-ൽ hover ചെയ്ത് Apply ചെയ്യാം.</p>
+          </div>
+          <div className={styles.sliderDots}>
+            {featuredServices.map((item, i) => <button key={item.title} aria-label={item.title} className={i === featuredIndex ? styles.sliderDotActive : styles.sliderDot} onClick={() => setFeaturedIndex(i)} />)}
+          </div>
+        </div>
+        <div className={styles.posterViewport} onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
+          <div className={styles.posterTrack} style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>
+            {featuredServices.map((item) => (
+              <article className={styles.servicePoster} key={item.title}>
+                <img src={item.image} alt={item.title} />
+                <div className={styles.posterOverlay}>
+                  <div><span>New Service</span><h3>{item.title}</h3><p>{item.subtitle}</p></div>
+                  <button type="button" onClick={() => applyFeatured(item.keywords)}>Apply Now <ArrowRight size={16}/></button>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>
