@@ -156,7 +156,7 @@ export default function SettingsPage() {
           {tab !== "overview" && <button onClick={() => setTab("overview")} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600"><ArrowLeft size={16}/> All Settings</button>}
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[250px_1fr]">
+        <div className="w-full">
           {tab === "overview" ? (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {[
@@ -175,14 +175,14 @@ export default function SettingsPage() {
                     else if (key === "permissions") router.push("/dashboard/feature-permissions");
                     else setTab(key as any);
                   }}
-                  className="group rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-cyan-200 hover:shadow-xl"
+                  className="group flex min-h-[190px] w-full flex-col rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-1 hover:border-cyan-200 hover:shadow-xl"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="rounded-2xl bg-slate-100 p-3 text-slate-700 transition group-hover:bg-cyan-50 group-hover:text-cyan-700"><Icon size={22}/></div>
                     <span className="rounded-full bg-slate-50 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400">Settings</span>
                   </div>
                   <h2 className="mt-5 text-lg font-black text-slate-900">{String(title)}</h2>
-                  <p className="mt-1 min-h-10 text-xs font-medium leading-5 text-slate-500">{String(desc)}</p>
+                  <p className="mt-1 min-h-10 flex-1 text-xs font-medium leading-5 text-slate-500">{String(desc)}</p>
                   <div className="mt-4 flex items-center gap-2 text-xs font-black text-cyan-700">{String(sub)} <span className="transition group-hover:translate-x-1">→</span></div>
                 </button>
               ))}
