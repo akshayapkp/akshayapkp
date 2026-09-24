@@ -327,6 +327,7 @@ setShowEditModal(true);
   );
 
   return (
+    <div className="mb-4 flex justify-end"><a href="/dashboard/settings" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm hover:border-cyan-300 hover:text-cyan-700"><Settings2 size={16}/> All Settings</a></div>
     <div className="relative mx-auto min-h-screen w-full max-w-[1500px] space-y-5 bg-gradient-to-br from-slate-50 via-white to-cyan-50/30 p-4 pb-24 sm:p-5 sm:pb-24 lg:p-6">
       
       {/* Top Header */}
