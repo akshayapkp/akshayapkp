@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, RefreshCw, Check } from 'lucide-react';
+import { ShieldAlert, RefreshCw, Check, Settings2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface PermissionItem {
@@ -276,6 +276,7 @@ export default function FeaturePermissionsPage() {
   };
 
   return (
+    <div className="mb-4 flex justify-end"><a href="/dashboard/settings" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm hover:border-cyan-300 hover:text-cyan-700"><Settings2 size={16}/> All Settings</a></div>
     <div className="mx-auto min-h-screen w-full max-w-[1500px] bg-gradient-to-br from-slate-50 via-white to-cyan-50/30 p-4 sm:p-5 lg:p-6">
       {/* Top Banner Box */}
       <div className="relative mb-5 flex flex-col items-start justify-between gap-4 overflow-hidden rounded-[30px] border border-cyan-400/20 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-6 text-white shadow-[0_22px_55px_rgba(15,23,42,0.18)] sm:flex-row sm:items-center sm:p-7">
