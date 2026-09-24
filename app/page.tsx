@@ -361,7 +361,7 @@ export default function HomePage() {
         <div className={styles.posterViewport} onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
           <div className={styles.posterTrack} style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>
             {featuredServices.map((item) => (
-              <article className={styles.servicePoster} key={item.id}>
+              <article className={styles.servicePoster} key={item.id} style={{ "--poster-image": `url("${item.image}")` } as React.CSSProperties}>
                 <img src={item.image} alt={item.title} />
                 <div className={styles.posterOverlay}>
                   <div><span>New Service</span><h3>{item.title}</h3><p>{item.subtitle}</p></div>
