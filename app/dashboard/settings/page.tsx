@@ -6,6 +6,7 @@ import { ArrowLeft, ImagePlus, Palette, Save, Settings2, Trash2, Upload, X, User
 import { useRouter } from "next/navigation";
 
 const ROW_ID = 999999;
+const HOMEPAGE_ROW_ID = 999998;
 const STORAGE_KEY = "__smart_akshaya_shared_storage__";
 
 type ServiceItem = { id?: string; name?: string; title?: string; serviceName?: string };
@@ -45,6 +46,8 @@ export default function SettingsPage() {
   const [selectedService, setSelectedService] = useState("");
   const [newDoc, setNewDoc] = useState("");
   const [poster, setPoster] = useState({ title:"", subtitle:"", serviceName:"", image:"", apply:true });
+  const [showNewService, setShowNewService] = useState(false);
+  const [newServiceName, setNewServiceName] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -57,7 +60,8 @@ export default function SettingsPage() {
 
     (async () => {
       try {
-        const permissions = await readShared();
+        const primary = await supabase.from("feature_permissions").select("permissions").eq("id", HOMEPAGE_ROW_ID).maybeSingle();
+        const permissions = primary.data?.permissions ? primary.data.permissions : await readShared();
         const data = permissions?.data || {};
         const saved = data.homepageSettings || {};
         setSettings({
@@ -86,13 +90,14 @@ export default function SettingsPage() {
   async function saveSettings(next = settings) {
     setSaving(true); setMessage("");
     try {
-      const permissions = await readShared();
+      const primary = await supabase.from("feature_permissions").select("permissions").eq("id", HOMEPAGE_ROW_ID).maybeSingle();
+      const permissions = primary.data?.permissions ? primary.data.permissions : await readShared();
       const updated = {
         storageKey: permissions.storageKey || STORAGE_KEY,
         data: { ...(permissions.data || {}), homepageSettings: next },
       };
       const { error } = await supabase.from("feature_permissions").upsert(
-        { id: ROW_ID, permissions: updated, updated_at: new Date().toISOString() },
+        { id: HOMEPAGE_ROW_ID, permissions: updated, updated_at: new Date().toISOString() },
         { onConflict: "id" }
       );
       if (error) throw error;
@@ -116,12 +121,37 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   }
 
-  function addPoster() {
+  async function addCustomService() {
+    const name = newServiceName.trim();
+    if (!name) { setMessage("പുതിയ service name നൽകുക."); return; }
+    try {
+      const { data, error } = await supabase.from("feature_permissions").select("permissions").eq("id", ROW_ID).maybeSingle();
+      if (error) throw error;
+      const permissions = data?.permissions && typeof data.permissions === "object" ? data.permissions : { storageKey: STORAGE_KEY, data: {} };
+      const current = Array.isArray(permissions?.data?.managedServices) ? permissions.data.managedServices : [];
+      const existing = current.find((s: ServiceItem) => serviceName(s).toLowerCase() === name.toLowerCase());
+      if (existing) {
+        setServices(current.filter((s: ServiceItem) => serviceName(s)));
+        setPoster(p => ({ ...p, serviceName: serviceName(existing) }));
+        setShowNewService(false); setNewServiceName(""); setMessage("ഈ service ഇതിനകം ഉണ്ട്."); return;
+      }
+      const created = { id: "custom-" + Date.now(), name, title: name };
+      const updatedPermissions = { storageKey: permissions.storageKey || STORAGE_KEY, data: { ...(permissions.data || {}), managedServices: [created, ...current] } };
+      const { error: saveError } = await supabase.from("feature_permissions").upsert({ id: ROW_ID, permissions: updatedPermissions, updated_at: new Date().toISOString() }, { onConflict: "id" });
+      if (saveError) throw saveError;
+      setServices([created, ...current].filter((s: ServiceItem) => serviceName(s)));
+      setPoster(p => ({ ...p, serviceName: name }));
+      setShowNewService(false); setNewServiceName(""); setMessage("പുതിയ service ചേർത്തു. ഇനി Service Forms-ൽ fields/documents set ചെയ്യാം.");
+    } catch (e) { console.error(e); setMessage("പുതിയ service save ചെയ്യാൻ കഴിഞ്ഞില്ല."); }
+  }
+
+  async function addPoster() {
     if (!poster.title.trim() || !poster.image) { setMessage("Poster title, image എന്നിവ നൽകുക."); return; }
     const nextPoster: Poster = { ...poster, id: crypto.randomUUID(), title: poster.title.trim(), subtitle: poster.subtitle.trim(), serviceName: poster.serviceName, apply: poster.apply };
-    setSettings(s => ({ ...s, posters: [nextPoster, ...s.posters] }));
+    const nextSettings = { ...settings, posters: [nextPoster, ...settings.posters] };
+    setSettings(nextSettings);
     setPoster({ title:"", subtitle:"", serviceName:"", image:"", apply:true });
-    setMessage("Poster added. Save Settings അമർത്തുക.");
+    await saveSettings(nextSettings);
   }
 
   function toggleField(field: string) {
@@ -214,10 +244,7 @@ export default function SettingsPage() {
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   <input value={poster.title} onChange={e=>setPoster(p=>({...p,title:e.target.value}))} placeholder="Poster title (ഉദാ: Scholarship)" className="rounded-2xl border p-3.5"/>
                   <input value={poster.subtitle} onChange={e=>setPoster(p=>({...p,subtitle:e.target.value}))} placeholder="Short description" className="rounded-2xl border p-3.5"/>
-                  <select value={poster.serviceName} onChange={e=>setPoster(p=>({...p,serviceName:e.target.value}))} className="rounded-2xl border p-3.5 md:col-span-2">
-                    <option value="">Service select ചെയ്യുക (optional)</option>
-                    {services.map(s=><option key={serviceName(s)} value={serviceName(s)}>{serviceName(s)}</option>)}
-                  </select>
+                  <div className="md:col-span-2 space-y-2"><div className="flex gap-2"><select value={poster.serviceName} onChange={e=>setPoster(p=>({...p,serviceName:e.target.value}))} className="min-w-0 flex-1 rounded-2xl border p-3.5"><option value="">Service select ചെയ്യുക (optional)</option>{services.map(s=><option key={serviceName(s)} value={serviceName(s)}>{serviceName(s)}</option>)}</select><button type="button" onClick={()=>setShowNewService(v=>!v)} className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 text-xs font-black text-cyan-700">＋ New Service</button></div>{showNewService && <div className="flex gap-2 rounded-2xl border border-cyan-100 bg-cyan-50/60 p-3"><input value={newServiceName} onChange={e=>setNewServiceName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addCustomService();}}} placeholder="പുതിയ service name" className="min-w-0 flex-1 rounded-xl border bg-white px-3 py-2.5"/><button type="button" onClick={addCustomService} className="rounded-xl bg-cyan-600 px-4 font-black text-white">Add</button></div>}</div>
                   <label className="md:col-span-2 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-cyan-200 bg-cyan-50/50 p-8 text-sm font-black text-cyan-700">
                     <ImagePlus size={20}/> {poster.image ? "Poster selected ✓" : "Poster image upload ചെയ്യുക"}
                     <input type="file" accept="image/*" className="hidden" onChange={e=>handlePosterFile(e.target.files?.[0])}/>
