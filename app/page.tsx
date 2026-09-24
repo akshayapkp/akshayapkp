@@ -160,7 +160,8 @@ export default function HomePage() {
             serviceConfigs: savedSettings.serviceConfigs || {},
           }));
         }
-        const central = payload?.storageKey === CENTRAL_STORAGE_KEY && payload?.data?.managedServices;
+        const serviceRow = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+        const central = serviceRow.data?.permissions?.data?.managedServices;
         const list = Array.isArray(central) && central.length ? central : localList;
         if (!cancelled) setServices(list.filter((s: ServiceItem) => serviceName(s)));
       } catch {
