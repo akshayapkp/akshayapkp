@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { hashPassword, supabase } from "@/lib/supabase";
 import { 
-  Users, Search, Plus, Edit2, Trash2, Mail, Phone, RefreshCw, Eye, Shield, Key 
+  Users, Search, Plus, Edit2, Trash2, Mail, Phone, RefreshCw, Eye, Shield, Key, Settings2 
 } from "lucide-react";
 
 interface Staff {
