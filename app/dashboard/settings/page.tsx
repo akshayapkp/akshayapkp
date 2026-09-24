@@ -72,7 +72,9 @@ export default function SettingsPage() {
           posters: Array.isArray(saved.posters) ? saved.posters : [],
           serviceConfigs: saved.serviceConfigs || {},
         });
-        const managed = Array.isArray(data.managedServices) ? data.managedServices : [];
+        const serviceRow = await supabase.from("feature_permissions").select("permissions").eq("id", ROW_ID).maybeSingle();
+        const serviceData = serviceRow.data?.permissions?.data || {};
+        const managed = Array.isArray(serviceData.managedServices) ? serviceData.managedServices : [];
         if (managed.length) setServices(managed.filter((s: ServiceItem) => serviceName(s)));
         else {
           const local = JSON.parse(localStorage.getItem("managedServices") || "[]");
