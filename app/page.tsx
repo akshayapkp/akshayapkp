@@ -27,6 +27,7 @@ type HomepageSettings = {
 };
 
 const CENTRAL_STORAGE_ROW_ID = 999999;
+const HOMEPAGE_SETTINGS_ROW_ID = 999998;
 const CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";
 
 const iconFor = (name: string) => {
@@ -145,8 +146,9 @@ export default function HomePage() {
       try {
         const local = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("managedServices") || "[]") : [];
         const localList = Array.isArray(local) ? local : [];
-        const { data } = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).limit(1);
-        const payload = data?.[0]?.permissions;
+        const primary = await supabase.from("feature_permissions").select("permissions").eq("id", HOMEPAGE_SETTINGS_ROW_ID).maybeSingle();
+        const legacy = primary.data?.permissions ? primary.data.permissions : (await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle()).data?.permissions;
+        const payload = legacy;
         const savedSettings = payload?.data?.homepageSettings;
         if (savedSettings) {
           setHomepageSettings(prev => ({
@@ -570,7 +572,7 @@ export default function HomePage() {
       </div>
     </section>
 
-    <footer className={styles.footer}><div className={styles.container + " " + styles.footerInner}><div className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></div><div className={styles.footerLinks}><a href="#services">സേവനങ്ങൾ</a><a href="#status">സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a><Link href="/login">Official Login</Link></div></div></footer>
+
 
     {selected && flow && <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) closeService(); }}>
       <div className={styles.serviceModal}>
