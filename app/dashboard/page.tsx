@@ -1477,40 +1477,42 @@ setServiceDirectory(filteredWithUrls);
               );
             }
 
-            try {
-              const { data: centralRow, error: centralReadError } = await supabase
-                .from("feature_permissions")
-                .select("permissions")
-                .eq("id", CENTRAL_STORAGE_ROW_ID)
-                .maybeSingle();
+            void (async () => {
+              try {
+                const { data: centralRow, error: centralReadError } = await supabase
+                  .from("feature_permissions")
+                  .select("permissions")
+                  .eq("id", CENTRAL_STORAGE_ROW_ID)
+                  .maybeSingle();
 
-              const centralPermissions = centralRow?.permissions as any;
-              const remoteBills = centralPermissions?.data?.smart_akshaya_bills;
+                const centralPermissions = centralRow?.permissions as any;
+                const remoteBills = centralPermissions?.data?.smart_akshaya_bills;
 
-              if (!centralReadError && Array.isArray(remoteBills)) {
-                const cleanedRemoteBills = remoteBills.filter(
-                  (bill: any) => !isOldDemoCreditBill(bill)
-                );
+                if (!centralReadError && Array.isArray(remoteBills)) {
+                  const cleanedRemoteBills = remoteBills.filter(
+                    (bill: any) => !isOldDemoCreditBill(bill)
+                  );
 
-                if (cleanedRemoteBills.length !== remoteBills.length) {
-                  await supabase
-                    .from("feature_permissions")
-                    .update({
-                      permissions: {
-                        ...centralPermissions,
-                        data: {
-                          ...(centralPermissions.data || {}),
-                          smart_akshaya_bills: cleanedRemoteBills,
+                  if (cleanedRemoteBills.length !== remoteBills.length) {
+                    await supabase
+                      .from("feature_permissions")
+                      .update({
+                        permissions: {
+                          ...centralPermissions,
+                          data: {
+                            ...(centralPermissions.data || {}),
+                            smart_akshaya_bills: cleanedRemoteBills,
+                          },
                         },
-                      },
-                      updated_at: new Date().toISOString(),
-                    })
-                    .eq("id", CENTRAL_STORAGE_ROW_ID);
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq("id", CENTRAL_STORAGE_ROW_ID);
+                  }
                 }
+              } catch (cleanupError) {
+                console.warn("Demo credit cleanup could not update shared storage:", cleanupError);
               }
-            } catch (cleanupError) {
-              console.warn("Demo credit cleanup could not update shared storage:", cleanupError);
-            }
+            })();
           }
 
           const normalizeStaffValue = (value: unknown) =>
