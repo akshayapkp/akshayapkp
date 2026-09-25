@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Akshaya Pookiparamba",
   description: "A focused workspace for managing Akshaya services, staff, wallets, bills, and customer operations.",
+  icons: {
+    icon: "/akshaya-logo.png",
+    shortcut: "/akshaya-logo.png",
+    apple: "/akshaya-logo.png",
+  },
 };
 
 export default function RootLayout({
