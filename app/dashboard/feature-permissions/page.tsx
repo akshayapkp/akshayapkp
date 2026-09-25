@@ -9,6 +9,7 @@ interface PermissionItem {
   featureName: string;
   accountantAccess: boolean;
   staffAccess: boolean;
+  onlineStaffAccess: boolean;
 }
 
 const initialPermissions: PermissionItem[] = [
@@ -17,102 +18,161 @@ const initialPermissions: PermissionItem[] = [
   featureName: "Dashboard",
   accountantAccess: true,
   staffAccess: true,
+  onlineStaffAccess: false,
 },
 {
   id: "2",
   featureName: "Application Forms",
   accountantAccess: true,
   staffAccess: true,
+  onlineStaffAccess: false,
 },
 {
   id: "3",
   featureName: "Service Entry",
   accountantAccess: true,
   staffAccess: true,
+  onlineStaffAccess: false,
 },
 {
   id: "4",
   featureName: "Saved Bills",
   accountantAccess: true,
   staffAccess: true,
+  onlineStaffAccess: false,
 },
 {
   id: "5",
   featureName: "Service Management",
   accountantAccess: false,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "6",
   featureName: "Work Status",
   accountantAccess: true,
   staffAccess: true,
+  onlineStaffAccess: false,
 },
 {
   id: "7",
   featureName: "Wallet Management",
   accountantAccess: true,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "8",
   featureName: "Billed Services",
   accountantAccess: true,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "9",
   featureName: "Transaction History",
   accountantAccess: true,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "10",
   featureName: "Expenses",
   accountantAccess: true,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "11",
   featureName: "Credit Details",
   accountantAccess: true,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "12",
   featureName: "Staff Management",
   accountantAccess: false,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "13",
   featureName: "Staff Performance",
   accountantAccess: false,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "14",
   featureName: "Customer Details",
   accountantAccess: true,
   staffAccess: true,
+  onlineStaffAccess: false,
 },
 {
   id: "15",
   featureName: "Quick Hub",
   accountantAccess: true,
   staffAccess: true,
+  onlineStaffAccess: false,
 },
 {
   id: "16",
   featureName: "Feature Permissions",
   accountantAccess: false,
   staffAccess: false,
+  onlineStaffAccess: false,
 },
 {
   id: "17",
   featureName: "Latest Billed Entry",
   accountantAccess: true,
   staffAccess: true,
+  onlineStaffAccess: false,
+},
+{
+  id: "18",
+  featureName: "App Services",
+  accountantAccess: false,
+  staffAccess: false,
+  onlineStaffAccess: false,
+},
+{
+  id: "19",
+  featureName: "Settings",
+  accountantAccess: false,
+  staffAccess: false,
+  onlineStaffAccess: false,
+},
+{
+  id: "20",
+  featureName: "Customer Homepage",
+  accountantAccess: false,
+  staffAccess: false,
+  onlineStaffAccess: false,
+},
+{
+  id: "21",
+  featureName: "Posters & Notices",
+  accountantAccess: false,
+  staffAccess: false,
+  onlineStaffAccess: false,
+},
+{
+  id: "22",
+  featureName: "Service Forms",
+  accountantAccess: false,
+  staffAccess: false,
+  onlineStaffAccess: false,
+},
+{
+  id: "23",
+  featureName: "Appearance",
+  accountantAccess: false,
+  staffAccess: false,
+  onlineStaffAccess: false,
 },
 ];
 
@@ -143,9 +203,13 @@ export default function FeaturePermissionsPage() {
           // newly introduced features (such as Latest Billed Entry).
           const savedPermissions = initialPermissions.map((defaultItem) => {
             const existingItem = storedPermissions.find(
-              (item) => String(item.id) === String(defaultItem.id)
+              (item) =>
+                String(item.featureName || "").trim().toLowerCase() ===
+                defaultItem.featureName.trim().toLowerCase()
             );
-            return existingItem ? { ...defaultItem, ...existingItem } : defaultItem;
+            return existingItem
+              ? { ...defaultItem, ...existingItem, featureName: defaultItem.featureName }
+              : defaultItem;
           });
 
           setPermissions(savedPermissions);
@@ -310,6 +374,7 @@ export default function FeaturePermissionsPage() {
                 <th className="p-4 font-black">Feature Name</th>
                 <th className="w-48 p-4 text-center font-black">Accountant Access</th>
                 <th className="w-48 p-4 text-center font-black">Staff Access</th>
+                <th className="w-48 p-4 text-center font-black">Online Staff Access</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -345,6 +410,22 @@ export default function FeaturePermissionsPage() {
                         }`}
                       >
                         {item.staffAccess && <Check size={14} strokeWidth={3} />}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Online Staff Access Checkbox */}
+                  <td className="p-4 text-center">
+                    <div className="flex justify-center">
+                      <div
+                        onClick={() => handleToggle(item.id, 'onlineStaffAccess')}
+                        className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border transition-all ${
+                          item.onlineStaffAccess
+                            ? 'bg-gradient-to-br from-cyan-500 to-blue-600 border-cyan-500 text-white shadow-lg shadow-cyan-500/20'
+                            : 'border-slate-300 bg-white hover:border-cyan-400 hover:bg-cyan-50/40'
+                        }`}
+                      >
+                        {item.onlineStaffAccess && <Check size={14} strokeWidth={3} />}
                       </div>
                     </div>
                   </td>

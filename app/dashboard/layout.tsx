@@ -324,6 +324,10 @@ export default function DashboardLayout({
           return Boolean(permission.accountantAccess);
         }
 
+        if (role === "online_staff" || role === "online staff" || role === "onlinestaff") {
+          return Boolean(permission.onlineStaffAccess);
+        }
+
         return Boolean(permission.staffAccess);
       });
 

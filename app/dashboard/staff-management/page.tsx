@@ -538,6 +538,7 @@ setShowEditModal(true);
                       onChange={(e) => setNewRole(e.target.value)}
                     >
                       <option value="Staff">Staff</option>
+                      <option value="Online Staff">Online Staff</option>
                       <option value="Accountant">Accountant</option>
                       <option value="Admin">Admin</option>
                     </select>
@@ -681,6 +682,7 @@ setShowEditModal(true);
                       onChange={(e) => setEditRole(e.target.value)}
                     >
                       <option value="Staff">Staff</option>
+                      <option value="Online Staff">Online Staff</option>
                       <option value="Accountant">Accountant</option>
                       <option value="Admin">Admin</option>
                     </select>
