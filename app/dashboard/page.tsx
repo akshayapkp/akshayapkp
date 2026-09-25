@@ -497,8 +497,7 @@ function StatusEdistrictTool() {
                   onChange={(event) => setCertificateCode(event.target.value)}
                 >
                   {CERTIFICATES.map((certificate) => (
-                    <option key={certificate.code} value={certificate.code}>
-                      {certificate.name}
+                    <option key={certificate.code} value={certificate.code}>                      {certificate.name}
                     </option>
                   ))}
                 </select>
@@ -997,8 +996,7 @@ function StatusGazetteTool() {
         }
 
         .gazette-error {
-          margin-bottom: 18px;
-          border: 1px solid #f5c6c6;
+          margin-bottom: 18px;          border: 1px solid #f5c6c6;
           border-radius: 8px;
           background: #fff0f0;
           color: #b84f4f;
@@ -1449,9 +1447,71 @@ setServiceDirectory(filteredWithUrls);
         // of the billing data used different staff identity field names, so
         // compare all known identity fields without changing the stored data.
         try {
-          const savedCreditBills = JSON.parse(
+          let savedCreditBills = JSON.parse(
             localStorage.getItem("smart_akshaya_bills") || "[]"
           );
+
+          // Remove the three old demo credit bills from this browser and
+          // the shared Supabase store so they do not return after refresh.
+          const isOldDemoCreditBill = (bill: any) => {
+            const name = String(bill?.customerName ?? "").trim().toLowerCase();
+            const mobile = String(bill?.mobileNumber ?? "").replace(/\D/g, "");
+            const owed = Number(bill?.owedAmount ?? 0);
+            return (
+              name === "irfan" &&
+              mobile === "8589868773" &&
+              [50, 1700, 167].includes(owed)
+            );
+          };
+
+          if (Array.isArray(savedCreditBills)) {
+            const cleanedLocalCreditBills = savedCreditBills.filter(
+              (bill: any) => !isOldDemoCreditBill(bill)
+            );
+
+            if (cleanedLocalCreditBills.length !== savedCreditBills.length) {
+              savedCreditBills = cleanedLocalCreditBills;
+              localStorage.setItem(
+                "smart_akshaya_bills",
+                JSON.stringify(cleanedLocalCreditBills)
+              );
+            }
+
+            try {
+              const { data: centralRow, error: centralReadError } = await supabase
+                .from("feature_permissions")
+                .select("permissions")
+                .eq("id", CENTRAL_STORAGE_ROW_ID)
+                .maybeSingle();
+
+              const centralPermissions = centralRow?.permissions as any;
+              const remoteBills = centralPermissions?.data?.smart_akshaya_bills;
+
+              if (!centralReadError && Array.isArray(remoteBills)) {
+                const cleanedRemoteBills = remoteBills.filter(
+                  (bill: any) => !isOldDemoCreditBill(bill)
+                );
+
+                if (cleanedRemoteBills.length !== remoteBills.length) {
+                  await supabase
+                    .from("feature_permissions")
+                    .update({
+                      permissions: {
+                        ...centralPermissions,
+                        data: {
+                          ...(centralPermissions.data || {}),
+                          smart_akshaya_bills: cleanedRemoteBills,
+                        },
+                      },
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq("id", CENTRAL_STORAGE_ROW_ID);
+                }
+              }
+            } catch (cleanupError) {
+              console.warn("Demo credit cleanup could not update shared storage:", cleanupError);
+            }
+          }
 
           const normalizeStaffValue = (value: unknown) =>
             String(value ?? "")
@@ -1497,7 +1557,6 @@ setServiceDirectory(filteredWithUrls);
                     return [normalizeStaffValue(value)].filter(Boolean);
                   })
                   .flat();
-
                 return billStaffValues.some((billStaff: string) =>
                   loggedInUserValues.includes(billStaff)
                 );
@@ -1997,8 +2056,7 @@ setServiceDirectory(filteredWithUrls);
 
             {attendanceSaved ? (
               <div className="mt-8 flex flex-col items-center">
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center animate-bounce">
-                  <span className="text-5xl text-green-600">✓</span>
+                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center animate-bounce">                  <span className="text-5xl text-green-600">✓</span>
                 </div>
                 <h3 className="mt-5 text-2xl font-bold text-green-600">Attendance Marked Successfully</h3>
               </div>
@@ -2497,8 +2555,7 @@ setServiceDirectory(filteredWithUrls);
                           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
                             <FileText size={16} />
                           </div>
-                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-emerald-600" />
-                        </div>
+                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-emerald-600" />                        </div>
                         <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Aadhaar Status</h5>
                         <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
                           Aadhaar enrolment / update status
