@@ -198,15 +198,45 @@ export default function HomePage() {
     return () => window.clearInterval(timer);
   }, [featuredPaused]);
 
+  function normalizeServiceKey(value: string) {
+    return value.toLowerCase().replace(/[^a-z0-9\u0D00-\u0D7F]+/g, "");
+  }
+
   function applyFeatured(item: HomepagePoster) {
-    if (item.serviceName) {
-      const service = services.find(s => serviceName(s).toLowerCase() === item.serviceName.toLowerCase());
-      if (service) { openService(service); return; }
+    // First use the service explicitly linked to the poster. If it was renamed,
+    // match it using a normalized key so "KTET", "K-TET", etc. still connect.
+    const targetName = String(item.serviceName || item.title || "").trim();
+    const targetKey = normalizeServiceKey(targetName);
+
+    if (targetKey) {
+      const service = services.find(s => normalizeServiceKey(serviceName(s)) === targetKey);
+      if (service) {
+        openService(service);
+        return;
+      }
+
+      // A custom service can exist in the poster/settings data before the
+      // service list has refreshed on the homepage. Open the request form
+      // directly instead of only scrolling to the service list.
+      const partial = services.find(s => {
+        const key = normalizeServiceKey(serviceName(s));
+        return key && (key.includes(targetKey) || targetKey.includes(key));
+      });
+      if (partial) {
+        openService(partial);
+        return;
+      }
+
+      const posterService: ServiceItem = {
+        id: "poster-service-" + item.id,
+        name: targetName,
+        title: targetName,
+      };
+      openService(posterService);
+      return;
     }
-    const keywords = item.title.toLowerCase().split(/\s+/).filter(Boolean);
-    const service = services.find(s => keywords.some(k => k.length > 3 && serviceName(s).toLowerCase().includes(k)));
-    if (service) openService(service);
-    else document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
+
+    document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
   }
 
   function getConfiguredFlow(name: string) {
