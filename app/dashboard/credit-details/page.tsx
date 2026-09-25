@@ -88,6 +88,30 @@ export default function CreditDetailsPage() {
         }
       }
 
+      let registeredStaffNames: string[] = [];
+
+      try {
+        const { data: staffRows, error: staffError } = await supabase
+          .from('staff')
+          .select('name')
+          .order('created_at', { ascending: true });
+
+        if (!staffError && Array.isArray(staffRows)) {
+          registeredStaffNames = staffRows
+            .map((row: any) => String(row?.name || '').trim())
+            .filter(Boolean);
+        }
+      } catch {
+        registeredStaffNames = [];
+      }
+
+      const normalizeStaffName = (value: unknown) =>
+        String(value ?? '').trim().replace(/\\s+/g, ' ').toLowerCase();
+
+      const registeredStaffSet = new Set(
+        registeredStaffNames.map(normalizeStaffName)
+      );
+
       const savedBills = localStorage.getItem('smart_akshaya_bills');
       let parsed: any[] = [];
 
@@ -97,17 +121,20 @@ export default function CreditDetailsPage() {
         parsed = [];
       }
 
+      // Only staff that currently exist in Staff Management are allowed to
+      // appear in Credit Details. Old/deleted staff such as demo names are
+      // therefore hidden from both the dropdown and the bill list.
       const creditOnly = Array.isArray(parsed)
-        ? parsed.filter((b: any) => Number(b?.owedAmount || 0) > 0)
+        ? parsed.filter(
+            (b: any) =>
+              Number(b?.owedAmount || 0) > 0 &&
+              registeredStaffSet.has(normalizeStaffName(b?.staffName))
+          )
         : [];
 
-      const allStaff = Array.from(
-        new Set(
-          creditOnly
-            .map((b: any) => String(b?.staffName || '').trim())
-            .filter(Boolean)
-        )
-      ).sort((a, b) => a.localeCompare(b));
+      const allStaff = registeredStaffNames
+        .filter((name) => registeredStaffSet.has(normalizeStaffName(name)))
+        .sort((a, b) => a.localeCompare(b));
 
       if (!cancelled) setStaffList(allStaff);
 
@@ -117,8 +144,8 @@ export default function CreditDetailsPage() {
         ? creditOnly
         : creditOnly.filter(
             (b: any) =>
-              String(b?.staffName || '').trim().toLowerCase() ===
-              String(currentUser?.username || '').trim().toLowerCase()
+              normalizeStaffName(b?.staffName) ===
+              normalizeStaffName(currentUser?.username)
           );
 
       if (!cancelled) setBills(visibleBills);
