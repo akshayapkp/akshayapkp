@@ -506,6 +506,76 @@ export default function DashboardLayout({
         onMouseEnter={openSidebar}
       />
 
+      {/* Collapsed desktop navigation rail */}
+      <div
+        className={`fixed left-2 top-1/2 z-50 hidden -translate-y-1/2 md:flex md:flex-col md:items-center md:gap-2 transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${
+          sidebarOpen
+            ? "-translate-x-6 opacity-0 pointer-events-none scale-90"
+            : "translate-x-0 opacity-100 scale-100"
+        }`}
+        onMouseEnter={openSidebar}
+        aria-label="Collapsed navigation"
+      >
+        <div className="mb-1 rounded-full border border-white/70 bg-white/80 px-2 py-1 text-[8px] font-black tracking-[0.18em] text-slate-500 shadow-lg backdrop-blur-xl">
+          MENU
+        </div>
+        <div className="flex max-h-[78vh] flex-col items-center gap-2 overflow-y-auto rounded-[24px] border border-white/70 bg-white/75 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/75">
+          {allowedMenus.slice(0, 10).map((item, index) => {
+            const IconComponent = item.icon;
+            const gradients = [
+              "from-blue-500 to-cyan-400",
+              "from-violet-500 to-fuchsia-500",
+              "from-emerald-500 to-teal-400",
+              "from-orange-500 to-amber-400",
+              "from-pink-500 to-rose-400",
+              "from-indigo-500 to-blue-500",
+              "from-cyan-500 to-sky-400",
+              "from-purple-500 to-indigo-500",
+              "from-lime-500 to-emerald-500",
+              "from-red-500 to-orange-400",
+            ];
+            const gradient = gradients[index % gradients.length];
+            return (
+              <button
+                key={item.path}
+                type="button"
+                title={item.name}
+                aria-label={item.name}
+                onClick={() => setSidebarOpen(true)}
+                className={`group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/60 bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/90 ${
+                  isActive(item.path) ? "ring-2 ring-blue-400/60 ring-offset-2 ring-offset-white dark:ring-offset-slate-950" : ""
+                }`}
+              >
+                <span className={`absolute inset-[3px] rounded-[14px] bg-gradient-to-br ${gradient} opacity-95 transition-all duration-300 group-hover:inset-[2px]`} />
+                <IconComponent size={17} className="relative z-10 text-white drop-shadow-sm" strokeWidth={2.2} />
+                <span className="pointer-events-none absolute left-12 whitespace-nowrap rounded-lg bg-slate-950 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+                  {item.name}
+                </span>
+              </button>
+            );
+          })}
+          {allowedMenus.length > 10 && (
+            <button
+              type="button"
+              title="More menu items"
+              aria-label="More menu items"
+              onClick={openSidebar}
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:scale-105 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            >
+              <Menu size={15} />
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={openSidebar}
+          aria-label="Expand sidebar"
+          title="Open sidebar"
+          className="group mt-1 flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:scale-110 hover:shadow-blue-500/40 active:scale-95"
+        >
+          <span className="transition-transform duration-500 group-hover:translate-x-0.5"><Menu size={17} /></span>
+        </button>
+      </div>
       <div className="dashboard-surface dashboard-depth relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
           onMouseEnter={openSidebar}
@@ -529,7 +599,7 @@ export default function DashboardLayout({
             }
           `}
         >
-          <div className="flex flex-col flex-1 overflow-hidden">
+          <div className={`flex flex-col flex-1 overflow-hidden md:min-w-[296px] md:transition-transform md:duration-500 md:ease-[cubic-bezier(.22,1,.36,1)] ${sidebarOpen ? "md:translate-x-0" : "md:-translate-x-8"}`} >
             <div className="dashboard-sidebar-brand mb-5 flex shrink-0 items-start justify-between px-2">
               <div className="flex items-center gap-3">
                 <div className="dashboard-sidebar-logo flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-cyan-200/60 bg-white shadow-lg shadow-cyan-500/20">
