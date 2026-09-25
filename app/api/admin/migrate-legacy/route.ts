@@ -130,10 +130,20 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
     }
 
+    const { data: migratedBills, error: billLookupError } = await supabase
+      .from("bills")
+      .select("id, source_legacy_id");
+    if (billLookupError) throw billLookupError;
+
+    const billIdByLegacy = new Map(
+      (migratedBills ?? []).map((bill: AnyRecord) => [String(bill.source_legacy_id), bill.id])
+    );
+
     const billItems = bills.flatMap((bill, billIndex) => {
+      const legacyBillId = sourceId("bill", bill, billIndex);
       const items = Array.isArray(bill.items) ? bill.items : Array.isArray(bill.billItems) ? bill.billItems : Array.isArray(bill.services) ? bill.services : [];
       return items.map((item: AnyRecord, itemIndex: number) => ({
-        bill_id: null,
+        bill_id: billIdByLegacy.get(legacyBillId) ?? null,
         service_name: text(item.serviceName, item.service, item.name) || "Legacy Service",
         qty: num(item.qty, item.quantity) || 1,
         unit_price: num(item.unitPrice, item.price, item.rate),
