@@ -4,8 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   CreditCard, Search, Calendar, RefreshCw, Download, 
-  User, Phone, ChevronDown, CheckCircle2, AlertCircle 
+  User, Phone, ChevronDown, CheckCircle2, AlertCircle, ShieldCheck
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+const CREDIT_ACCESS_ROW_ID = 999997;
+const CREDIT_ACCESS_KEY = 'credit_details_access_settings';
 
 interface CreditBill {
   id: string;
@@ -32,42 +36,142 @@ export default function CreditDetailsPage() {
   const [startDate, setStartDate] = useState(getToday);
   const [endDate, setEndDate] = useState(getToday);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAccountant, setIsAccountant] = useState(false);
+  const [accountantCanViewAll, setAccountantCanViewAll] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState('ALL');
+  const [staffList, setStaffList] = useState<string[]>([]);
+  const [savingAccess, setSavingAccess] = useState(false);
+  const [accessLoaded, setAccessLoaded] = useState(false);
 
-  // Role-based filtering ഉൾപ്പെടുത്തിയ useEffect
+  // Admin controls whether Accountant users can see all staff credit data.
+  // Admin always sees all credit data. Accountant defaults to own data until
+  // the admin explicitly enables the shared view.
   useEffect(() => {
-    const storedUser = localStorage.getItem('loggedInUser');
-    const currentUser = storedUser ? JSON.parse(storedUser) : { username: 'Admin User', role: 'admin' };
-    setIsAdmin(String(currentUser?.role || '').trim().toLowerCase() === 'admin');
+    let cancelled = false;
 
-    const savedBills = localStorage.getItem('smart_akshaya_bills');
-    if (savedBills) {
-      const parsed = JSON.parse(savedBills);
-      let creditOnly = parsed.filter((b: any) => Number(b.owedAmount || 0) > 0);
+    const loadCreditAccess = async () => {
+      const storedUser = localStorage.getItem('loggedInUser');
+      const currentUser = storedUser
+        ? JSON.parse(storedUser)
+        : { username: 'Admin User', role: 'admin' };
 
-      // അഡ്മിൻ അല്ലെങ്കിൽ സ്റ്റാഫിന്റെ പേര് മാത്രം ഫിൽട്ടർ ചെയ്യുക[cite: 2]
-      if (currentUser.role.toLowerCase() !== 'admin') {
-        creditOnly = creditOnly.filter(
-          (b: any) => (b.staffName || '').toLowerCase() === currentUser.username.toLowerCase()
-        );
+      const role = String(currentUser?.role || '').trim().toLowerCase();
+      const admin = role === 'admin';
+      const accountant = role === 'accountant';
+
+      if (cancelled) return;
+      setIsAdmin(admin);
+      setIsAccountant(accountant);
+
+      try {
+        const { data, error } = await supabase
+          .from('feature_permissions')
+          .select('permissions')
+          .eq('id', CREDIT_ACCESS_ROW_ID)
+          .maybeSingle();
+
+        const settings = data?.permissions as any;
+        const enabled =
+          !error &&
+          settings?.storageKey === CREDIT_ACCESS_KEY &&
+          settings?.data?.accountantCanViewAll === true;
+
+        if (!cancelled) {
+          setAccountantCanViewAll(enabled);
+          setAccessLoaded(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setAccountantCanViewAll(false);
+          setAccessLoaded(true);
+        }
       }
 
-      setBills(creditOnly);
-    } else {
-      const defaultData: CreditBill[] = [
+      const savedBills = localStorage.getItem('smart_akshaya_bills');
+      let parsed: any[] = [];
 
-      ];
-
-      let filteredDefault = defaultData;
-      if (currentUser.role.toLowerCase() !== 'admin') {
-        filteredDefault = defaultData.filter(
-          (b) => b.staffName.toLowerCase() === currentUser.username.toLowerCase()
-        );
+      try {
+        parsed = savedBills ? JSON.parse(savedBills) : [];
+      } catch {
+        parsed = [];
       }
 
-      setBills(filteredDefault);
-      localStorage.setItem('smart_akshaya_bills', JSON.stringify(defaultData));
-    }
+      const creditOnly = Array.isArray(parsed)
+        ? parsed.filter((b: any) => Number(b?.owedAmount || 0) > 0)
+        : [];
+
+      const allStaff = Array.from(
+        new Set(
+          creditOnly
+            .map((b: any) => String(b?.staffName || '').trim())
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b));
+
+      if (!cancelled) setStaffList(allStaff);
+
+      const canSeeAll = admin || (accountant && enabled);
+
+      const visibleBills = canSeeAll
+        ? creditOnly
+        : creditOnly.filter(
+            (b: any) =>
+              String(b?.staffName || '').trim().toLowerCase() ===
+              String(currentUser?.username || '').trim().toLowerCase()
+          );
+
+      if (!cancelled) setBills(visibleBills);
+    };
+
+    void loadCreditAccess();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const handleAccountantAccessToggle = async (enabled: boolean) => {
+    if (!isAdmin) return;
+
+    setSavingAccess(true);
+    setAccountantCanViewAll(enabled);
+
+    const payload = {
+      storageKey: CREDIT_ACCESS_KEY,
+      version: 1,
+      data: {
+        accountantCanViewAll: enabled,
+      },
+    };
+
+    try {
+      const { error: updateError } = await supabase
+        .from('feature_permissions')
+        .update({
+          permissions: payload,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', CREDIT_ACCESS_ROW_ID);
+
+      if (updateError) {
+        const { error: insertError } = await supabase
+          .from('feature_permissions')
+          .insert({
+            id: CREDIT_ACCESS_ROW_ID,
+            permissions: payload,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (insertError) throw insertError;
+      }
+    } catch (error) {
+      console.error('Failed to save credit access setting:', error);
+      setAccountantCanViewAll(!enabled);
+      window.alert('Credit access setting could not be saved. Please try again.');
+    } finally {
+      setSavingAccess(false);
+    }
+  };
 
   // Filter Logic
   const filteredBills = bills.filter((bill) => {
@@ -80,7 +184,10 @@ export default function CreditDetailsPage() {
       (!startDate || bill.date >= startDate) &&
       (!endDate || bill.date <= endDate);
 
-    return matchesSearch && matchesDate;
+    const matchesStaff =
+      selectedStaff === 'ALL' || bill.staffName === selectedStaff;
+
+    return matchesSearch && matchesDate && matchesStaff;
   });
 
   const totalBalanceOwed = filteredBills.reduce((acc, b) => acc + b.owedAmount, 0);
@@ -141,6 +248,50 @@ export default function CreditDetailsPage() {
           </div>
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="rounded-3xl border border-cyan-200 bg-cyan-50/70 p-5 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl bg-cyan-600 p-3 text-white shadow-lg shadow-cyan-500/20">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h2 className="text-sm font-black text-slate-800">Credit Details Access</h2>
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  Control whether Accountant users can view credit bills created by all staff.
+                </p>
+              </div>
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white bg-white px-4 py-3 shadow-sm">
+              <input
+                type="checkbox"
+                checked={accountantCanViewAll}
+                disabled={savingAccess}
+                onChange={(e) => void handleAccountantAccessToggle(e.target.checked)}
+                className="h-5 w-5 accent-cyan-600"
+              />
+              <span className="text-xs font-extrabold text-slate-700">
+                Accountant: View All Staff Credits
+              </span>
+              {savingAccess && (
+                <span className="text-[10px] font-semibold text-slate-400">Saving...</span>
+              )}
+            </label>
+          </div>
+        </div>
+      )}
+
+      {isAccountant && accessLoaded && (
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <p className="text-xs font-semibold text-slate-600">
+            {accountantCanViewAll
+              ? 'Admin has enabled All Staff Credit Details for your account.'
+              : 'You are currently viewing only your own Credit Details.'}
+          </p>
+        </div>
+      )}
 
       {/* Metric Cards */}
       <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -234,9 +385,22 @@ export default function CreditDetailsPage() {
             <select className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 focus:outline-none">
               <option>Presets</option>
             </select>
-            <select className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 focus:outline-none">
-              <option>All Staff</option>
-            </select>
+            {(isAdmin || (isAccountant && accountantCanViewAll)) ? (
+              <select
+                value={selectedStaff}
+                onChange={(e) => setSelectedStaff(e.target.value)}
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 focus:outline-none"
+              >
+                <option value="ALL">All Staff</option>
+                {staffList.map((staff) => (
+                  <option key={staff} value={staff}>{staff}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-500">
+                My Credits Only
+              </div>
+            )}
           </div>
         </div>
 
