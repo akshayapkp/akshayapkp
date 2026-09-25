@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { deleteHomepagePoster, uploadHomepagePoster } from "@/lib/homepage-poster-storage";
 import { ArrowLeft, ImagePlus, Palette, Save, Settings2, Trash2, Upload, X, UsersRound, ShieldCheck, Home, LayoutGrid, FileCog } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -10,7 +11,7 @@ const HOMEPAGE_ROW_ID = 999998;
 const STORAGE_KEY = "__smart_akshaya_shared_storage__";
 
 type ServiceItem = { id?: string; name?: string; title?: string; serviceName?: string };
-type Poster = { id: string; title: string; subtitle: string; image: string; serviceName: string; apply: boolean };
+type Poster = { id: string; title: string; subtitle: string; image: string; storagePath?: string; serviceName: string; apply: boolean };
 type ServiceConfig = { fields: string[]; documents: string[] };
 
 const FIELD_OPTIONS = [
@@ -46,6 +47,7 @@ export default function SettingsPage() {
   const [selectedService, setSelectedService] = useState("");
   const [newDoc, setNewDoc] = useState("");
   const [poster, setPoster] = useState({ title:"", subtitle:"", serviceName:"", image:"", apply:true });
+  const [posterFile, setPosterFile] = useState<File | null>(null);
   const [showNewService, setShowNewService] = useState(false);
   const [newServiceName, setNewServiceName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -148,12 +150,50 @@ export default function SettingsPage() {
   }
 
   async function addPoster() {
-    if (!poster.title.trim() || !poster.image) { setMessage("Poster title, image എന്നിവ നൽകുക."); return; }
-    const nextPoster: Poster = { ...poster, id: crypto.randomUUID(), title: poster.title.trim(), subtitle: poster.subtitle.trim(), serviceName: poster.serviceName, apply: poster.apply };
-    const nextSettings = { ...settings, posters: [nextPoster, ...settings.posters] };
-    setSettings(nextSettings);
-    setPoster({ title:"", subtitle:"", serviceName:"", image:"", apply:true });
-    await saveSettings(nextSettings);
+    if (!poster.title.trim() || !posterFile) {
+      setMessage("Poster title, image എന്നിവ നൽകുക.");
+      return;
+    }
+
+    setSaving(true);
+    setMessage("Poster Storage-ലേക്ക് upload ചെയ്യുന്നു...");
+    try {
+      const uploaded = await uploadHomepagePoster(posterFile);
+      const nextPoster: Poster = {
+        ...poster,
+        id: crypto.randomUUID(),
+        title: poster.title.trim(),
+        subtitle: poster.subtitle.trim(),
+        image: uploaded.publicUrl,
+        storagePath: uploaded.storagePath,
+        serviceName: poster.serviceName,
+        apply: poster.apply,
+      };
+      const nextSettings = { ...settings, posters: [nextPoster, ...settings.posters] };
+      setPoster({ title:"", subtitle:"", serviceName:"", image:"", apply:true });
+      setPosterFile(null);
+      await saveSettings(nextSettings);
+    } catch (e) {
+      console.error(e);
+      setMessage("Poster upload ചെയ്യാൻ കഴിഞ്ഞില്ല. Supabase Storage bucket/policy setup പരിശോധിക്കുക.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removePoster(p: Poster) {
+    setSaving(true);
+    setMessage("Poster remove ചെയ്യുന്നു...");
+    try {
+      if (p.storagePath) await deleteHomepagePoster(p.storagePath);
+      const nextSettings = { ...settings, posters: settings.posters.filter(x => x.id !== p.id) };
+      await saveSettings(nextSettings);
+    } catch (e) {
+      console.error(e);
+      setMessage("Poster remove ചെയ്യാൻ കഴിഞ്ഞില്ല.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function toggleField(field: string) {
@@ -259,7 +299,7 @@ export default function SettingsPage() {
                     <div key={p.id} className="flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center">
                       <img src={p.image} alt={p.title} className="h-20 w-32 rounded-xl object-cover bg-slate-100"/>
                       <div className="min-w-0 flex-1"><b className="block truncate">{p.title}</b><span className="text-xs text-slate-500">{p.serviceName || "No Apply service"}</span></div>
-                      <button onClick={()=>setSettings(s=>({...s,posters:s.posters.filter(x=>x.id!==p.id)}))} className="rounded-xl p-2 text-rose-600 hover:bg-rose-50"><Trash2 size={17}/></button>
+                      <button onClick={()=>void removePoster(p)} className="rounded-xl p-2 text-rose-600 hover:bg-rose-50"><Trash2 size={17}/></button>
                     </div>
                   ))}
                 </div>
