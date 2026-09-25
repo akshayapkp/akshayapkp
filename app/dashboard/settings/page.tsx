@@ -119,10 +119,17 @@ export default function SettingsPage() {
 
   async function handlePosterFile(file?: File) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) { setMessage("Image file മാത്രം upload ചെയ്യുക."); return; }
-    const reader = new FileReader();
-    reader.onload = () => setPoster(p => ({ ...p, image: String(reader.result || "") }));
-    reader.readAsDataURL(file);
+    if (!file.type.startsWith("image/")) {
+      setMessage("Image file മാത്രം upload ചെയ്യുക.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setMessage("Poster image 8 MB-ൽ താഴെയായിരിക്കണം.");
+      return;
+    }
+    setPosterFile(file);
+    setPoster(p => ({ ...p, image: URL.createObjectURL(file) }));
+    setMessage("Poster selected. Add Poster അമർത്തുമ്പോൾ Storage-ലേക്ക് upload ചെയ്യും.");
   }
 
   async function addCustomService() {
