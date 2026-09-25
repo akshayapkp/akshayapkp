@@ -58,6 +58,7 @@ export default function CreditDetailsPage() {
       const role = String(currentUser?.role || '').trim().toLowerCase();
       const admin = role === 'admin';
       const accountant = role === 'accountant';
+      let enabled = false;
 
       if (cancelled) return;
       setIsAdmin(admin);
@@ -71,7 +72,7 @@ export default function CreditDetailsPage() {
           .maybeSingle();
 
         const settings = data?.permissions as any;
-        const enabled =
+        enabled =
           !error &&
           settings?.storageKey === CREDIT_ACCESS_KEY &&
           settings?.data?.accountantCanViewAll === true;
