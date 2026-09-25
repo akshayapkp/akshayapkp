@@ -130,6 +130,23 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
     }
 
+    const billItems = bills.flatMap((bill, billIndex) => {
+      const items = Array.isArray(bill.items) ? bill.items : Array.isArray(bill.billItems) ? bill.billItems : Array.isArray(bill.services) ? bill.services : [];
+      return items.map((item: AnyRecord, itemIndex: number) => ({
+        bill_id: null,
+        service_name: text(item.serviceName, item.service, item.name) || "Legacy Service",
+        qty: num(item.qty, item.quantity) || 1,
+        unit_price: num(item.unitPrice, item.price, item.rate),
+        amount: num(item.amount, item.totalAmount, item.total),
+        source_legacy_id: `bill-item:${sourceId("bill", bill, billIndex)}:${itemIndex}`,
+        raw_data: item,
+      }));
+    });
+    if (billItems.length) {
+      const { error } = await supabase.from("bill_items").upsert(billItems, { onConflict: "source_legacy_id" });
+      if (error) throw error;
+    }
+
     const serviceEntries = [
       ...arr(mergedData.serviceEntries),
       ...arr(mergedData.billedServicesData),
@@ -220,6 +237,7 @@ export async function POST(request: NextRequest) {
         customers: customers.length,
         services: services.length,
         bills: billRows.length,
+        billItems: billItems.length,
         serviceEntries: entryRows.length,
         expenses: expenses.length,
         walletTransactions: walletRows.length,
@@ -234,6 +252,7 @@ export async function POST(request: NextRequest) {
         customers: customers.length,
         services: services.length,
         bills: billRows.length,
+        billItems: billItems.length,
         serviceEntries: entryRows.length,
         expenses: expenses.length,
         walletTransactions: walletRows.length,
