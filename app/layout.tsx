@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Smart Akshaya | Business Operations Hub",
+  title: "Akshaya Pookiparamba",
   description: "A focused workspace for managing Akshaya services, staff, wallets, bills, and customer operations.",
 };
 
