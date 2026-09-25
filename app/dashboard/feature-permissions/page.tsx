@@ -281,7 +281,7 @@ export default function FeaturePermissionsPage() {
 
   const handleToggle = async (
     id: string,
-    roleType: 'accountantAccess' | 'staffAccess'
+    roleType: 'accountantAccess' | 'staffAccess' | 'onlineStaffAccess'
   ) => {
     const updated = permissions.map((item) => {
       if (item.id === id) {
