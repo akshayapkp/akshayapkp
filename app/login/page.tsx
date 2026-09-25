@@ -51,7 +51,18 @@ export default function LoginPage() {
           const storedPassword = String(staff.password ?? "").trim();
           return usernameMatches && (storedPassword === cleanPassword || storedPassword === passwordHash);
         });
-        if (matched) { isValid = true; assignedRole = String(matched.role ?? "").toLowerCase() === "admin" ? "admin" : String(matched.role ?? "").toLowerCase().includes("account") ? "accountant" : "staff"; displayName = matched.name || matched.email || matched.staff_id || "Staff"; }
+        if (matched) {
+          isValid = true;
+          const matchedRole = String(matched.role ?? "").trim().toLowerCase();
+          assignedRole = matchedRole === "admin"
+            ? "admin"
+            : matchedRole.includes("account")
+              ? "accountant"
+              : matchedRole.includes("online")
+                ? "online_staff"
+                : "staff";
+          displayName = matched.name || matched.email || matched.staff_id || "Staff";
+        }
       } catch (error) { console.error("Staff login failed:", error); }
       if (!isValid) {
         try {
@@ -63,7 +74,18 @@ export default function LoginPage() {
             const firstName = cleanUsername.split(" ")[0] || "staff";
             return usernameMatches && (storedPassword ? storedPassword === cleanPassword : [cleanPassword.toLowerCase(), "akshaya123"].includes(`${firstName}akshaya`));
           });
-          if (matched) { isValid = true; assignedRole = String(matched.role ?? "").toLowerCase() === "admin" ? "admin" : "staff"; displayName = matched.name || matched.staffName || matched.username || matched.email || matched.staffId || "Staff"; }
+          if (matched) {
+            isValid = true;
+            const matchedRole = String(matched.role ?? "").trim().toLowerCase();
+            assignedRole = matchedRole === "admin"
+              ? "admin"
+              : matchedRole.includes("account")
+                ? "accountant"
+                : matchedRole.includes("online")
+                  ? "online_staff"
+                  : "staff";
+            displayName = matched.name || matched.staffName || matched.username || matched.email || matched.staffId || "Staff";
+          }
         } catch (error) { console.error("Local staff login failed:", error); }
       }
     }
