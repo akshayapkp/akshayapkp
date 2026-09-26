@@ -512,12 +512,12 @@ export default function DashboardLayout({
         aria-label="Collapsed navigation"
       >
         <div
-          className="relative flex h-[min(72vh,620px)] w-[58px] flex-col items-center justify-center overflow-hidden rounded-[30px] border border-white/80 bg-white/70 p-2 shadow-[0_18px_55px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70"
+          className="relative flex h-[calc(100vh-32px)] max-h-[820px] min-h-[620px] w-[58px] flex-col items-center justify-center overflow-hidden rounded-[30px] border border-white/80 bg-white/70 p-2 shadow-[0_18px_55px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70"
           onWheel={(event) => {
             if (allowedMenus.length <= 1) return;
             event.preventDefault();
             const direction = event.deltaY > 0 ? 1 : -1;
-            const visibleSlots = 11;
+            const visibleSlots = 14;
             const maxIndex = Math.max(0, allowedMenus.length - visibleSlots);
             setRailScrollIndex((current) =>
               Math.max(0, Math.min(maxIndex, current + direction))
@@ -586,6 +586,8 @@ export default function DashboardLayout({
 
       <div className="dashboard-surface dashboard-depth relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
+          onMouseEnter={openSidebar}
+          onMouseLeave={closeSidebar}
           className={`
             fixed inset-y-3 left-3
             z-50
