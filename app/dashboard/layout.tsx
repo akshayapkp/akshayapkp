@@ -518,7 +518,7 @@ export default function DashboardLayout({
             if (allowedMenus.length <= 1) return;
             event.preventDefault();
             const direction = event.deltaY > 0 ? 1 : -1;
-            const visibleSlots = 10;
+            const visibleSlots = 7;
             const maxIndex = Math.max(0, allowedMenus.length - visibleSlots);
             setRailScrollIndex((current) =>
               Math.max(0, Math.min(maxIndex, current + direction))
@@ -529,9 +529,12 @@ export default function DashboardLayout({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-14 rounded-b-[30px] bg-gradient-to-t from-white/70 to-transparent dark:from-slate-950/70" />
 
           <div
-            className="mt-2 flex flex-col items-center gap-2 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] will-change-transform"
-            style={{ transform: `translateY(-${railScrollIndex * 48}px)` }}
+            className="absolute left-2 right-2 top-10 bottom-[140px] overflow-hidden"
           >
+            <div
+              className="flex flex-col items-center gap-2 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] will-change-transform"
+              style={{ transform: `translateY(-${railScrollIndex * 48}px)` }}
+            >
             {allowedMenus.map((item, index) => {
               const IconComponent = item.icon;
               const gradients = [
@@ -568,7 +571,8 @@ export default function DashboardLayout({
                   </span>
                 </button>
               );
-            })}
+              })}
+            </div>
           </div>
 
           {settingsMenu && (
