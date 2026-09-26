@@ -182,6 +182,7 @@ export default function DashboardLayout({
   const [allowedMenus, setAllowedMenus] = useState<MenuItem[]>([]);
   const [sidebarPinned, setSidebarPinned] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [railScrollIndex, setRailScrollIndex] = useState(0);
 
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(false);
