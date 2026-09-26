@@ -501,11 +501,6 @@ export default function DashboardLayout({
         <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
       </div>
 
-      <div
-        className="fixed left-0 top-0 z-40 hidden h-screen w-3 md:block"
-        onMouseEnter={openSidebar}
-      />
-
       {/* Collapsed desktop navigation rail */}
       <div
         className={`fixed left-2 top-1/2 z-50 hidden -translate-y-1/2 md:flex md:flex-col md:items-center md:gap-2 transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${
@@ -541,7 +536,7 @@ export default function DashboardLayout({
                 type="button"
                 title={item.name}
                 aria-label={item.name}
-                onClick={() => setSidebarOpen(true)}
+                onClick={() => router.push(item.path)}
                 className={`group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/60 bg-white/90 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/90 ${
                   isActive(item.path) ? "ring-2 ring-blue-400/60 ring-offset-2 ring-offset-white dark:ring-offset-slate-950" : ""
                 }`}
@@ -643,7 +638,10 @@ export default function DashboardLayout({
               </div>
             </div>
 
-            <nav className="flex-1 space-y-5 overflow-y-auto pr-1">
+            <nav
+              className="flex-1 space-y-5 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              style={{ msOverflowStyle: "none" }}
+            >
               {sections.map((sectionName) => {
                 const sectionItems = allowedMenus.filter(
                   (item) => item.section === sectionName
