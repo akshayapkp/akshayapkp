@@ -516,7 +516,8 @@ export default function DashboardLayout({
             if (allowedMenus.length <= 1) return;
             event.preventDefault();
             const direction = event.deltaY > 0 ? 1 : -1;
-            const maxIndex = Math.max(0, allowedMenus.length - 1);
+            const visibleSlots = 11;
+            const maxIndex = Math.max(0, allowedMenus.length - visibleSlots);
             setRailScrollIndex((current) =>
               Math.max(0, Math.min(maxIndex, current + direction))
             );
