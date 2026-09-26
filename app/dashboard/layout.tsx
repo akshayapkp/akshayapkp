@@ -529,7 +529,7 @@ export default function DashboardLayout({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-14 rounded-b-[30px] bg-gradient-to-t from-white/70 to-transparent dark:from-slate-950/70" />
 
           <div
-            className="absolute left-2 right-2 top-10 bottom-[140px] overflow-hidden"
+            className={`absolute left-2 right-2 top-10 overflow-hidden ${settingsMenu ? "bottom-[140px]" : "bottom-[92px]"}`}
           >
             <div
               className="flex flex-col items-center gap-2 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] will-change-transform"
