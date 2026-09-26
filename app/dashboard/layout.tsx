@@ -577,7 +577,7 @@ export default function DashboardLayout({
               title="Settings"
               aria-label="Settings"
               onClick={() => router.push(settingsMenu.path)}
-              className={`group absolute bottom-[52px] z-30 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/70 bg-white/55 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/50 ${
+              className={`group absolute bottom-[96px] z-30 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/70 bg-white/55 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/50 ${
                 isActive(settingsMenu.path) ? "ring-2 ring-blue-400/70 ring-offset-2 ring-offset-white dark:ring-offset-slate-950" : ""
               }`}
             >
@@ -588,6 +588,21 @@ export default function DashboardLayout({
               </span>
             </button>
           )}
+
+          <div
+            className="group absolute bottom-[52px] z-30 flex h-9 w-9 items-center justify-center rounded-xl border border-white/70 bg-white/70 p-1 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-xl dark:border-white/10 dark:bg-slate-900/55"
+            title="Akshaya Pookiparamba"
+            aria-label="Akshaya Pookiparamba"
+          >
+            <img
+              src="/akshaya-logo.png"
+              alt="Akshaya Pookiparamba"
+              className="h-full w-full object-contain"
+            />
+            <span className="pointer-events-none absolute left-12 whitespace-nowrap rounded-lg bg-slate-950 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+              Akshaya Pookiparamba
+            </span>
+          </div>
 
           <button
             type="button"
@@ -786,7 +801,7 @@ export default function DashboardLayout({
           className={`
             dashboard-content relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent premium-enter
             p-3 pt-16 sm:p-4 sm:pt-16 lg:p-5 xl:p-6 transition-[padding] duration-300
-            md:pl-5
+            ${sidebarOpen ? "md:pl-5" : "md:pl-[78px]"}
             ml-0
           `}
         >
