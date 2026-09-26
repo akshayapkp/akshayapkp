@@ -804,7 +804,7 @@ export default function DashboardLayout({
             dashboard-content relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent premium-enter
             p-3 pt-16 sm:p-4 sm:pt-16 lg:p-5 xl:p-6 transition-[padding] duration-300
             md:pl-5
-            ${sidebarOpen ? "md:ml-0" : "md:ml-[78px]"}
+            ${sidebarOpen ? "md:ml-0" : "md:ml-[54px]"}
           `}
         >
           {children}
