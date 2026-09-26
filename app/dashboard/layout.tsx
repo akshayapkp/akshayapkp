@@ -589,20 +589,18 @@ export default function DashboardLayout({
             </button>
           )}
 
-          <div
-            className="group absolute bottom-[52px] z-30 flex h-9 w-9 items-center justify-center rounded-xl border border-white/70 bg-white/70 p-1 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-xl dark:border-white/10 dark:bg-slate-900/55"
-            title="Akshaya Pookiparamba"
-            aria-label="Akshaya Pookiparamba"
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Log out"
+            aria-label="Log out"
+            className="group absolute bottom-[52px] z-30 flex h-9 w-9 items-center justify-center rounded-xl border border-white/70 bg-white/70 text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-rose-500 hover:text-white hover:shadow-xl dark:border-white/10 dark:bg-slate-900/55 dark:text-slate-200 dark:hover:bg-rose-500"
           >
-            <img
-              src="/akshaya-logo.png"
-              alt="Akshaya Pookiparamba"
-              className="h-full w-full object-contain"
-            />
+            <LogOut size={17} strokeWidth={2.2} />
             <span className="pointer-events-none absolute left-12 whitespace-nowrap rounded-lg bg-slate-950 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
-              Akshaya Pookiparamba
+              Log out
             </span>
-          </div>
+          </button>
 
           <button
             type="button"
