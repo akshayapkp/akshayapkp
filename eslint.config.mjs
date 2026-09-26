@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Resume Builder is a standalone legacy static page served from /public.
+    "public/resume-builder/**",
   ]),
 ]);
 
