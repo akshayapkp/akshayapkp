@@ -512,23 +512,23 @@ export default function DashboardLayout({
         aria-label="Collapsed navigation"
       >
         <div
-          className="relative flex h-[calc(100vh-32px)] max-h-[820px] min-h-[620px] w-[58px] flex-col items-center justify-center overflow-hidden rounded-[30px] border border-white/80 bg-white/70 p-2 shadow-[0_18px_55px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/70"
+          className="relative flex h-[min(calc(100vh-120px),720px)] min-h-[500px] w-[58px] flex-col items-center justify-start overflow-hidden rounded-[30px] border border-white/50 bg-white/35 p-2 shadow-[0_18px_55px_rgba(15,23,42,0.14)] backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-slate-950/35"
           onWheel={(event) => {
             if (allowedMenus.length <= 1) return;
             event.preventDefault();
             const direction = event.deltaY > 0 ? 1 : -1;
-            const visibleSlots = 14;
+            const visibleSlots = 10;
             const maxIndex = Math.max(0, allowedMenus.length - visibleSlots);
             setRailScrollIndex((current) =>
               Math.max(0, Math.min(maxIndex, current + direction))
             );
           }}
         >
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-8 rounded-t-[30px] bg-gradient-to-b from-white/95 to-transparent dark:from-slate-950/95" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-12 rounded-b-[30px] bg-gradient-to-t from-white/95 to-transparent dark:from-slate-950/95" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-8 rounded-t-[30px] bg-gradient-to-b from-white/70 to-transparent dark:from-slate-950/70" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-14 rounded-b-[30px] bg-gradient-to-t from-white/70 to-transparent dark:from-slate-950/70" />
 
           <div
-            className="flex flex-col items-center gap-2 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] will-change-transform"
+            className="mt-2 flex flex-col items-center gap-2 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] will-change-transform"
             style={{ transform: `translateY(-${railScrollIndex * 48}px)` }}
           >
             {allowedMenus.map((item, index) => {
@@ -554,7 +554,7 @@ export default function DashboardLayout({
                   title={item.name}
                   aria-label={item.name}
                   onClick={() => router.push(item.path)}
-                  className={`group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/60 bg-white/90 shadow-sm transition-all duration-300 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/90 ${
+                  className={`group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/55 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/50 ${
                     isActive(item.path)
                       ? "ring-2 ring-blue-400/70 ring-offset-2 ring-offset-white dark:ring-offset-slate-950"
                       : ""
