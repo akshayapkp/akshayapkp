@@ -435,6 +435,7 @@ export default function DashboardLayout({
   };
 
   const isActive = (path: string) => pathname === path;
+  const settingsMenu = allowedMenus.find((item) => item.permissionKey === "Settings");
 
   const displayRole =
     currentUser.role.charAt(0).toUpperCase() +
@@ -570,6 +571,24 @@ export default function DashboardLayout({
             })}
           </div>
 
+          {settingsMenu && (
+            <button
+              type="button"
+              title="Settings"
+              aria-label="Settings"
+              onClick={() => router.push(settingsMenu.path)}
+              className={`group absolute bottom-[52px] z-30 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/70 bg-white/55 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/50 ${
+                isActive(settingsMenu.path) ? "ring-2 ring-blue-400/70 ring-offset-2 ring-offset-white dark:ring-offset-slate-950" : ""
+              }`}
+            >
+              <span className="absolute inset-[3px] rounded-[14px] bg-gradient-to-br from-slate-600 to-slate-400 opacity-95" />
+              <Settings2 size={17} className="relative z-10 text-white drop-shadow-sm" strokeWidth={2.2} />
+              <span className="pointer-events-none absolute left-12 whitespace-nowrap rounded-lg bg-slate-950 px-2.5 py-1.5 text-[11px] font-semibold text-white opacity-0 shadow-xl transition-opacity duration-200 group-hover:opacity-100">
+                Settings
+              </span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={openSidebar}
@@ -657,7 +676,9 @@ export default function DashboardLayout({
             >
               {sections.map((sectionName) => {
                 const sectionItems = allowedMenus.filter(
-                  (item) => item.section === sectionName
+                  (item) =>
+                    item.section === sectionName &&
+                    item.permissionKey !== "Settings"
                 );
 
                 if (sectionItems.length === 0) return null;
@@ -696,6 +717,24 @@ export default function DashboardLayout({
               })}
             </nav>
           </div>
+
+          {settingsMenu && (
+            <button
+              type="button"
+              onClick={() => {
+                router.push(settingsMenu.path);
+                setSidebarOpen(false);
+              }}
+              className={`mb-2 flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                isActive(settingsMenu.path)
+                  ? "bg-gradient-to-r from-slate-700 to-slate-500 text-white shadow-lg"
+                  : "text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 md:dark:text-slate-300 md:dark:hover:bg-white/[0.07] md:dark:hover:text-white"
+              }`}
+            >
+              <Settings2 size={18} />
+              <span>Settings</span>
+            </button>
+          )}
 
           <div className="flex shrink-0 items-center justify-between border-t border-white/10 pt-4 mt-3">
             <div className="flex items-center gap-3">
