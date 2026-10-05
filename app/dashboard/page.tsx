@@ -14,6 +14,7 @@ import AadhaarStatusPage from "./tools/aadhaar-status/page";
 import AadhaarNameChangePage from "./tools/aadhaar-name-change/page";
 import PanStatusPage from "./tools/pan-status/page";
 import TranslatorTool from "./tools/TranslatorTool";
+import IncomeAffidavitTool from "./tools/IncomeAffidavitTool";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -1181,6 +1182,7 @@ export default function DashboardPage() {
   const [showImageToTextModal, setShowImageToTextModal] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
+  const [showIncomeAffidavitModal, setShowIncomeAffidavitModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
   const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "aadhaar-name" | "pan" | null>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
@@ -1296,6 +1298,13 @@ export default function DashboardPage() {
   bgColor: "from-cyan-500 to-blue-600",
   isInternal: true,
 },
+    {
+      id: "income-affidavit",
+      name: "Income Affidavit",
+      url: "income-affidavit-modal",
+      bgColor: "from-violet-600 to-fuchsia-600",
+      isInternal: true,
+    },
   ]);
 
   const [announcements, setAnnouncements] = useState<any[]>([]);
@@ -1943,6 +1952,7 @@ setServiceDirectory(filteredWithUrls);
             <CalculatorTool onClose={() => setShowCalculatorModal(false)} />
           </div>
         )}
+        {showIncomeAffidavitModal && <IncomeAffidavitTool onClose={() => setShowIncomeAffidavitModal(false)} />}
         {showResumeBuilderModal && (
   <div
     className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[6px] sm:p-5"
@@ -2319,6 +2329,7 @@ setServiceDirectory(filteredWithUrls);
               const isImageToTextTool = tool.name.toLowerCase().includes("image") || tool.url === "image-to-text-modal";
               const isCalculatorTool = tool.name.toLowerCase().includes("calculator") || tool.url === "calculator-modal";
               const isResumeBuilderTool = tool.url === "resume-builder-modal";
+              const isIncomeAffidavitTool = tool.url === "income-affidavit-modal";
               const isStatusCenter = tool.url === "status-center";
               return (
                 <div
@@ -2342,7 +2353,8 @@ setServiceDirectory(filteredWithUrls);
                       isConverterTool ||
                       isImageToTextTool ||
                       isCalculatorTool ||
-                      isResumeBuilderTool
+                      isResumeBuilderTool ||
+                      isIncomeAffidavitTool
                         ? undefined
                         : tool.url
                     }
@@ -2384,6 +2396,9 @@ setServiceDirectory(filteredWithUrls);
                       } else if (isResumeBuilderTool) {
                         e.preventDefault();
                         setShowResumeBuilderModal(true);
+                      } else if (isIncomeAffidavitTool) {
+                        e.preventDefault();
+                        setShowIncomeAffidavitModal(true);
                       } else if (isStatusCenter) {
                         e.preventDefault();
                         setStatusCenterView("center");
@@ -2419,7 +2434,8 @@ setServiceDirectory(filteredWithUrls);
     isConverterTool ||
     isImageToTextTool ||
     isCalculatorTool ||
-    isResumeBuilderTool
+    isResumeBuilderTool ||
+    isIncomeAffidavitTool
   )
     ? "Internal Tool"
     : "External Link"}
