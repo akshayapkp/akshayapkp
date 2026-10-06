@@ -16,6 +16,7 @@ import PanStatusPage from "./tools/pan-status/page";
 import TranslatorTool from "./tools/TranslatorTool";
 import IncomeAffidavitTool from "./tools/IncomeAffidavitTool";
 import AadhaarGazetteTool from "./tools/AadhaarGazetteTool";
+import ServiceDocumentGeneratorTool from "./tools/ServiceDocumentGeneratorTool";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -1185,6 +1186,7 @@ export default function DashboardPage() {
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
   const [showIncomeAffidavitModal, setShowIncomeAffidavitModal] = useState(false);
   const [showAadhaarGazetteModal, setShowAadhaarGazetteModal] = useState(false);
+  const [showServiceDocumentGeneratorModal, setShowServiceDocumentGeneratorModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
   const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "aadhaar-name" | "pan" | null>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
@@ -1312,6 +1314,13 @@ export default function DashboardPage() {
       name: "Aadhaar Gazette",
       url: "aadhaar-gazette-modal",
       bgColor: "from-orange-500 to-red-600",
+      isInternal: true,
+    },
+    {
+      id: "service-document-generator",
+      name: "Service Document Generator",
+      url: "service-document-generator-modal",
+      bgColor: "from-cyan-500 to-blue-700",
       isInternal: true,
     },
   ]);
@@ -2000,6 +2009,7 @@ setServiceDirectory(filteredWithUrls);
         )}
         {showIncomeAffidavitModal && <IncomeAffidavitTool onClose={() => setShowIncomeAffidavitModal(false)} />}
         {showAadhaarGazetteModal && <AadhaarGazetteTool onClose={() => setShowAadhaarGazetteModal(false)} />}
+        {showServiceDocumentGeneratorModal && <ServiceDocumentGeneratorTool onClose={() => setShowServiceDocumentGeneratorModal(false)} />}
         {showResumeBuilderModal && (
   <div
     className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[6px] sm:p-5"
@@ -2378,6 +2388,7 @@ setServiceDirectory(filteredWithUrls);
               const isResumeBuilderTool = tool.url === "resume-builder-modal";
               const isIncomeAffidavitTool = tool.url === "income-affidavit-modal";
               const isAadhaarGazetteTool = tool.url === "aadhaar-gazette-modal";
+              const isServiceDocumentGeneratorTool = tool.url === "service-document-generator-modal";
               const isStatusCenter = tool.url === "status-center";
               return (
                 <div
@@ -2403,7 +2414,8 @@ setServiceDirectory(filteredWithUrls);
                       isCalculatorTool ||
                       isResumeBuilderTool ||
                       isIncomeAffidavitTool ||
-                      isAadhaarGazetteTool
+                      isAadhaarGazetteTool ||
+                      isServiceDocumentGeneratorTool
                         ? undefined
                         : tool.url
                     }
@@ -2451,6 +2463,9 @@ setServiceDirectory(filteredWithUrls);
                       } else if (isAadhaarGazetteTool) {
                         e.preventDefault();
                         setShowAadhaarGazetteModal(true);
+                      } else if (isServiceDocumentGeneratorTool) {
+                        e.preventDefault();
+                        setShowServiceDocumentGeneratorModal(true);
                       } else if (isStatusCenter) {
                         e.preventDefault();
                         setStatusCenterView("center");
@@ -2488,7 +2503,8 @@ setServiceDirectory(filteredWithUrls);
     isCalculatorTool ||
     isResumeBuilderTool ||
     isIncomeAffidavitTool ||
-    isAadhaarGazetteTool
+    isAadhaarGazetteTool ||
+    isServiceDocumentGeneratorTool
   )
     ? "Internal Tool"
     : "External Link"}
