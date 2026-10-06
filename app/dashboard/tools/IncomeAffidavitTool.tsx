@@ -45,6 +45,17 @@ export default function IncomeAffidavitTool({onClose}:Props){
  const [activeList,setActiveList]=useState<string|null>(null);
  const [sidebarInset,setSidebarInset]=useState(72);
  const pages=useRef<(HTMLDivElement|null)[]>([]);
+ useEffect(()=>{
+  if(!activeList)return;
+  const closeOnOutside=(e:PointerEvent)=>{
+   const target=e.target as Node|null;
+   if(!target)return;
+   const field=(target as Element).closest?.(".ia-list-field");
+   if(!field)setActiveList(null);
+  };
+  document.addEventListener("pointerdown",closeOnOutside,true);
+  return()=>document.removeEventListener("pointerdown",closeOnOutside,true);
+ },[activeList]);
  useEffect(()=>{try{
   const f=localStorage.getItem("income_affidavit_form");if(f)setForm({...initial,...JSON.parse(f)});
   setAuto(localStorage.getItem("aff_auto_convert")!=="0");
