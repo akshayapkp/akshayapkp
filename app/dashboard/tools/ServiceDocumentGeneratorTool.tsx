@@ -19,6 +19,7 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
   const [serviceOpen, setServiceOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
   const allDocs = useMemo(() => { const seen = new Set<string>(); return SERVICE_CATALOG.flatMap(s => s.docs).filter(d => { const k=d.en+"|"+d.ml; if(seen.has(k)) return false; seen.add(k); return true; }); }, []);
   const services = useMemo(() => { const q=query.trim().toLowerCase(); return (q ? SERVICE_CATALOG.filter(s => (s.name+" "+s.ml).toLowerCase().includes(q)) : SERVICE_CATALOG).slice(0,100); }, [query]);
   const docs = useMemo(() => { const q=docQuery.trim().toLowerCase(); return (q ? allDocs.filter(d => (d.en+" "+d.ml).toLowerCase().includes(q)) : allDocs).slice(0,100); }, [allDocs,docQuery]);
@@ -54,9 +55,10 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
   }
   function reset(){setDrafts([]);setActiveId(null);setQuery("");setDocQuery("");setNote("");setToast("");}
   async function share(){
-    if(!previewRef.current) return;
+    if(!shareCardRef.current || !drafts.some(d=>d.service)) return;
     try {
-      const blob=await toPng(previewRef.current,{pixelRatio:2,backgroundColor:"#ffffff",cacheBust:true}).then(dataUrl=>fetch(dataUrl).then(r=>r.blob()));
+      const blob=await toPng(shareCardRef.current,{pixelRatio:2,backgroundColor:"#eef5fc",cacheBust:true,width:900})
+        .then(dataUrl=>fetch(dataUrl).then(r=>r.blob()));
       if(!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("image clipboard unavailable");
       await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
       toastMsg("Image copied to clipboard");
@@ -75,6 +77,61 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
   }
   return <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-900/30 p-2 backdrop-blur-sm"><div className="flex h-[96vh] w-full max-w-[1220px] flex-col overflow-hidden rounded-[26px] border border-slate-200 bg-[#f3f8fd] text-slate-800 shadow-2xl">
     <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-sm"><div className="flex items-center gap-3"><div className="h-10 w-10 overflow-hidden rounded-xl border border-cyan-100 bg-white shadow-sm"><img src="/akshaya-logo.png" alt="Akshaya" className="h-full w-full object-contain p-1"/></div><div><h2 className="text-base font-extrabold">Service Document Generator</h2><p className="text-[10px] text-slate-500">Build a required-documents list for your customers</p></div></div><div className="flex items-center gap-2"><button onClick={reset} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600"><RotateCcw size={14} className="mr-1 inline"/>Reset</button><button onClick={printA4} disabled={!drafts.some(d=>d.service&&d.documents.length)} className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-40"><Printer size={14} className="mr-1 inline"/>Print A4</button><button onClick={share} disabled={!drafts.some(d=>d.service)} className="rounded-xl bg-violet-500 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-40"><Share2 size={14} className="mr-1 inline"/>Share</button>{onClose&&<button onClick={onClose} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600"><X size={17}/></button>}</div></header>
+<div
+      ref={shareCardRef}
+      aria-hidden="true"
+      style={{
+        position:"fixed",left:"-10000px",top:"0",width:"900px",padding:"0 34px 28px",
+        background:"#eef5fc",fontFamily:"Arial, 'Noto Sans Malayalam', 'Nirmala UI', sans-serif",
+        color:"#10295b",boxSizing:"border-box",pointerEvents:"none"
+      }}
+    >
+      <div style={{
+        margin:"0 -34px 34px",padding:"24px 34px 28px",minHeight:"210px",
+        background:"linear-gradient(110deg,#1149a8,#1685e2)",color:"#fff",
+        borderRadius:"0 0 42px 42px",display:"grid",gridTemplateColumns:"150px 1fr",
+        alignItems:"center",gap:"18px",boxSizing:"border-box"
+      }}>
+        <div style={{width:"116px",height:"116px",borderRadius:"24px",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+          <img src="/akshaya-logo.png" alt="" style={{width:"100%",height:"100%",objectFit:"contain"}} />
+        </div>
+        <div style={{textAlign:"center",paddingRight:"100px"}}>
+          <div style={{fontSize:"38px",fontWeight:800,lineHeight:1.05}}>Akshaya e Centre</div>
+          <div style={{fontSize:"27px",fontWeight:800,marginTop:"12px"}}>POOKIPARAMB</div>
+          <div style={{fontSize:"20px",fontWeight:700,marginTop:"12px"}}>◯ ${CENTER.whatsapp} &nbsp; | &nbsp; ☎ ${CENTER.phone}</div>
+          <div style={{fontSize:"18px",marginTop:"10px"}}>${CENTER.address}</div>
+        </div>
+      </div>
+      ${drafts.filter(d=>d.service).map((d,di)=>d.service ? (
+        <div key={d.id} style={{marginBottom:"28px",background:"#fff",borderRadius:"26px",padding:"24px 28px 26px",boxShadow:"0 1px 0 rgba(15,45,90,.05)"}}>
+          <div style={{background:"linear-gradient(110deg,#dceeff,#d0e8fc)",borderRadius:"20px",padding:"22px 26px",display:"flex",alignItems:"center",gap:"24px"}}>
+            <div style={{width:"88px",height:"88px",borderRadius:"22px",background:"#c7e3fb",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"48px",color:"#1592e7",fontWeight:700}}>▤</div>
+            <div>
+              <div style={{fontSize:"18px",fontWeight:800,letterSpacing:"8px",color:"#4b73ad"}}>SERVICE</div>
+              <div style={{fontSize:"28px",fontWeight:900,marginTop:"8px",lineHeight:1.15}}>${ds(d.service)}</div>
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:"12px",margin:"26px 6px 18px",fontSize:"23px",fontWeight:900,letterSpacing:"6px",color:"#12366e"}}>
+            <span style={{fontSize:"28px",letterSpacing:0}}>▤</span><span>DOCUMENTS REQUIRED</span>
+          </div>
+          <div>
+            ${d.documents.map((doc,j)=>(
+              <div key={j} style={{display:"grid",gridTemplateColumns:"72px 82px 1fr 52px",alignItems:"center",minHeight:"92px",borderLeft:"6px solid #1695e8",borderRadius:"8px 0 0 8px",marginBottom:"16px",padding:"0 8px 0 18px",boxSizing:"border-box"}}>
+                <div style={{width:"58px",height:"58px",borderRadius:"50%",background:"#1594e6",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"25px",fontWeight:800}}>${j+1}</div>
+                <div style={{width:"62px",height:"62px",borderRadius:"16px",background:"#dcecfb",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"30px",color:"#168fe1"}}>▣</div>
+                <div style={{fontSize:"24px",fontWeight:900,lineHeight:1.15,paddingRight:"16px"}}>${dd(doc)}</div>
+                <div style={{width:"42px",height:"42px",border:"4px solid #168fe1",borderRadius:"10px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"31px",fontWeight:900,color:"#168fe1"}}>✓</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null)}
+      ${note.trim() && <div style={{background:"#fff8df",border:"1px solid #f2d48a",borderRadius:"14px",padding:"12px 16px",fontSize:"15px",marginBottom:"18px"}}><b>Note:</b> ${note}</div>}
+      <div style={{background:"#d9ebfc",borderRadius:"22px",padding:"20px 28px",display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:"17px"}}>
+        <div><div style={{fontSize:"16px",color:"#355887"}}>Generated on</div><div style={{fontSize:"24px",fontWeight:900}}>${new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})} • ${new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true})}</div></div>
+        <div style={{borderLeft:"2px solid #b4d1ed",paddingLeft:"28px",fontSize:"17px",fontWeight:900,letterSpacing:"2px",lineHeight:1.4}}>KEEP YOUR DOCUMENTS<br/>READY FOR FASTER SERVICE</div>
+      </div>
+    </div>
     <main className="min-h-0 flex-1 overflow-auto p-3 sm:p-5"><div className="grid gap-4 lg:grid-cols-2">
       <section ref={previewRef} className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3"><h3 className="text-xs font-extrabold uppercase tracking-[0.13em] text-sky-600">Configure Document List</h3><div className="rounded-full border border-slate-200 bg-slate-50 p-1"><button onClick={()=>setLanguage("en")} className={"rounded-full px-3 py-1.5 text-[11px] font-bold "+(language==="en"?"bg-sky-500 text-white":"text-slate-500")}>English</button><button onClick={()=>setLanguage("ml")} className={"rounded-full px-3 py-1.5 text-[11px] font-bold "+(language==="ml"?"bg-sky-500 text-white":"text-slate-500")}>മലയാളം</button></div></div>
         <label className="mb-1.5 block text-xs font-extrabold text-slate-700">Service <span className="font-normal text-slate-400">(search and select)</span></label><div className="relative" data-service-picker><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-sky-500"/><input value={query} onFocus={()=>setServiceOpen(true)} onClick={()=>setServiceOpen(true)} onChange={e=>{setQuery(e.target.value);setServiceOpen(true)}} placeholder="Search services..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-9 text-sm outline-none focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"/><ChevronDown className="pointer-events-none absolute right-3 top-3.5 h-4 w-4 text-slate-400"/>{serviceOpen&&<div className="absolute left-0 right-0 top-[calc(100%+5px)] z-50 max-h-72 overflow-auto rounded-xl border border-slate-200 bg-white p-1 shadow-2xl">{services.map(s=><button key={s.name} onClick={()=>{chooseService(s);setServiceOpen(false)}} className="block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-sky-50">{ds(s)}</button>)}</div>}</div>
