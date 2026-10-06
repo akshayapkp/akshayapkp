@@ -139,7 +139,7 @@ export default function AadhaarGazetteTool({ onClose }: { onClose?: () => void }
 
   const printPdf = async () => {
     const bytes = await makePdf();
-    const blob = new Blob([bytes], { type: "application/pdf" });
+    const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const w = window.open(url, "_blank");
     if (w) setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 1200);
