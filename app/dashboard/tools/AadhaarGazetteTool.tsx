@@ -121,21 +121,6 @@ export default function AadhaarGazetteTool({ onClose }: { onClose?: () => void }
       }
     }
 
-    // Keep the original PDF geometry/design and remove only the old akshayaonline.in URL widget.
-    const page = pdf.getPage(0);
-    const annots = page.node.Annots();
-    if (annots) {
-      const kept = annots.asArray().filter((ref) => {
-        const annot = pdf.context.lookup(ref);
-        const fieldName = annot?.get?.("T")?.decodeText?.();
-        const action = annot?.get?.("A");
-        const uri = action?.get?.("URI")?.decodeText?.();
-        return fieldName !== "in" && uri !== "akshayaonline.in";
-      });
-      const arr = pdf.context.obj(kept);
-      page.node.set("Annots", arr);
-    }
-
     form.updateFieldAppearances();
     return await pdf.save();
   };
