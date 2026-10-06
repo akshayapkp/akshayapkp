@@ -44,10 +44,19 @@ export default function IncomeAffidavitTool({onClose}:Props){
  useEffect(()=>{try{localStorage.setItem("income_affidavit_form",JSON.stringify(form))}catch{}},[form]);
  useEffect(()=>{const t=setTimeout(()=>setToast(""),2600);return()=>clearTimeout(t)},[toast]);
  useEffect(()=>{
-  const html=document.documentElement,body=document.body;
-  const prevHtml=html.style.overflow,prevBody=body.style.overflow;
-  html.style.overflow="hidden"; body.style.overflow="hidden";
-  return()=>{html.style.overflow=prevHtml;body.style.overflow=prevBody};
+  const html=document.documentElement, body=document.body;
+  const dashboard=document.querySelector(".dashboard-content") as HTMLElement | null;
+  const prevHtml=html.style.overflow;
+  const prevBody=body.style.overflow;
+  const prevDashboard=dashboard?.style.overflowY || "";
+  html.style.overflow="hidden";
+  body.style.overflow="hidden";
+  if(dashboard) dashboard.style.overflowY="hidden";
+  return()=>{
+    html.style.overflow=prevHtml;
+    body.style.overflow=prevBody;
+    if(dashboard) dashboard.style.overflowY=prevDashboard;
+  };
  },[]);
  const set=(k:string,v:string)=>{setForm(p=>({...p,[k]:v}));setDirty(true)};
  const convert=async(k:string)=>{if(!auto)return;const v=form[k]?.trim();if(!v||!/^[A-Za-z0-9 .,/'-]+$/.test(v))return;try{
