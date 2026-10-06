@@ -19,7 +19,6 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
   const [serviceOpen, setServiceOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
-  const sharePreviewRef = useRef<HTMLDivElement>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
   const allDocs = useMemo(() => { const seen = new Set<string>(); return SERVICE_CATALOG.flatMap(s => s.docs).filter(d => { const k=d.en+"|"+d.ml; if(seen.has(k)) return false; seen.add(k); return true; }); }, []);
   const services = useMemo(() => { const q=query.trim().toLowerCase(); return (q ? SERVICE_CATALOG.filter(s => (s.name+" "+s.ml).toLowerCase().includes(q)) : SERVICE_CATALOG).slice(0,100); }, [query]);
@@ -76,54 +75,6 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
     const html="<!doctype html><html><head><meta charset=\"utf-8\"><title>Document List</title><style>"+css+"</style></head><body><div class=\"page\"><div class=\"head\"><img class=\"logo\" src=\"/akshaya-logo.png\"><div class=\"brand\"><h1>"+CENTER.name+"</h1><h2>"+CENTER.place+"</h2><p>"+CENTER.address+"</p><div class=\"contact\">◉ "+CENTER.whatsapp+" &nbsp; | &nbsp; ☎ "+CENTER.phone+"</div></div><div class=\"mission\"><div><b>KERALA</b>STATE<br>MISSION</div></div></div><div class=\"title\">DOCUMENTS REQUIRED</div><table><thead><tr><th class=\"service\">Service</th><th class=\"num\">#</th><th class=\"doc\">Document</th><th class=\"check\">✓</th></tr></thead><tbody>"+rows+"</tbody></table>"+noteHtml+"<div class=\"foot\">"+date+" · "+time+"</div></div></body></html>";
     const w=window.open("","_blank");if(!w){toastMsg("Allow pop-ups to print");return;}w.document.open();w.document.write(html);w.document.close();w.focus();window.setTimeout(()=>w.print(),450);
   }
-  const shareList=drafts.filter(d=>d.service&&d.documents.length);
-  const shareNow=new Date();
-  const shareDate=shareNow.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
-  const shareTime=shareNow.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true});
-  return <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-900/30 p-2 backdrop-blur-sm"><div className="flex h-[96vh] w-full max-w-[1220px] flex-col overflow-hidden rounded-[26px] border border-slate-200 bg-[#f3f8fd] text-slate-800 shadow-2xl">
-    <div ref={sharePreviewRef} aria-hidden="true" className="pointer-events-none absolute left-[-10000px] top-0 w-[900px] overflow-hidden bg-[#eef5fc] text-[#142d5d]">
-      <div style={{background:"linear-gradient(135deg,#0f4da8,#1689e8)",borderRadius:"0 0 42px 42px",padding:"30px 34px 32px",color:"#fff"}}>
-        <div className="flex items-center gap-6">
-          <div className="h-[112px] w-[112px] shrink-0 overflow-hidden rounded-[28px] bg-white p-2"><img src="/akshaya-logo.png" alt="" className="h-full w-full object-contain"/></div>
-          <div className="min-w-0 flex-1 text-center">
-            <div className="text-[42px] font-extrabold leading-tight">Akshaya e Centre</div>
-            <div className="mt-2 text-[28px] font-extrabold">POOKIPARAMB</div>
-            <div className="mt-4 text-[19px] font-bold">◉ 9037296582&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;☎ 9447906582</div>
-            <div className="mt-3 text-[18px]">POOKIPARAMB, MALAPPURAM</div>
-          </div>
-          <div className="w-[112px] shrink-0"></div>
-        </div>
-      </div>
-      <div className="px-9 py-9">
-        {shareList.map((d,di)=><div key={d.id} className="mb-8 overflow-hidden rounded-[28px] bg-white p-7 shadow-sm">
-          <div className="flex items-center gap-7 rounded-[24px] bg-[#dceefe] p-7">
-            <div className="flex h-[124px] w-[124px] shrink-0 items-center justify-center rounded-[28px] bg-[#c3e0fb] text-[#168fe2]"><FileText size={70} strokeWidth={2.2}/></div>
-            <div className="min-w-0">
-              <div className="text-[22px] font-extrabold tracking-[0.28em] text-[#4c73ae]">SERVICE</div>
-              <div className="mt-3 text-[31px] font-extrabold leading-tight text-[#102652]">{ds(d.service!)}</div>
-            </div>
-          </div>
-          <div className="mt-7 flex items-center gap-4 text-[25px] font-extrabold tracking-[0.25em] text-[#173a78]"><FileText size={34} fill="#173a78" strokeWidth={1.5}/>DOCUMENTS REQUIRED</div>
-          <div className="mt-4">
-            {d.documents.map((doc,j)=><div key={j} className="flex items-center gap-5 border-l-[6px] border-[#168fe2] py-5 pl-6">
-              <div className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full bg-[#168fe2] text-[26px] font-extrabold text-white">{j+1}</div>
-              <div className="flex h-[62px] w-[74px] shrink-0 items-center justify-center rounded-[16px] bg-[#dceefe] text-[#168fe2]"><FileText size={36}/></div>
-              <div className="min-w-0 flex-1 text-[24px] font-extrabold text-[#182b56]">{dd(doc)}</div>
-              <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[9px] border-[4px] border-[#168fe2] text-[#168fe2]"><Check size={30} strokeWidth={3.5}/></div>
-            </div>)}
-          </div>
-        </div>)}
-        <div className="flex items-center justify-between rounded-[28px] bg-[#dceefe] px-8 py-6">
-          <div className="flex items-center gap-5">
-            <div className="text-[#173f83]"><span className="text-[42px]">▦</span></div>
-            <div><div className="text-[18px] text-[#31588d]">Generated on</div><div className="text-[24px] font-extrabold text-[#173f83]">{shareDate} • {shareTime}</div></div>
-          </div>
-          <div className="h-16 w-px bg-[#a9c9eb]"></div>
-          <div className="text-right text-[17px] font-extrabold leading-relaxed tracking-[0.08em] text-[#184b96]">KEEP YOUR DOCUMENTS<br/>READY FOR FASTER SERVICE</div>
-        </div>
-      </div>
-    </div>
-    <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-sm"><div className="flex items-center gap-3"><div className="h-10 w-10 overflow-hidden rounded-xl border border-cyan-100 bg-white shadow-sm"><img src="/akshaya-logo.png" alt="Akshaya" className="h-full w-full object-contain p-1"/></div><div><h2 className="text-base font-extrabold">Service Document Generator</h2><p className="text-[10px] text-slate-500">Build a required-documents list for your customers</p></div></div><div className="flex items-center gap-2"><button onClick={reset} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600"><RotateCcw size={14} className="mr-1 inline"/>Reset</button><button onClick={printA4} disabled={!drafts.some(d=>d.service&&d.documents.length)} className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-40"><Printer size={14} className="mr-1 inline"/>Print A4</button><button onClick={share} disabled={!drafts.some(d=>d.service)} className="rounded-xl bg-violet-500 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-40"><Share2 size={14} className="mr-1 inline"/>Share</button>{onClose&&<button onClick={onClose} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600"><X size={17}/></button>}</div></header>
 <div
       ref={shareCardRef}
       aria-hidden="true"
