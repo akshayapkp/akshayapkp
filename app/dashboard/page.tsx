@@ -1466,11 +1466,48 @@ setServiceDirectory(filteredWithUrls);
             const name = String(bill?.customerName ?? "").trim().toLowerCase();
             const mobile = String(bill?.mobileNumber ?? "").replace(/\D/g, "");
             const owed = Number(bill?.owedAmount ?? 0);
-            return (
+            const staffValues = [
+              bill?.staffName,
+              bill?.staff,
+              bill?.staffUsername,
+              bill?.username,
+              bill?.createdBy,
+              bill?.employeeName,
+            ]
+              .map((value) =>
+                typeof value === "object"
+                  ? [
+                      value?.username,
+                      value?.name,
+                      value?.fullName,
+                      value?.displayName,
+                      value?.staffName,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                  : String(value ?? "")
+              )
+              .join(" ")
+              .trim()
+              .toLowerCase();
+
+            // Legacy demo credit records that were used while testing the
+            // Sahla staff dashboard. These are removed once from both local
+            // and shared storage; newly created real credits are untouched.
+            const legacyDemo =
               name === "irfan" &&
               mobile === "8589868773" &&
-              [50, 1700, 167].includes(owed)
-            );
+              [50, 1700, 167].includes(owed);
+
+            const screenshotDemo =
+              name === "irfan" &&
+              owed === 2150 &&
+              staffValues.includes("sahla") &&
+              (mobile === "8589868773" ||
+                mobile === "8589888773" ||
+                !mobile);
+
+            return legacyDemo || screenshotDemo;
           };
 
           if (Array.isArray(savedCreditBills)) {
