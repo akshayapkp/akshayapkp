@@ -44,6 +44,7 @@ export default function AadhaarGazetteTool({ onClose }: { onClose?: () => void }
     let cleanup = () => {};
 
     (async () => {
+      // @ts-expect-error pdfjs-dist may not ship declarations for this deep import in the current package version.
       const pdfjs = await import("pdfjs-dist/build/pdf.mjs");
       const bytes = await fetch(PDF_URL).then((r) => r.arrayBuffer());
       const pdf = await pdfjs.getDocument({ data: bytes, disableWorker: true }).promise;
