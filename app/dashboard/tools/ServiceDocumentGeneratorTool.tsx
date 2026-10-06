@@ -19,7 +19,7 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
   const [serviceOpen, setServiceOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
-  const shareCardRef = useRef<HTMLDivElement>(null);
+  const sharePreviewRef = useRef<HTMLDivElement>(null);
   const allDocs = useMemo(() => { const seen = new Set<string>(); return SERVICE_CATALOG.flatMap(s => s.docs).filter(d => { const k=d.en+"|"+d.ml; if(seen.has(k)) return false; seen.add(k); return true; }); }, []);
   const services = useMemo(() => { const q=query.trim().toLowerCase(); return (q ? SERVICE_CATALOG.filter(s => (s.name+" "+s.ml).toLowerCase().includes(q)) : SERVICE_CATALOG).slice(0,100); }, [query]);
   const docs = useMemo(() => { const q=docQuery.trim().toLowerCase(); return (q ? allDocs.filter(d => (d.en+" "+d.ml).toLowerCase().includes(q)) : allDocs).slice(0,100); }, [allDocs,docQuery]);
@@ -55,7 +55,7 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
   }
   function reset(){setDrafts([]);setActiveId(null);setQuery("");setDocQuery("");setNote("");setToast("");}
   async function share(){
-    if(!shareCardRef.current || !drafts.some(d=>d.service)) return;
+    if(!sharePreviewRef.current || !drafts.some(d=>d.service)) return;
     try {
       const blob=await toPng(sharePreviewRef.current,{pixelRatio:2,backgroundColor:"#eef5fc",cacheBust:true,width:900})
         .then(dataUrl=>fetch(dataUrl).then(r=>r.blob()));
@@ -71,10 +71,58 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
     const now=new Date(),date=now.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}),time=now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true});
     let rows="";list.forEach(d=>d.documents.forEach((doc,i)=>{rows+="<tr>"+(i===0?"<td class=\"service\" rowspan=\""+d.documents.length+"\">"+esc(ds(d.service!))+"</td>":"")+"<td class=\"num\">"+(i+1)+"</td><td>"+esc(dd(doc))+"</td><td class=\"check\">✓</td></tr>";}));
     const noteHtml=note.trim()?"<div class=\"note\"><b>Note:</b> "+esc(note.trim())+"</div>":"";
-    const css=`@page{size:A4 portrait;margin:0}*{box-sizing:border-box}body{margin:0;background:#fff;color:#142d5d;font-family:Arial,'Noto Sans Malayalam','Nirmala UI',sans-serif}.page{width:210mm;min-height:297mm;padding:15mm 16mm 12mm;background:#fff}.head{display:grid;grid-template-columns:72px 1fr 65px;gap:12px;align-items:center;border-bottom:2px solid #1693e6;padding-bottom:7px}.logo{width:68px;height:68px;object-fit:contain}.brand{text-align:center}.brand h1{margin:0;color:#087ab8;font-size:18px;font-weight:800}.brand h2{margin:2px 0 0;color:#102e61;font-size:13px}.brand p{margin:3px 0;color:#555;font-size:9px}.contact{font-size:9px;font-weight:800}.mission{width:55px;height:60px;border:1px solid #d4d4d4;border-radius:12px;background:linear-gradient(135deg,#fff,#f7edb2);display:flex;align-items:center;justify-content:center;text-align:center;font-size:7px;font-weight:800;color:#6b5b13}.mission b{display:block;color:#167c75;font-size:8px}.title{text-align:center;margin:6px 0;font-size:12px;letter-spacing:3px;font-weight:900}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9.5px}th,td{border:1px solid #555;padding:5px 7px;vertical-align:middle}th{background:#e7f2fa;text-align:left}th.service{width:31%}th.num{width:6%;text-align:center}th.doc{width:56%}th.check{width:7%;text-align:center}td.service{background:#f4f9fd;font-weight:800;line-height:1.25}td.num{text-align:center}td.check{text-align:center;color:#138b72;font-size:14px;font-weight:900}.note{margin-top:7px;border:1px solid #cbd5e1;padding:5px;font-size:8.5px;color:#334155}.foot{text-align:right;margin-top:7px;color:#666;font-size:8px}`;
+    const css=`@page{size:A4 portrait;margin:0}*{box-sizing:border-box}body{margin:0;background:#fff;color:#142d5d;font-family:Arial,'Noto Sans Malayalam','Nirmala UI',sans-serif}.page{width:210mm;min-height:297mm;padding:15mm 16mm 12mm;background:#fff}.head{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;border-bottom:2px solid #1693e6;padding-bottom:7px}.logo{width:68px;height:68px;object-fit:contain}.brand{text-align:center}.brand h1{margin:0;color:#087ab8;font-size:18px;font-weight:800}.brand h2{margin:2px 0 0;color:#102e61;font-size:13px}.brand p{margin:3px 0;color:#555;font-size:9px}.contact{font-size:9px;font-weight:800}.title{text-align:center;margin:6px 0;font-size:12px;letter-spacing:3px;font-weight:900}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9.5px}th,td{border:1px solid #555;padding:5px 7px;vertical-align:middle}th{background:#e7f2fa;text-align:left}th.service{width:31%}th.num{width:6%;text-align:center}th.doc{width:56%}th.check{width:7%;text-align:center}td.service{background:#f4f9fd;font-weight:800;line-height:1.25}td.num{text-align:center}td.check{text-align:center;color:#138b72;font-size:14px;font-weight:900}.note{margin-top:7px;border:1px solid #cbd5e1;padding:5px;font-size:8.5px;color:#334155}.foot{text-align:right;margin-top:7px;color:#666;font-size:8px}`;
     const html="<!doctype html><html><head><meta charset=\"utf-8\"><title>Document List</title><style>"+css+"</style></head><body><div class=\"page\"><div class=\"head\"><img class=\"logo\" src=\"/akshaya-logo.png\"><div class=\"brand\"><h1>"+CENTER.name+"</h1><h2>"+CENTER.place+"</h2><p>"+CENTER.address+"</p><div class=\"contact\">◉ "+CENTER.whatsapp+" &nbsp; | &nbsp; ☎ "+CENTER.phone+"</div></div><div class=\"mission\"><div><b>KERALA</b>STATE<br>MISSION</div></div></div><div class=\"title\">DOCUMENTS REQUIRED</div><table><thead><tr><th class=\"service\">Service</th><th class=\"num\">#</th><th class=\"doc\">Document</th><th class=\"check\">✓</th></tr></thead><tbody>"+rows+"</tbody></table>"+noteHtml+"<div class=\"foot\">"+date+" · "+time+"</div></div></body></html>";
     const w=window.open("","_blank");if(!w){toastMsg("Allow pop-ups to print");return;}w.document.open();w.document.write(html);w.document.close();w.focus();window.setTimeout(()=>w.print(),450);
   }
+  const shareList=drafts.filter(d=>d.service&&d.documents.length);
+  const shareNow=new Date();
+  const shareDate=shareNow.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+  const shareTime=shareNow.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",hour12:true});
+  return <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-900/30 p-2 backdrop-blur-sm"><div className="flex h-[96vh] w-full max-w-[1220px] flex-col overflow-hidden rounded-[26px] border border-slate-200 bg-[#f3f8fd] text-slate-800 shadow-2xl">
+    <div ref={sharePreviewRef} aria-hidden="true" className="pointer-events-none absolute left-[-10000px] top-0 w-[900px] overflow-hidden bg-[#eef5fc] text-[#142d5d]">
+      <div style={{background:"linear-gradient(135deg,#0f4da8,#1689e8)",borderRadius:"0 0 42px 42px",padding:"30px 34px 32px",color:"#fff"}}>
+        <div className="flex items-center gap-6">
+          <div className="h-[112px] w-[112px] shrink-0 overflow-hidden rounded-[28px] bg-white p-2"><img src="/akshaya-logo.png" alt="" className="h-full w-full object-contain"/></div>
+          <div className="min-w-0 flex-1 text-center">
+            <div className="text-[42px] font-extrabold leading-tight">Akshaya e Centre</div>
+            <div className="mt-2 text-[28px] font-extrabold">POOKIPARAMB</div>
+            <div className="mt-4 text-[19px] font-bold">◉ 9037296582&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;☎ 9447906582</div>
+            <div className="mt-3 text-[18px]">POOKIPARAMB, MALAPPURAM</div>
+          </div>
+          <div className="w-[112px] shrink-0"></div>
+        </div>
+      </div>
+      <div className="px-9 py-9">
+        {shareList.map((d,di)=><div key={d.id} className="mb-8 overflow-hidden rounded-[28px] bg-white p-7 shadow-sm">
+          <div className="flex items-center gap-7 rounded-[24px] bg-[#dceefe] p-7">
+            <div className="flex h-[124px] w-[124px] shrink-0 items-center justify-center rounded-[28px] bg-[#c3e0fb] text-[#168fe2]"><FileText size={70} strokeWidth={2.2}/></div>
+            <div className="min-w-0">
+              <div className="text-[22px] font-extrabold tracking-[0.28em] text-[#4c73ae]">SERVICE</div>
+              <div className="mt-3 text-[31px] font-extrabold leading-tight text-[#102652]">{ds(d.service!)}</div>
+            </div>
+          </div>
+          <div className="mt-7 flex items-center gap-4 text-[25px] font-extrabold tracking-[0.25em] text-[#173a78]"><FileText size={34} fill="#173a78" strokeWidth={1.5}/>DOCUMENTS REQUIRED</div>
+          <div className="mt-4">
+            {d.documents.map((doc,j)=><div key={j} className="flex items-center gap-5 border-l-[6px] border-[#168fe2] py-5 pl-6">
+              <div className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full bg-[#168fe2] text-[26px] font-extrabold text-white">{j+1}</div>
+              <div className="flex h-[62px] w-[74px] shrink-0 items-center justify-center rounded-[16px] bg-[#dceefe] text-[#168fe2]"><FileText size={36}/></div>
+              <div className="min-w-0 flex-1 text-[24px] font-extrabold text-[#182b56]">{dd(doc)}</div>
+              <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[9px] border-[4px] border-[#168fe2] text-[#168fe2]"><Check size={30} strokeWidth={3.5}/></div>
+            </div>)}
+          </div>
+        </div>)}
+        <div className="flex items-center justify-between rounded-[28px] bg-[#dceefe] px-8 py-6">
+          <div className="flex items-center gap-5">
+            <div className="text-[#173f83]"><span className="text-[42px]">▦</span></div>
+            <div><div className="text-[18px] text-[#31588d]">Generated on</div><div className="text-[24px] font-extrabold text-[#173f83]">{shareDate} • {shareTime}</div></div>
+          </div>
+          <div className="h-16 w-px bg-[#a9c9eb]"></div>
+          <div className="text-right text-[17px] font-extrabold leading-relaxed tracking-[0.08em] text-[#184b96]">KEEP YOUR DOCUMENTS<br/>READY FOR FASTER SERVICE</div>
+        </div>
+      </div>
+    </div>
+    <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-sm"><div className="flex items-center gap-3"><div className="h-10 w-10 overflow-hidden rounded-xl border border-cyan-100 bg-white shadow-sm"><img src="/akshaya-logo.png" alt="Akshaya" className="h-full w-full object-contain p-1"/></div><div><h2 className="text-base font-extrabold">Service Document Generator</h2><p className="text-[10px] text-slate-500">Build a required-documents list for your customers</p></div></div><div className="flex items-center gap-2"><button onClick={reset} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600"><RotateCcw size={14} className="mr-1 inline"/>Reset</button><button onClick={printA4} disabled={!drafts.some(d=>d.service&&d.documents.length)} className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-40"><Printer size={14} className="mr-1 inline"/>Print A4</button><button onClick={share} disabled={!drafts.some(d=>d.service)} className="rounded-xl bg-violet-500 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-40"><Share2 size={14} className="mr-1 inline"/>Share</button>{onClose&&<button onClick={onClose} className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600"><X size={17}/></button>}</div></header>
     <main className="min-h-0 flex-1 overflow-auto p-3 sm:p-5"><div className="grid gap-4 lg:grid-cols-2">
       <section ref={previewRef} className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5"><div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3"><h3 className="text-xs font-extrabold uppercase tracking-[0.13em] text-sky-600">Configure Document List</h3><div className="rounded-full border border-slate-200 bg-slate-50 p-1"><button onClick={()=>setLanguage("en")} className={"rounded-full px-3 py-1.5 text-[11px] font-bold "+(language==="en"?"bg-sky-500 text-white":"text-slate-500")}>English</button><button onClick={()=>setLanguage("ml")} className={"rounded-full px-3 py-1.5 text-[11px] font-bold "+(language==="ml"?"bg-sky-500 text-white":"text-slate-500")}>മലയാളം</button></div></div>
         <label className="mb-1.5 block text-xs font-extrabold text-slate-700">Service <span className="font-normal text-slate-400">(search and select)</span></label><div className="relative" data-service-picker><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-sky-500"/><input value={query} onFocus={()=>setServiceOpen(true)} onClick={()=>setServiceOpen(true)} onChange={e=>{setQuery(e.target.value);setServiceOpen(true)}} placeholder="Search services..." className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-9 text-sm outline-none focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"/><ChevronDown className="pointer-events-none absolute right-3 top-3.5 h-4 w-4 text-slate-400"/>{serviceOpen&&<div className="absolute left-0 right-0 top-[calc(100%+5px)] z-50 max-h-72 overflow-auto rounded-xl border border-slate-200 bg-white p-1 shadow-2xl">{services.map(s=><button key={s.name} onClick={()=>{chooseService(s);setServiceOpen(false)}} className="block w-full rounded-lg px-3 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-sky-50">{ds(s)}</button>)}</div>}</div>
