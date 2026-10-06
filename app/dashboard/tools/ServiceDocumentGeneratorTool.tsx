@@ -55,15 +55,43 @@ export default function ServiceDocumentGeneratorTool({ onClose }: { onClose?: ()
   }
   function reset(){setDrafts([]);setActiveId(null);setQuery("");setDocQuery("");setNote("");setToast("");}
   async function share(){
-    if(!sharePreviewRef.current || !drafts.some(d=>d.service)) return;
+    const node=sharePreviewRef.current;
+    if(!node || !drafts.some(d=>d.service)) return;
+    const original={position:node.style.position,left:node.style.left,top:node.style.top,zIndex:node.style.zIndex};
+    setToast("Preparing image...");
     try {
-      const blob=await toPng(sharePreviewRef.current,{pixelRatio:2,backgroundColor:"#eef5fc",cacheBust:true,width:900})
-        .then(dataUrl=>fetch(dataUrl).then(r=>r.blob()));
-      if(!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("image clipboard unavailable");
+      // Keep the capture node inside the viewport while html-to-image measures it.
+      // Off-screen fixed elements can produce a blank PNG.
+      node.style.position="absolute";
+      node.style.left="0px";
+      node.style.top="0px";
+      node.style.zIndex="-1";
+      await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
+      const images=Array.from(node.querySelectorAll("img"));
+      await Promise.all(images.map(img=>img.complete?img.decode().catch(()=>{}):new Promise<void>(resolve=>{
+        img.addEventListener("load",()=>resolve(),{once:true});
+        img.addEventListener("error",()=>resolve(),{once:true});
+      })));
+      await document.fonts?.ready;
+      const dataUrl=await toPng(node,{
+        pixelRatio:2,
+        backgroundColor:"#eef5fc",
+        cacheBust:true,
+        width:node.scrollWidth,
+        height:node.scrollHeight
+      });
+      const blob=await fetch(dataUrl).then(res=>res.blob());
+      if(!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("Image clipboard is not supported in this browser");
       await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
       toastMsg("Image copied to clipboard");
-    } catch {
-      toastMsg("Image copy failed");
+    } catch(error) {
+      console.error("Document image copy failed",error);
+      toastMsg("Image copy failed — allow clipboard permission and try again");
+    } finally {
+      node.style.position=original.position;
+      node.style.left=original.left;
+      node.style.top=original.top;
+      node.style.zIndex=original.zIndex;
     }
   }
   function printA4(){
