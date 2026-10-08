@@ -5,12 +5,11 @@ const STORAGE_KEY = "work_status_items";
 export function getWorks(): WorkItem[] {
   if (typeof window === "undefined") return [];
 
-  const data = localStorage.getItem(STORAGE_KEY);
-
-  if (!data) return [];
-
   try {
-    return JSON.parse(data);
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (!data) return [];
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }

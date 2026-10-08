@@ -40,8 +40,9 @@ async function optimizeImage(file: File): Promise<Blob> {
 }
 
 export async function uploadHomepagePoster(file: File): Promise<StoredPoster> {
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Only image files are allowed.");
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (!allowedTypes.has(file.type)) {
+    throw new Error("Only JPG, PNG, and WebP images are allowed.");
   }
   if (file.size > HOMEPAGE_POSTER_MAX_BYTES) {
     throw new Error("Poster image must be 8 MB or smaller.");

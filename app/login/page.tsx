@@ -38,7 +38,12 @@ export default function LoginPage() {
     if (isSigningIn) return;
     setIsSigningIn(true);
     const cleanUsername = username.trim().toLowerCase();
-    const cleanPassword = password.trim();
+    const cleanPassword = password;
+    if (!cleanUsername || !cleanPassword) {
+      setIsSigningIn(false);
+      window.alert("Invalid Username or Password. Please check your credentials.");
+      return;
+    }
     let isValid = cleanUsername === "admin" && cleanPassword === "admin";
     let assignedRole = isValid ? "admin" : "staff";
     let displayName = isValid ? "Admin User" : "";
@@ -72,7 +77,7 @@ export default function LoginPage() {
             const usernameMatches = [staff.name, staff.staffName, staff.username, staff.userName, staff.email, staff.staffId, staff.id].some(value => String(value ?? "").trim().toLowerCase() === cleanUsername);
             const storedPassword = String(staff.password ?? staff.pass ?? staff.staffPassword ?? staff.loginPassword ?? "").trim();
             const firstName = cleanUsername.split(" ")[0] || "staff";
-            return usernameMatches && (storedPassword ? storedPassword === cleanPassword : [cleanPassword.toLowerCase(), "akshaya123"].includes(`${firstName}akshaya`));
+            return usernameMatches && storedPassword === cleanPassword;
           });
           if (matched) {
             isValid = true;
