@@ -514,13 +514,7 @@ useEffect(() => {
             <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
               {filteredServices.length > 0 ? (
                 serviceGroupLetters.map((letter) => (
-                  <React.Fragment key={letter}>
-                    <tr className="bg-cyan-50/70">
-                      <td colSpan={6} className="px-6 py-2 text-xs font-black uppercase tracking-[0.2em] text-cyan-700">
-                        {letter}
-                      </td>
-                    </tr>
-                    {serviceGroups[letter].map((service) => (
+                    serviceGroups[letter].map((service) => (
                   <tr key={service.id} className="transition hover:bg-cyan-50/30">
                     <td className="py-4 px-6">
                       <div className="font-black text-slate-800">{service.name}</div>
@@ -573,8 +567,7 @@ useEffect(() => {
                       </div>
                     </td>
                   </tr>
-                    ))}
-                  </React.Fragment>
+                    ))
                 ))
               ) : (
                 <tr>
