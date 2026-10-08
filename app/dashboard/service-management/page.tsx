@@ -412,10 +412,14 @@ useEffect(() => {
     }
   };
 
-  const filteredServices = services.filter(service =>
-    service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.wallet.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredServices = normalizedSearch
+    ? services.filter((service) => {
+        const name = String(service.name ?? "").toLowerCase();
+        const wallet = String(service.wallet ?? "").toLowerCase();
+        return name.includes(normalizedSearch) || wallet.includes(normalizedSearch);
+      })
+    : services;
 
   return (
     <div className="relative mx-auto w-full max-w-[1600px] space-y-5 bg-gradient-to-br from-slate-50 via-white to-cyan-50/30 p-4 sm:p-5 lg:p-6">
