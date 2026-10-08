@@ -152,7 +152,8 @@ export default function ServiceManagementPage() {
   const [newWallet, setNewWallet] = useState('CASH');
   const [newDeptFee, setNewDeptFee] = useState(0);
   const [newSrvCharge, setNewSrvCharge] = useState(0);
-  const [newCommission, setNewCommission] = useState(0);
+  // Commission is stored as a percentage of the service charge (e.g. 5 = 5%).
+  const [newCommission, setNewCommission] = useState(5);
   const [newFollowupDays, setNewFollowupDays] = useState(0);
   const [newPortalUrl, setNewPortalUrl] = useState('');
 
@@ -368,7 +369,7 @@ useEffect(() => {
     setNewWallet(walletOptions[0] || 'CASH');
     setNewDeptFee(0);
     setNewSrvCharge(0);
-    setNewCommission(0);
+    setNewCommission(5);
     setNewFollowupDays(0);
     setNewPortalUrl('');
     setIsModalOpen(true);
@@ -381,7 +382,9 @@ useEffect(() => {
     setNewWallet(service.wallet || walletOptions[0] || 'CASH');
     setNewDeptFee(service.deptFee);
     setNewSrvCharge(service.srvCharge);
-    setNewCommission(service.commission);
+    setNewCommission(
+      Number.isFinite(Number(service.commission)) ? Number(service.commission) : 5
+    );
     setNewFollowupDays(service.followupDays || 0);
     setNewPortalUrl(service.portalUrl || '');
     setIsModalOpen(true);
@@ -413,13 +416,34 @@ useEffect(() => {
   };
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
-  const filteredServices = normalizedSearch
+  const filteredServices = (normalizedSearch
     ? services.filter((service) => {
         const name = String(service.name ?? "").toLowerCase();
         const wallet = String(service.wallet ?? "").toLowerCase();
         return name.includes(normalizedSearch) || wallet.includes(normalizedSearch);
       })
-    : services;
+    : services
+  ).sort((a, b) =>
+    String(a.name ?? "").localeCompare(String(b.name ?? ""), undefined, {
+      sensitivity: "base",
+      numeric: true,
+    })
+  );
+
+  const serviceGroups = filteredServices.reduce<Record<string, ServiceItem[]>>(
+    (groups, service) => {
+      const firstLetter = String(service.name ?? "").trim().charAt(0).toUpperCase() || "#";
+      const letter = /[A-Z]/.test(firstLetter) ? firstLetter : "#";
+      (groups[letter] ||= []).push(service);
+      return groups;
+    },
+    {}
+  );
+  const serviceGroupLetters = Object.keys(serviceGroups).sort((a, b) => {
+    if (a === "#") return 1;
+    if (b === "#") return -1;
+    return a.localeCompare(b);
+  });
 
   return (
     <div className="relative mx-auto w-full max-w-[1600px] space-y-5 bg-gradient-to-br from-slate-50 via-white to-cyan-50/30 p-4 sm:p-5 lg:p-6">
@@ -489,7 +513,14 @@ useEffect(() => {
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
               {filteredServices.length > 0 ? (
-                filteredServices.map((service) => (
+                serviceGroupLetters.map((letter) => (
+                  <React.Fragment key={letter}>
+                    <tr className="bg-cyan-50/70">
+                      <td colSpan={6} className="px-6 py-2 text-xs font-black uppercase tracking-[0.2em] text-cyan-700">
+                        {letter}
+                      </td>
+                    </tr>
+                    {serviceGroups[letter].map((service) => (
                   <tr key={service.id} className="transition hover:bg-cyan-50/30">
                     <td className="py-4 px-6">
                       <div className="font-black text-slate-800">{service.name}</div>
@@ -511,7 +542,7 @@ useEffect(() => {
                     </td>
                     <td className="py-4 px-4 text-center text-slate-500">₹{service.deptFee}</td>
                     <td className="px-4 py-4 text-center font-bold text-slate-800">₹{service.srvCharge}</td>
-                    <td className="px-4 py-4 text-center font-bold text-emerald-600">₹{service.commission}</td>
+                    <td className="px-4 py-4 text-center font-bold text-emerald-600">{Number(service.commission ?? 5)}%</td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button 
@@ -542,6 +573,8 @@ useEffect(() => {
                       </div>
                     </td>
                   </tr>
+                    ))}
+                  </React.Fragment>
                 ))
               ) : (
                 <tr>
@@ -624,13 +657,17 @@ useEffect(() => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Commission (₹)</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Commission (%)</label>
                   <input 
-                    type="number" 
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
                     className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-center text-xs font-semibold outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10"
-                    value={newCommission || ''}
-                    onChange={(e) => setNewCommission(Number(e.target.value))}
+                    value={newCommission}
+                    onChange={(e) => setNewCommission(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
                   />
+                  <p className="mt-1 text-[10px] font-semibold text-slate-400">Percentage of service charge</p>
                 </div>
               </div>
 
