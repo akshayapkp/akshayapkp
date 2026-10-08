@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Plus, Edit2, Trash2, RefreshCw, Briefcase, ExternalLink, Bookmark, X } from 'lucide-react';
 
 interface ServiceItem {
@@ -590,7 +591,7 @@ useEffect(() => {
       </button>
 
       {/* MODAL POPUP FOR ADD / EDIT SERVICE */}
-      {isModalOpen && (
+      {isModalOpen && typeof document !== 'undefined' && createPortal((
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-3 backdrop-blur-md sm:px-4">
           <div className="w-full max-w-lg max-h-[calc(100vh-24px)] overflow-hidden rounded-3xl border border-white/80 bg-white/95 p-4 shadow-[0_30px_80px_rgba(15,23,42,0.22)] backdrop-blur-2xl sm:p-5">
             
@@ -700,7 +701,7 @@ useEffect(() => {
 
           </div>
         </div>
-      )}
+      ), document.body)}
 
     </div>
   );
