@@ -591,8 +591,8 @@ useEffect(() => {
 
       {/* MODAL POPUP FOR ADD / EDIT SERVICE */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md">
-          <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/80 bg-white/95 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.22)] backdrop-blur-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/60 px-3 py-3 backdrop-blur-md sm:px-4">
+          <div className="w-full max-w-lg max-h-[calc(100vh-24px)] overflow-hidden rounded-3xl border border-white/80 bg-white/95 p-4 shadow-[0_30px_80px_rgba(15,23,42,0.22)] backdrop-blur-2xl sm:p-5">
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2 text-base font-black text-cyan-600">
@@ -606,7 +606,7 @@ useEffect(() => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmitService} className="space-y-4">
+            <form onSubmit={handleSubmitService} className="space-y-3">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Service Name *</label>
                 <input 
@@ -688,7 +688,7 @@ useEffect(() => {
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <button 
                   type="submit"
                   className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 py-3 text-xs font-black text-white shadow-lg shadow-cyan-500/20 transition-all hover:-translate-y-0.5 hover:shadow-xl"
