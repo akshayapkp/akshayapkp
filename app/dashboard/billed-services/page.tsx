@@ -170,6 +170,7 @@ interface BilledServiceItem {
   billId?: string;
   serviceCount?: number;
   createdAt?: string;
+  businessDate?: string;
 }
 
 const parseStoredDate = (value: unknown): number => {
@@ -319,12 +320,17 @@ export default function BilledServicesPage() {
       // Use the bill-level performance/saved bill as the canonical staff owner
       // when legacy service lines have a missing or stale staffName.
       const canonicalStaffByBill = new Map<string, string>();
+      const canonicalBusinessDateByBill = new Map<string, string>();
       const completedPerformanceBillIds = new Set<string>();
       // Use saved bill metadata as fallback; current performance records win on conflicts.
       [...(Array.isArray(savedBillsList) ? savedBillsList : []), ...performanceRecords].forEach((record: any) => {
         const id = getBillKey(record);
         const name = String(record?.staffName || record?.staff || '').trim();
         if (id && name) canonicalStaffByBill.set(id, name);
+        if (id && performanceRecords.includes(record)) {
+          const businessDate = String(record?.date || '').trim();
+          if (businessDate) canonicalBusinessDateByBill.set(id, businessDate);
+        }
 
         // Staff Performance records are written when a service is actually
         // billed. Use them to avoid a stale saved-draft status hiding a bill.
@@ -595,6 +601,7 @@ export default function BilledServicesPage() {
               firstItem.dateTime ||
               firstItem.date ||
               new Date().toLocaleString(),
+            businessDate: canonicalBusinessDateByBill.get(billKey) || undefined,
             createdAt:
               savedBill?.createdAt ||
               firstItem.createdAt ||
@@ -1104,6 +1111,7 @@ export default function BilledServicesPage() {
     if (!matchesStaff) return false;
 
     const storedDate =
+      s.businessDate ||
       s.dateTime ||
       s.createdAt ||
       '';
