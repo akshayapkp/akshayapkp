@@ -1291,9 +1291,13 @@ html.dark .dashboard-page-frame .fixed.bg-white .text-slate-800 {
   justify-content: center !important;
   position: relative !important;
   z-index: 20 !important;
-  color: #334155 !important;
-  background: rgba(255,255,255,.92) !important;
-  border: 1px solid rgba(203,213,225,.9) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #155eef !important;
+  border: 1px solid #155eef !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  padding: 0 12px !important;
 }
 .dashboard-topbar .latest-billed-entry-trigger svg {
   display: block !important;
