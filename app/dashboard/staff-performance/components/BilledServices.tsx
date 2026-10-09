@@ -58,6 +58,8 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
       const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
       const billedData = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
       const savedBills = JSON.parse(localStorage.getItem("savedBillsList") || "[]");
+      const creditBills = JSON.parse(localStorage.getItem("smart_akshaya_bills") || "[]");
+      const performanceData = JSON.parse(localStorage.getItem("performanceRecords") || "[]");
       const source = [
         ...(Array.isArray(serviceEntries) ? serviceEntries : []),
         ...(Array.isArray(billedData) ? billedData : []),
@@ -109,26 +111,68 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         });
       });
 
-      // If no detailed service rows exist, retain the existing performance data as a fallback.
-      if (!formatted.length) {
-        records.forEach((record) => {
+      // Some versions save the completed bill and its item list only in
+      // smart_akshaya_bills. Expand those items so today's services are not missed.
+      const detailedBillIds = new Set(formatted.map((row) => row.billId));
+      (Array.isArray(creditBills) ? creditBills : []).forEach((bill: any, billIndex: number) => {
+        const billId = String(bill?.billId || bill?.id || bill?.billNumber || "").trim();
+        if (!billId || detailedBillIds.has(billId) || !Array.isArray(bill?.items)) return;
+        bill.items.forEach((item: any, itemIndex: number) => {
+          const serviceName = String(item?.name || item?.serviceName || item?.service || "").trim();
+          if (!serviceName) return;
           formatted.push({
-            id: record.id,
-            billId: String((record as any).billId || record.id),
-            dateTime: record.timestamp || record.date,
-            serviceName: String((record as any).serviceName || "Service"),
-            wallet: String((record as any).wallet || "N/A"),
-            quantity: Number((record as any).quantity || 1),
-            departmentFee: Number(record.departmentFee || 0),
-            serviceCharge: Number(record.serviceCharge || 0),
-            totalAmount: Number(record.totalAmount || 0),
-            staffName: record.staffName || "Admin User",
-            customerName: record.customerName || "Walk-in Customer",
+            id: String(item?.id || `${billId}-credit-${itemIndex}`),
+            billId,
+            dateTime: String(bill?.date || bill?.dateTime || bill?.createdAt || ""),
+            serviceName,
+            wallet: String(item?.wallet || item?.defaultWallet || "N/A"),
+            quantity: Number(item?.qty ?? item?.quantity ?? 1) || 1,
+            departmentFee: Number(item?.walletChg ?? item?.deptChg ?? item?.deptFee ?? 0) || 0,
+            serviceCharge: Number(item?.srvChg ?? item?.srvCharge ?? item?.serviceCharge ?? 0) || 0,
+            totalAmount: Number(item?.totalAmount ?? item?.total ?? ((Number(item?.walletChg ?? item?.deptChg ?? item?.deptFee ?? 0) + Number(item?.srvChg ?? item?.srvCharge ?? item?.serviceCharge ?? 0)) * Number(item?.qty ?? item?.quantity ?? 1))) || 0,
+            staffName: String(bill?.staffName || item?.staffName || "Admin User"),
+            customerName: String(bill?.customerName || item?.customerName || "Walk-in Customer"),
           });
         });
-      }
+        detailedBillIds.add(billId);
+      });
 
-      setRows(formatted);
+      // Performance records are written when a bill is completed. Always merge
+      // them as a fallback for bills that do not have detailed item rows.
+      const performanceSource = [
+        ...(Array.isArray(performanceData) ? performanceData : []),
+        ...records,
+      ];
+      performanceSource.forEach((record: any, index: number) => {
+        const billId = String(record?.billId || record?.id || `performance-${index}`).trim();
+        if (!billId || detailedBillIds.has(billId)) return;
+        const dateTime = String(record?.date || record?.timestamp || "");
+        formatted.push({
+          id: String(record?.id || billId),
+          billId,
+          // Prefer the local date field over UTC timestamp to avoid shifting
+          // late-evening India bills into the previous/next day.
+          dateTime,
+          serviceName: String(record?.serviceName || (Number(record?.totalServices || 0) > 1 ? `${record.totalServices} billed services` : "Billed service")),
+          wallet: String(record?.wallet || "N/A"),
+          quantity: Number(record?.totalServices || record?.quantity || 1),
+          departmentFee: Number(record?.departmentFee || 0),
+          serviceCharge: Number(record?.serviceCharge || 0),
+          totalAmount: Number(record?.totalAmount || 0),
+          staffName: String(record?.staffName || "Admin User"),
+          customerName: String(record?.customerName || "Walk-in Customer"),
+        });
+        detailedBillIds.add(billId);
+      });
+
+      // De-duplicate identical rows from overlapping storage keys.
+      const uniqueRows = new Map<string, BilledRow>();
+      formatted.forEach((row) => {
+        const key = [row.billId, row.serviceName.toLowerCase(), row.quantity, row.totalAmount, row.staffName.toLowerCase()].join("|");
+        if (!uniqueRows.has(key)) uniqueRows.set(key, row);
+      });
+
+      setRows(Array.from(uniqueRows.values()));
     } catch (error) {
       console.error("Failed to load Staff Performance billed services:", error);
       setRows([]);
