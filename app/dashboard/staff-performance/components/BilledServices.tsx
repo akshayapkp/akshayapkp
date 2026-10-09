@@ -74,6 +74,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
       // The detailed service row can lack staffName or contain an older name.
       // The bill-level performance/saved-bill record is the authoritative owner.
       const staffByBillId = new Map<string, string>();
+      const completedPerformanceBillIds = new Set<string>();
       [...(Array.isArray(savedBills) ? savedBills : []),
         ...(Array.isArray(performanceData) ? performanceData : []),
         ...records,
@@ -81,6 +82,13 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         const id = String(bill?.billId || bill?.billID || bill?.invoiceId || bill?.id || bill?.billNumber || "").trim();
         const name = String(bill?.staffName || bill?.staff || "").trim();
         if (id && name) staffByBillId.set(id, name);
+        const status = String(bill?.status || "").trim().toLowerCase();
+        const total = Number(bill?.totalAmount ?? bill?.total ?? 0) || 0;
+        const fee = Number(bill?.departmentFee ?? bill?.deptFee ?? bill?.walletChg ?? 0) || 0;
+        const charge = Number(bill?.serviceCharge ?? bill?.srvChg ?? bill?.srvCharge ?? 0) || 0;
+        if (id && (["completed","complete","paid","credit","pending"].includes(status) || total > 0 || fee > 0 || charge > 0)) {
+          completedPerformanceBillIds.add(id);
+        }
       });
 
       const seen = new Set<string>();
@@ -97,7 +105,11 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
           item.staffName || item.staff || "Admin User"
         ).trim();
 
-        const status = String(saved?.status ?? item.status ?? "").toLowerCase();
+        const rawStatus = String(saved?.status ?? item.status ?? "").toLowerCase();
+        const status = completedPerformanceBillIds.has(billId) &&
+          !["completed", "complete", "paid", "credit", "pending"].includes(rawStatus)
+          ? "completed"
+          : rawStatus;
         const pending = Number(saved?.balance ?? saved?.owedAmount ?? item.pendingAmount ?? item.balance ?? 0);
         // Completed service-entry rows may not carry a status field in older
         // staff sessions. Treat a missing status as a billed row, but still
