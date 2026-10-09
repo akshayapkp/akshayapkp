@@ -407,14 +407,13 @@ export default function StaffPerformancePage() {
         })
         .filter(Boolean) as PerformanceRecord[];
 
-      // Preserve existing performance records as a fallback.
-      const merged = [
-        ...loginAttendanceRecords,
-        ...records,
-      ];
+      // Real attendance logs are authoritative when available; billing is not attendance.
+      const sourceRecords = attendanceLogs.length > 0
+        ? loginAttendanceRecords
+        : records;
 
       const unique = new Map<string, PerformanceRecord>();
-      merged.forEach((record) => {
+      sourceRecords.forEach((record) => {
         const key = `${(record.staffName || "").toLowerCase().trim()}|${record.date}`;
         if (!unique.has(key)) {
           unique.set(key, record);

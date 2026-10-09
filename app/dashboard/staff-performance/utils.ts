@@ -65,9 +65,6 @@ export function getDailyBilledTotals(
     );
 
     if (matching.length > 0) {
-      const hasAttendanceSummary = matching.length === 1 &&
-        Number(matching[0]?.totalServices || 0) > 0;
-
       return matching.reduce(
         (sum, record: any) => ({
           departmentFee:
@@ -76,10 +73,11 @@ export function getDailyBilledTotals(
             sum.serviceCharge + Number(record.serviceCharge || 0),
           totalAmount:
             sum.totalAmount + Number(record.totalAmount || 0),
+          // One performance record is a bill summary; totalServices is its item count.
           count:
             sum.count +
-            (hasAttendanceSummary
-              ? Number(record.totalServices || 0)
+            (Number(record.totalServices || 0) > 0
+              ? Number(record.totalServices)
               : 1),
         }),
         { departmentFee: 0, serviceCharge: 0, totalAmount: 0, count: 0 }

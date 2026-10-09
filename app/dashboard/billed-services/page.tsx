@@ -145,17 +145,6 @@ const refreshBilledServicesFromCentral = async () => {
     const local = readSharedArray(key);
     let merged = mergeSharedArraysForRead(remote, local, key);
 
-    if (key === 'serviceEntries') {
-      const localBillIds = new Set(local.map((item: any) => String(item?.billId || item?.billID || item?.invoiceId || '').trim()).filter(Boolean));
-      merged = [
-        ...remote.filter((item: any) => {
-          const billId = String(item?.billId || item?.billID || item?.invoiceId || '').trim();
-          return !billId || !localBillIds.has(billId);
-        }),
-        ...local,
-      ];
-    }
-
     if (deletedIds.length) {
       merged = merged.filter((item: any) => !deletedIds.includes(String(item?.billId || item?.billID || item?.invoiceId || item?.id || '')));
     }
@@ -181,23 +170,27 @@ interface BilledServiceItem {
   billId?: string;
   serviceCount?: number;
   createdAt?: string;
+  businessDate?: string;
 }
 
 const parseStoredDate = (value: unknown): number => {
   const raw = String(value ?? '').trim();
   if (!raw) return NaN;
-  const direct = new Date(raw).getTime();
-  if (Number.isFinite(direct)) return direct;
 
+  // Parse Indian DD/MM/YYYY locale strings before native Date parsing.
   const match = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:,?\s+)(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
-  if (!match) return NaN;
-  let hours = Number(match[4]);
-  const minutes = Number(match[5]);
-  const seconds = Number(match[6] || 0);
-  const meridiem = String(match[7] || '').toUpperCase();
-  if (meridiem === 'PM' && hours < 12) hours += 12;
-  if (meridiem === 'AM' && hours === 12) hours = 0;
-  return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), hours, minutes, seconds).getTime();
+  if (match) {
+    let hours = Number(match[4]);
+    const minutes = Number(match[5]);
+    const seconds = Number(match[6] || 0);
+    const meridiem = String(match[7] || '').toUpperCase();
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+    return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), hours, minutes, seconds).getTime();
+  }
+
+  const direct = new Date(raw).getTime();
+  return Number.isFinite(direct) ? direct : NaN;
 };
 
 const getTodayDateKey = (): string => {
@@ -275,7 +268,7 @@ export default function BilledServicesPage() {
       const performanceEntries = performanceRecords.map((record: any) => ({
         id: record?.id,
         billId: record?.billId || record?.billID || record?.invoiceId || record?.id,
-        dateTime: record?.timestamp || record?.dateTime || record?.date || '',
+        dateTime: record?.date || record?.dateTime || record?.timestamp || '',
         createdAt: record?.timestamp || record?.createdAt || '',
         customerName: record?.customerName || record?.name || 'Customer',
         customerPhone:
@@ -327,11 +320,17 @@ export default function BilledServicesPage() {
       // Use the bill-level performance/saved bill as the canonical staff owner
       // when legacy service lines have a missing or stale staffName.
       const canonicalStaffByBill = new Map<string, string>();
+      const canonicalBusinessDateByBill = new Map<string, string>();
       const completedPerformanceBillIds = new Set<string>();
-      [...performanceRecords, ...(Array.isArray(savedBillsList) ? savedBillsList : [])].forEach((record: any) => {
+      // Use saved bill metadata as fallback; current performance records win on conflicts.
+      [...(Array.isArray(savedBillsList) ? savedBillsList : []), ...performanceRecords].forEach((record: any) => {
         const id = getBillKey(record);
         const name = String(record?.staffName || record?.staff || '').trim();
         if (id && name) canonicalStaffByBill.set(id, name);
+        if (id && performanceRecords.includes(record)) {
+          const businessDate = String(record?.date || '').trim();
+          if (businessDate) canonicalBusinessDateByBill.set(id, businessDate);
+        }
 
         // Staff Performance records are written when a service is actually
         // billed. Use them to avoid a stale saved-draft status hiding a bill.
@@ -509,10 +508,9 @@ export default function BilledServicesPage() {
 
           // A stale saved-draft record must not hide a bill that has a
           // completed/non-zero performance record for the same bill ID.
+          // A performance record confirming billing overrides an out-of-date saved draft.
           if (!savedIsCredit && !savedIsCompleted && !completedPerformanceBillIds.has(billKey)) return false;
-
-          // Saved Bill was later completed or converted to credit -> show it.
-          return savedIsCredit || savedIsCompleted;
+          return savedIsCredit || savedIsCompleted || completedPerformanceBillIds.has(billKey);
         }
 
         // Bills that were never saved: show both completed/paid and credit.
@@ -603,6 +601,7 @@ export default function BilledServicesPage() {
               firstItem.dateTime ||
               firstItem.date ||
               new Date().toLocaleString(),
+            businessDate: canonicalBusinessDateByBill.get(billKey) || undefined,
             createdAt:
               savedBill?.createdAt ||
               firstItem.createdAt ||
@@ -807,27 +806,25 @@ export default function BilledServicesPage() {
     const raw = String(value ?? '').trim();
     if (!raw) return NaN;
 
-    const native = new Date(raw).getTime();
-    if (Number.isFinite(native)) return native;
-
-    // Service Entry stores dateTime using the browser's locale string.
-    // In India this is commonly DD/MM/YYYY, which Date.parse() does not
-    // reliably understand across browsers.
+    // Parse Indian DD/MM/YYYY strings before native parsing to prevent
+    // locale-dependent month/day swaps in browser sorting and filtering.
     const match = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?$/i);
-    if (!match) return NaN;
-
-    const [, day, month, year, hourText, minuteText, secondText = '0', meridiem] = match;
-    let hour = Number(hourText);
-    const minute = Number(minuteText);
-    const second = Number(secondText);
-    if (meridiem) {
-      const lower = meridiem.toLowerCase();
-      if (lower === 'pm' && hour < 12) hour += 12;
-      if (lower === 'am' && hour === 12) hour = 0;
+    if (match) {
+      const [, day, month, year, hourText, minuteText, secondText = '0', meridiem] = match;
+      let hour = Number(hourText);
+      const minute = Number(minuteText);
+      const second = Number(secondText);
+      if (meridiem) {
+        const lower = meridiem.toLowerCase();
+        if (lower === 'pm' && hour < 12) hour += 12;
+        if (lower === 'am' && hour === 12) hour = 0;
+      }
+      const date = new Date(Number(year), Number(month) - 1, Number(day), hour, minute, second);
+      return Number.isNaN(date.getTime()) ? NaN : date.getTime();
     }
 
-    const date = new Date(Number(year), Number(month) - 1, Number(day), hour, minute, second);
-    return Number.isNaN(date.getTime()) ? NaN : date.getTime();
+    const native = new Date(raw).getTime();
+    return Number.isFinite(native) ? native : NaN;
   };
 
   const formatDisplayDateTime = (value: unknown) => {
@@ -1114,6 +1111,7 @@ export default function BilledServicesPage() {
     if (!matchesStaff) return false;
 
     const storedDate =
+      s.businessDate ||
       s.dateTime ||
       s.createdAt ||
       '';

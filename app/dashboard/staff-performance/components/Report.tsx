@@ -68,7 +68,7 @@ export default function StaffPerformanceReport({
   const totals = useMemo(() => ({
     // Keep Report's service count consistent with Monthly Performance:
     // one PerformanceRecord represents one billed service summary row.
-    services: reportRows.length,
+    services: reportRows.reduce((sum, r) => sum + (Number(r.totalServices || 0) > 0 ? Number(r.totalServices) : 1), 0),
     dept: reportRows.reduce((s,r)=>s+Number(r.departmentFee||0),0),
     charge: reportRows.reduce((s,r)=>s+Number(r.serviceCharge||0),0),
     upi: reportRows.reduce((s,r)=>s+Number(r.gpayUpiAmount||0),0),

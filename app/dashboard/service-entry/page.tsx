@@ -1333,8 +1333,8 @@ function ServiceEntryForm() {
       ? String(existingEditData?.dateTime || new Date().toLocaleDateString('en-GB'))
       : new Date().toLocaleDateString('en-GB');
     const billTimestamp = editId
-      ? String(existingEditData?.dateTime || new Date().toLocaleString())
-      : new Date().toLocaleString();
+      ? String(existingEditData?.dateTime || new Date().toLocaleString('en-GB'))
+      : new Date().toLocaleString('en-GB');
     const billCreatedAt = editId
       ? String(existingEditData?.createdAt || new Date().toISOString())
       : new Date().toISOString();
