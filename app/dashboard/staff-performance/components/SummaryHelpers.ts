@@ -13,9 +13,9 @@ export const getDate = (value: any): Date => {
   // Prefer the business-local bill date over the UTC timestamp to avoid
   // shifting near-midnight IST entries to another day.
   const rawDate = String(value?.date ?? "").trim();
-  const iso = rawDate.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);
+  const iso = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-  const indian = rawDate.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})/);
+  const indian = rawDate.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
   if (indian) return new Date(Number(indian[3]), Number(indian[2]) - 1, Number(indian[1]));
 
   const fallback = value?.timestamp ?? value?.created_at ?? value?.createdAt ?? value?.date;
@@ -28,8 +28,8 @@ export const matchesStaff = (
   staffName?: string
 ) =>
   selectedStaff === "All" ||
-  (staffName || "").trim().replace(/\\s+/g, " ").toLowerCase() ===
-    selectedStaff.trim().replace(/\\s+/g, " ").toLowerCase();
+  (staffName || "").trim().replace(/\s+/g, " ").toLowerCase() ===
+    selectedStaff.trim().replace(/\s+/g, " ").toLowerCase();
 
 export const getCredit = (rows: BillRecord[]) =>
   rows.reduce((sum, row: any) => {
