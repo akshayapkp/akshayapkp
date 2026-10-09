@@ -76,8 +76,9 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
       const staffByBillId = new Map<string, string>();
       [...(Array.isArray(savedBills) ? savedBills : []),
         ...(Array.isArray(performanceData) ? performanceData : []),
+        ...records,
         ...(Array.isArray(creditBills) ? creditBills : [])].forEach((bill: any) => {
-        const id = String(bill?.billId || bill?.id || bill?.billNumber || "").trim();
+        const id = String(bill?.billId || bill?.billID || bill?.invoiceId || bill?.id || bill?.billNumber || "").trim();
         const name = String(bill?.staffName || bill?.staff || "").trim();
         if (id && name) staffByBillId.set(id, name);
       });
