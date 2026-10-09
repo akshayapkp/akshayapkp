@@ -285,7 +285,6 @@ export default function HomePage() {
 
   function closeService() {
     setSelected(null);
-    setFiles([]);
   }
 
   function field(label: string, key: FieldKey, type = "text", placeholder = "") {
