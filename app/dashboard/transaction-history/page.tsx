@@ -35,25 +35,25 @@ const transactionDateKey = (value: unknown): string => {
     return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
 
-  const isoMatch = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})(?:$|[T\\s])/);
+  const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[T\s])/);
   if (isoMatch) {
     return formatDateKey(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]));
   }
 
-  const numericMatch = raw.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})(?:$|[,\\s])/);
+  const numericMatch = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:$|[,\s])/);
   if (numericMatch) {
     // Legacy transaction dates use the Indian day/month/year convention.
     return formatDateKey(Number(numericMatch[3]), Number(numericMatch[2]), Number(numericMatch[1]));
   }
 
   const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-  const dayFirstMonthName = raw.match(/^(\\d{1,2})\\s+([a-z]{3,9})\\.?\\s+(\\d{4})/i);
+  const dayFirstMonthName = raw.match(/^(\d{1,2})\s+([a-z]{3,9})\.?\s+(\d{4})/i);
   if (dayFirstMonthName) {
     const month = monthNames.indexOf(dayFirstMonthName[2].slice(0, 3).toLowerCase()) + 1;
     return formatDateKey(Number(dayFirstMonthName[3]), month, Number(dayFirstMonthName[1]));
   }
 
-  const monthFirstName = raw.match(/^([a-z]{3,9})\\.?\\s+(\\d{1,2}),?\\s+(\\d{4})/i);
+  const monthFirstName = raw.match(/^([a-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4})/i);
   if (monthFirstName) {
     const month = monthNames.indexOf(monthFirstName[1].slice(0, 3).toLowerCase()) + 1;
     return formatDateKey(Number(monthFirstName[3]), month, Number(monthFirstName[2]));
