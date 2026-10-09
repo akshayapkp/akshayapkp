@@ -3,6 +3,50 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Calendar, Search, ShieldAlert } from "lucide-react";
 import { PerformanceRecord } from "../types";
+import { supabase } from "@/lib/supabase";
+
+const CENTRAL_STORAGE_ROW_ID = 999999;
+const CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";
+
+type SharedStorage = Record<string, any[]>;
+
+const readLocalArray = (key: string): any[] => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const mergeSharedArrays = (remote: any[] = [], local: any[] = []): any[] => {
+  const merged = new Map<string, any>();
+  [...remote, ...local].forEach((item) => {
+    if (!item || typeof item !== "object") return;
+    const id = String(item.id ?? "").trim();
+    const identity = id ? "id:" + id : "value:" + JSON.stringify(item);
+    merged.set(identity, item);
+  });
+  return Array.from(merged.values());
+};
+
+const loadCentralSharedStore = async (): Promise<SharedStorage | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("feature_permissions")
+      .select("id, permissions")
+      .eq("id", CENTRAL_STORAGE_ROW_ID)
+      .limit(1);
+    if (error) return null;
+
+    const row = Array.isArray(data) ? data[0] : null;
+    const payload = row?.permissions as any;
+    if (!payload || payload.storageKey !== CENTRAL_STORAGE_KEY) return null;
+    return payload.data && typeof payload.data === "object" ? payload.data as SharedStorage : null;
+  } catch {
+    return null;
+  }
+};
 
 interface BilledServicesProps {
   records: PerformanceRecord[];
@@ -71,16 +115,29 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
   const [dateError, setDateError] = useState("");
 
   useEffect(() => {
-    try {
-      const serviceEntries = JSON.parse(localStorage.getItem("serviceEntries") || "[]");
-      const billedData = JSON.parse(localStorage.getItem("billedServicesData") || "[]");
-      const savedBills = JSON.parse(localStorage.getItem("savedBillsList") || "[]");
-      const creditBills = JSON.parse(localStorage.getItem("smart_akshaya_bills") || "[]");
-      const performanceData = JSON.parse(localStorage.getItem("performanceRecords") || "[]");
-      const source = [
-        ...(Array.isArray(serviceEntries) ? serviceEntries : []),
-        ...(Array.isArray(billedData) ? billedData : []),
-      ];
+    let cancelled = false;
+
+    const loadRows = async () => {
+      try {
+        // Staff Performance can be opened on a different device/browser from
+        // Service Entry. Read the same shared Supabase snapshot as Billed Services,
+        // then merge local rows without writing or changing the central data.
+        const centralStore = await loadCentralSharedStore();
+        const readSharedArray = (key: string, additionalRows: any[] = []) => {
+          const remote = Array.isArray(centralStore?.[key]) ? centralStore[key] : [];
+          const merged = mergeSharedArrays(remote, readLocalArray(key));
+          return additionalRows.length ? mergeSharedArrays(merged, additionalRows) : merged;
+        };
+
+        const serviceEntries = readSharedArray("serviceEntries");
+        const billedData = readSharedArray("billedServicesData");
+        const savedBills = readSharedArray("savedBillsList");
+        const creditBills = readSharedArray("smart_akshaya_bills");
+        const performanceData = readSharedArray("performanceRecords", records);
+        const source = [
+          ...serviceEntries,
+          ...billedData,
+        ];
 
       const savedMap = new Map<string, any>();
       (Array.isArray(savedBills) ? savedBills : []).forEach((bill: any) => {
@@ -231,11 +288,17 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         if (!uniqueRows.has(key)) uniqueRows.set(key, row);
       });
 
-      setRows(Array.from(uniqueRows.values()));
-    } catch (error) {
-      console.error("Failed to load Staff Performance billed services:", error);
-      setRows([]);
-    }
+        if (!cancelled) setRows(Array.from(uniqueRows.values()));
+      } catch (error) {
+        console.error("Failed to load Staff Performance billed services:", error);
+        if (!cancelled) setRows([]);
+      }
+    };
+
+    void loadRows();
+    return () => {
+      cancelled = true;
+    };
   }, [records]);
 
   const handleSearch = () => {
