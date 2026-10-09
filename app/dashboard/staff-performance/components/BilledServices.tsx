@@ -29,6 +29,23 @@ const todayKey = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+const parseLocalDateTime = (value: unknown): number => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return NaN;
+  const indian = raw.match(/^(\d{1,2})[\\/-](\d{1,2})[\\/-](\d{4})(?:,?\\s+)(\d{1,2}):(\d{2})(?::(\d{2}))?\\s*(AM|PM)?$/i);
+  if (indian) {
+    let hour = Number(indian[4]);
+    const minute = Number(indian[5]);
+    const second = Number(indian[6] || 0);
+    const meridiem = String(indian[7] || "").toUpperCase();
+    if (meridiem === "PM" && hour < 12) hour += 12;
+    if (meridiem === "AM" && hour === 12) hour = 0;
+    return new Date(Number(indian[3]), Number(indian[2]) - 1, Number(indian[1]), hour, minute, second).getTime();
+  }
+  const parsed = new Date(raw).getTime();
+  return Number.isFinite(parsed) ? parsed : NaN;
+};
+
 const localDateKey = (value: unknown) => {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
@@ -254,6 +271,13 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         row.staffName.toLowerCase().includes(parentQ);
 
       return staffMatch && fromMatch && toMatch && searchMatch && parentMatch;
+    }).sort((a, b) => {
+      const aTime = parseLocalDateTime(a.dateTime);
+      const bTime = parseLocalDateTime(b.dateTime);
+      if (!Number.isFinite(aTime) && !Number.isFinite(bTime)) return 0;
+      if (!Number.isFinite(aTime)) return 1;
+      if (!Number.isFinite(bTime)) return -1;
+      return bTime - aTime;
     });
   }, [rows, selectedStaff, searchQuery, serviceSearch, appliedFromDate, appliedToDate]);
 
@@ -341,10 +365,10 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
                     <td className="px-4 py-3.5 text-center text-xs text-slate-400">{index + 1}</td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-xs font-medium text-slate-600">
                       {(() => {
-                        const parsed = new Date(row.dateTime);
-                        return Number.isNaN(parsed.getTime())
+                        const parsed = parseLocalDateTime(row.dateTime);
+                        return Number.isNaN(parsed)
                           ? row.dateTime || "-"
-                          : parsed.toLocaleDateString("en-GB");
+                          : new Date(parsed).toLocaleDateString("en-GB");
                       })()}
                     </td>
                     <td className="px-4 py-3.5 font-semibold text-slate-800">{row.serviceName}</td>
