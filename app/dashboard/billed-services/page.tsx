@@ -175,18 +175,21 @@ interface BilledServiceItem {
 const parseStoredDate = (value: unknown): number => {
   const raw = String(value ?? '').trim();
   if (!raw) return NaN;
-  const direct = new Date(raw).getTime();
-  if (Number.isFinite(direct)) return direct;
 
-  const match = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:,?\s+)(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
-  if (!match) return NaN;
-  let hours = Number(match[4]);
-  const minutes = Number(match[5]);
-  const seconds = Number(match[6] || 0);
-  const meridiem = String(match[7] || '').toUpperCase();
-  if (meridiem === 'PM' && hours < 12) hours += 12;
-  if (meridiem === 'AM' && hours === 12) hours = 0;
-  return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), hours, minutes, seconds).getTime();
+  // Parse Indian DD/MM/YYYY locale strings before native Date parsing.
+  const match = raw.match(/^(\d{1,2})[\\/.-](\d{1,2})[\\/.-](\d{4})(?:,?\\s+)(\d{1,2}):(\d{2})(?::(\d{2}))?\\s*(AM|PM)?$/i);
+  if (match) {
+    let hours = Number(match[4]);
+    const minutes = Number(match[5]);
+    const seconds = Number(match[6] || 0);
+    const meridiem = String(match[7] || '').toUpperCase();
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+    return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), hours, minutes, seconds).getTime();
+  }
+
+  const direct = new Date(raw).getTime();
+  return Number.isFinite(direct) ? direct : NaN;
 };
 
 const getTodayDateKey = (): string => {
