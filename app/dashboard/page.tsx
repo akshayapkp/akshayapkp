@@ -29,7 +29,6 @@ import {
   ArrowUpRight,
   Bell,
   History,
-  ReceiptText,
   Megaphone,
   ChevronDown,
   ChevronUp,
@@ -2255,11 +2254,19 @@ setServiceDirectory(filteredWithUrls);
               <button
                 ref={latestEntryButtonRef}
                 onClick={handleLatestEntryToggle}
-                className={`latest-billed-entry-trigger relative flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/90 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md ${isLatestEntryOpen ? "ring-2 ring-blue-200" : ""}`}
+                className={`latest-billed-entry-trigger relative flex h-10 items-center justify-center gap-1.5 rounded-2xl border border-slate-200/80 bg-white/90 px-2.5 py-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md ${isLatestEntryOpen ? "ring-2 ring-blue-200" : ""}`}
                 aria-label="Latest billed entry"
                 title="Latest billed entry"
               >
-                <ReceiptText className="!block !text-slate-700" size={20} strokeWidth={2.4} aria-hidden="true" />
+                <span
+                  className="flex h-5 w-4 shrink-0 flex-col justify-center gap-[3px] rounded-[3px] border-2 border-current px-[2px]"
+                  aria-hidden="true"
+                >
+                  <span className="block h-px w-full rounded bg-current" />
+                  <span className="block h-px w-full rounded bg-current" />
+                  <span className="block h-px w-2/3 rounded bg-current" />
+                </span>
+                <span className="whitespace-nowrap text-[10px] font-extrabold">Latest Bill</span>
               </button>
             </div>
             )}
