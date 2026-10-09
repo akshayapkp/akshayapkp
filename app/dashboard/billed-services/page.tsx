@@ -267,7 +267,7 @@ export default function BilledServicesPage() {
       const performanceEntries = performanceRecords.map((record: any) => ({
         id: record?.id,
         billId: record?.billId || record?.billID || record?.invoiceId || record?.id,
-        dateTime: record?.dateTime || record?.date || record?.timestamp || '',
+        dateTime: record?.date || record?.dateTime || record?.timestamp || '',
         createdAt: record?.timestamp || record?.createdAt || '',
         customerName: record?.customerName || record?.name || 'Customer',
         customerPhone:
