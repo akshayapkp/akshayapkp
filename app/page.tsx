@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, FileText, MapPin, MessageCircle, Phone, Search, ShieldCheck, Upload, X, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, FileText, MapPin, MessageCircle, Phone, Search, ShieldCheck, X, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { SERVICE_CATALOG } from "@/app/dashboard/tools/serviceDocumentCatalog";
 import styles from "./home.module.css";
@@ -120,7 +120,6 @@ export default function HomePage() {
   const [selected, setSelected] = useState<ServiceItem | null>(null);
   const [audience, setAudience] = useState("");
   const [form, setForm] = useState<Record<FieldKey, string>>({ name: "", mobile: "", address: "", dob: "", aadhaar: "", parentName: "" });
-  const [files, setFiles] = useState<File[]>([]);
   const [applicationNumber, setApplicationNumber] = useState("");
   const [showApplicationPopup, setShowApplicationPopup] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -282,7 +281,6 @@ export default function HomePage() {
     const f = getFlow(serviceName(s));
     setAudience(f.audiences[0] || "");
     setForm({ name: "", mobile: "", address: "", dob: "", aadhaar: "", parentName: "" });
-    setFiles([]);
   }
 
   function closeService() {
@@ -307,10 +305,6 @@ export default function HomePage() {
       setSubmitError("ദയവായി ആവശ്യമായ എല്ലാ വിവരങ്ങളും പൂരിപ്പിക്കുക.");
       return;
     }
-    if (files.length === 0) {
-      setSubmitError("ദയവായി ആവശ്യമായ രേഖകൾ Upload ചെയ്ത ശേഷം Submit ചെയ്യുക.");
-      return;
-    }
     try {
       const { data, error } = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
       if (error) throw error;
@@ -326,7 +320,7 @@ export default function HomePage() {
         service: serviceName(selected),
         audience,
         customer: { ...form },
-        documentNames: files.map(f => f.name),
+        documentNames: [],
         submittedAt: new Date().toISOString(),
         status: "Submitted",
       };
@@ -388,9 +382,9 @@ export default function HomePage() {
       form.parentName && "രക്ഷിതാവിന്റെ പേര്: " + form.parentName,
       "",
       "Upload ചെയ്യേണ്ട രേഖകൾ:",
-      ...files.map(f => "• " + f.name),
+      ...(flow.docs.length ? flow.docs.map(doc => "• " + doc) : ["ആവശ്യമായ രേഖകൾ കേന്ദ്രം സ്ഥിരീകരിക്കും"]),
       "",
-      "ഈ അപേക്ഷയുടെ രേഖകൾ WhatsApp-ൽ attach ചെയ്ത് അയയ്ക്കുന്നു.",
+      "മുകളിൽ പറഞ്ഞ ആവശ്യമായ രേഖകൾ WhatsApp-ൽ attach ചെയ്ത് അയയ്ക്കുക.",
     ].filter(Boolean).join("\n");
     window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(lines), "_blank", "noopener,noreferrer");
   }
@@ -640,7 +634,6 @@ export default function HomePage() {
           <div className={styles.modalSection}><h3>ആർക്കാണ് സേവനം?</h3><div className={styles.choiceGrid}>{flow.audiences.map(a => <button key={a} className={audience === a ? styles.choiceActive : styles.choice} onClick={() => setAudience(a)}>{a}</button>)}</div></div>
           <div className={styles.modalSection}><h3>ആവശ്യമായ രേഖകൾ</h3><div className={styles.documentList}>{flow.docs.map(d => <div key={d}><CheckCircle2 size={16}/><span>{d}</span></div>)}</div><small>കുറിപ്പ്: രേഖകളുടെ അന്തിമ ലിസ്റ്റ് സേവനത്തിന്റെ നിലവിലെ ആവശ്യകത അനുസരിച്ച് കേന്ദ്രം സ്ഥിരീകരിക്കും.</small></div>
           <div className={styles.modalSection}><h3>നിങ്ങളുടെ വിവരങ്ങൾ</h3><div className={styles.formGrid}>{field("പേര്","name","text","പൂർണ്ണ പേര്")}{field("മൊബൈൽ നമ്പർ","mobile","tel","10 അക്ക മൊബൈൽ നമ്പർ")}{field("വിലാസം","address","text","പൂർണ്ണ വിലാസം")}{field("ജനന തീയതി","dob","date")}{field("ആധാർ നമ്പർ","aadhaar","text","12 അക്ക ആധാർ നമ്പർ")}{field("രക്ഷിതാവിന്റെ പേര്","parentName","text","കുട്ടിയാണെങ്കിൽ")}</div></div>
-          <div className={styles.modalSection}><h3>രേഖകൾ തിരഞ്ഞെടുക്കുക</h3><label className={styles.uploadBox}><Upload size={22}/><b>Upload Documents</b><span>രേഖകൾ തിരഞ്ഞെടുക്കാൻ ഇവിടെ ക്ലിക്ക് ചെയ്യുക</span><input type="file" multiple onChange={e => setFiles(Array.from(e.target.files || []))}/></label>{files.length > 0 && <div className={styles.fileList}>{files.map(f => <span key={f.name}>{f.name}</span>)}</div>}</div>
         </div>
         <div className={styles.modalFooter}>{submitError && <span className={styles.submitError}>{submitError}</span>}<button className={styles.secondaryButton} onClick={closeService}>Cancel</button><button className={styles.primaryButton} onClick={submitApplication}><CheckCircle2 size={18}/> Submit അപേക്ഷ</button></div>
       </div>
@@ -656,10 +649,10 @@ export default function HomePage() {
         <p>ഈ നമ്പർ സൂക്ഷിച്ച് വെക്കുക. അപേക്ഷയുടെ തുടർനടപടികൾക്കും status അറിയാനും ഇത് ആവശ്യമാണ്.</p>
         <div className={styles.applicationSummary}>
           <span>സേവനം</span><strong>{serviceName(selected)}</strong>
-          <span>രേഖകൾ</span><strong>{files.length} എണ്ണം</strong>
+          <span>ആവശ്യമായ രേഖകൾ</span><strong>{flow.docs.length} എണ്ണം</strong>
         </div>
         <button className={styles.whatsappButton} onClick={openApplicationWhatsApp}><MessageCircle size={18}/> WhatsApp-ൽ രേഖകൾ Upload ചെയ്യുക</button>
-        <small>WhatsApp തുറന്ന ശേഷം തിരഞ്ഞെടുക്കപ്പെട്ട രേഖകൾ attach ചെയ്ത് അയയ്ക്കുക. അപേക്ഷ നമ്പറും സേവന വിവരവും മെസ്സേജിൽ സ്വയം വരും.</small>
+        <small>WhatsApp തുറന്ന ശേഷം ആവശ്യമായ രേഖകൾ attach ചെയ്ത് അയയ്ക്കുക. അപേക്ഷ നമ്പറും സേവന വിവരവും മെസ്സേജിൽ സ്വയം വരും.</small>
         <button className={styles.popupCloseButton} onClick={closeApplicationPopup}>പിന്നീട് Upload ചെയ്യാം</button>
       </div>
     </div>}  </main>;
