@@ -177,7 +177,7 @@ const parseStoredDate = (value: unknown): number => {
   if (!raw) return NaN;
 
   // Parse Indian DD/MM/YYYY locale strings before native Date parsing.
-  const match = raw.match(/^(\d{1,2})[\\/.-](\d{1,2})[\\/.-](\d{4})(?:,?\\s+)(\d{1,2}):(\d{2})(?::(\d{2}))?\\s*(AM|PM)?$/i);
+  const match = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:,?\s+)(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
   if (match) {
     let hours = Number(match[4]);
     const minutes = Number(match[5]);
@@ -801,7 +801,7 @@ export default function BilledServicesPage() {
 
     // Parse Indian DD/MM/YYYY strings before native parsing to prevent
     // locale-dependent month/day swaps in browser sorting and filtering.
-    const match = raw.match(/^(\d{1,2})[\\/-](\d{1,2})[\\/-](\d{4})[,\\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\\s*(am|pm)?$/i);
+    const match = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?$/i);
     if (match) {
       const [, day, month, year, hourText, minuteText, secondText = '0', meridiem] = match;
       let hour = Number(hourText);
