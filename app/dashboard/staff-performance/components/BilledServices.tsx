@@ -66,6 +66,7 @@ interface BilledRow {
   totalAmount: number;
   staffName: string;
   customerName: string;
+  businessDate?: string;
 }
 
 const todayKey = () => {
@@ -76,6 +77,8 @@ const todayKey = () => {
 const parseLocalDateTime = (value: unknown): number => {
   const raw = String(value ?? "").trim();
   if (!raw) return NaN;
+  const dateOnly = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (dateOnly) return new Date(Number(dateOnly[3]), Number(dateOnly[2]) - 1, Number(dateOnly[1])).getTime();
   const indian = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})(?:,?\s+)(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
   if (indian) {
     let hour = Number(indian[4]);
@@ -148,6 +151,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
       // The detailed service row can lack staffName or contain an older name.
       // The bill-level performance/saved-bill record is the authoritative owner.
       const staffByBillId = new Map<string, string>();
+      const businessDateByBillId = new Map<string, string>();
       const completedPerformanceBillIds = new Set<string>();
       // Treat saved/credit bill metadata as fallback; current performance records own the bill.
       [...(Array.isArray(creditBills) ? creditBills : []),
@@ -165,6 +169,8 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
           (Array.isArray(performanceData) ? performanceData : []).includes(bill) ||
           records.includes(bill) ||
           (Array.isArray(creditBills) ? creditBills : []).includes(bill);
+        const businessDate = String(bill?.date || "").trim();
+        if (id && isPerformanceRecord && businessDate) businessDateByBillId.set(id, businessDate);
         if (id && isPerformanceRecord && (["completed","complete","paid","credit","pending"].includes(status) || total > 0 || fee > 0 || charge > 0)) {
           completedPerformanceBillIds.add(id);
         }
@@ -215,6 +221,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         formatted.push({
           id: String(item.id || `${billId}-${index}`),
           billId,
+          businessDate: businessDateByBillId.get(billId) || undefined,
           dateTime: String(saved?.dateTime || item.dateTime || item.timestamp || item.date || ""),
           serviceName,
           wallet: String(item.wallet || item.defaultWallet || item.walletName || "N/A"),
@@ -239,6 +246,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
           formatted.push({
             id: String(item?.id || `${billId}-credit-${itemIndex}`),
             billId,
+            businessDate: businessDateByBillId.get(billId) || String(bill?.date || "").trim() || undefined,
             dateTime: String(bill?.date || bill?.dateTime || bill?.createdAt || ""),
             serviceName,
             wallet: String(item?.wallet || item?.defaultWallet || "N/A"),
@@ -266,6 +274,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         formatted.push({
           id: String(record?.id || billId),
           billId,
+          businessDate: String(record?.date || "").trim() || undefined,
           // Prefer the local date field over UTC timestamp to avoid shifting
           // late-evening India bills into the previous/next day.
           dateTime,
@@ -316,7 +325,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
     const parentQ = searchQuery.trim().toLowerCase();
 
     return rows.filter((row) => {
-      const date = localDateKey(row.dateTime);
+      const date = localDateKey(row.businessDate || row.dateTime);
       const normalizedRowStaff = row.staffName.trim().replace(/\s+/g, " ").toLowerCase();
       const normalizedSelectedStaff = selectedStaff.trim().replace(/\s+/g, " ").toLowerCase();
       const staffMatch = selectedStaff === "All" || normalizedRowStaff === normalizedSelectedStaff;
@@ -428,9 +437,10 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
                     <td className="px-4 py-3.5 text-center text-xs text-slate-400">{index + 1}</td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-xs font-medium text-slate-600">
                       {(() => {
-                        const parsed = parseLocalDateTime(row.dateTime);
+                        const displayDate = row.businessDate || row.dateTime;
+                        const parsed = parseLocalDateTime(displayDate);
                         return Number.isNaN(parsed)
-                          ? row.dateTime || "-"
+                          ? displayDate || "-"
                           : new Date(parsed).toLocaleDateString("en-GB");
                       })()}
                     </td>
