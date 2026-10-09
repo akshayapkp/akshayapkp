@@ -25,7 +25,7 @@ const mergeSharedArrays = (remote: any[] = [], local: any[] = []): any[] => {
     if (!item || typeof item !== "object") return;
     const id = String(item.id ?? "").trim();
     const identity = id ? "id:" + id : "value:" + JSON.stringify(item);
-    merged.set(identity, item);
+    if (!merged.has(identity)) merged.set(identity, item);
   });
   return Array.from(merged.values());
 };
