@@ -86,7 +86,11 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         const total = Number(bill?.totalAmount ?? bill?.total ?? 0) || 0;
         const fee = Number(bill?.departmentFee ?? bill?.deptFee ?? bill?.walletChg ?? 0) || 0;
         const charge = Number(bill?.serviceCharge ?? bill?.srvChg ?? bill?.srvCharge ?? 0) || 0;
-        if (id && (["completed","complete","paid","credit","pending"].includes(status) || total > 0 || fee > 0 || charge > 0)) {
+        const isPerformanceRecord =
+          (Array.isArray(performanceData) ? performanceData : []).includes(bill) ||
+          records.includes(bill) ||
+          (Array.isArray(creditBills) ? creditBills : []).includes(bill);
+        if (id && isPerformanceRecord && (["completed","complete","paid","credit","pending"].includes(status) || total > 0 || fee > 0 || charge > 0)) {
           completedPerformanceBillIds.add(id);
         }
       });
