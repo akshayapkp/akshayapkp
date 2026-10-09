@@ -2179,21 +2179,23 @@ setServiceDirectory(filteredWithUrls);
       </div>
 
       <div className="dashboard-page-frame relative z-[100] isolate mx-auto w-full max-w-[1600px] space-y-2.5 pb-5">
-        <div className="dashboard-topbar flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl mb-0">
+        <div className="dashboard-topbar relative flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl mb-0">
           <div>
             <h2 className="text-lg font-bold text-slate-800">Dashboard</h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="dashboard-topbar-actions flex items-center gap-2" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, position: "relative", zIndex: 50, visibility: "visible", opacity: 1 }}>
             <div className="relative" ref={notificationRef}>
               <button
+                type="button"
                 ref={notificationButtonRef}
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="relative rounded-2xl border border-slate-200/80 bg-white/70 p-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+                className="notification-trigger relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
+                style={{ display: "flex", width: 40, minWidth: 40, height: 40, alignItems: "center", justifyContent: "center", padding: 8, color: "#334155", backgroundColor: "#ffffff", borderColor: "#cbd5e1", opacity: 1, visibility: "visible" }}
                 aria-label="Notifications"
                 title="Notifications"
               >
-                <Bell size={19} />
+                <Bell size={19} aria-hidden="true" style={{ color: "#334155", stroke: "#334155", opacity: 1 }} />
                 {announcements.length > 0 && (
                   <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white"></span>
                 )}
