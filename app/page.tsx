@@ -639,7 +639,7 @@ export default function HomePage() {
     </div>}
 
 
-    {showApplicationPopup && selected && <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) closeApplicationPopup(); }}>
+    {showApplicationPopup && selected && flow && <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) closeApplicationPopup(); }}>
       <div className={styles.applicationPopup}>
         <div className={styles.successIcon}><CheckCircle2 size={32}/></div>
         <span className={styles.popupEyebrow}>Application Submitted</span>
