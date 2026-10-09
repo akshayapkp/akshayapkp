@@ -75,10 +75,11 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
       // The bill-level performance/saved-bill record is the authoritative owner.
       const staffByBillId = new Map<string, string>();
       const completedPerformanceBillIds = new Set<string>();
-      [...(Array.isArray(savedBills) ? savedBills : []),
+      // Treat saved/credit bill metadata as fallback; current performance records own the bill.
+      [...(Array.isArray(creditBills) ? creditBills : []),
+        ...(Array.isArray(savedBills) ? savedBills : []),
         ...(Array.isArray(performanceData) ? performanceData : []),
-        ...records,
-        ...(Array.isArray(creditBills) ? creditBills : [])].forEach((bill: any) => {
+        ...records].forEach((bill: any) => {
         const id = String(bill?.billId || bill?.billID || bill?.invoiceId || bill?.id || bill?.billNumber || "").trim();
         const name = String(bill?.staffName || bill?.staff || "").trim();
         if (id && name) staffByBillId.set(id, name);
