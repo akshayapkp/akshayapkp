@@ -1279,6 +1279,41 @@ html.dark .dashboard-page-frame .fixed.bg-white .text-slate-800 {
   color: #f8fafc !important;
 }
 
+/* Dashboard header actions must remain visible in all account themes. */
+.dashboard-topbar-actions {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 50 !important;
+}
+.dashboard-topbar .notification-trigger {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px !important;
+  color: #334155 !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+.dashboard-topbar .notification-trigger svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: #334155 !important;
+  stroke: #334155 !important;
+}
+
 /* Explicit latest-bill trigger: keep it visible beside notifications. */
 .dashboard-topbar .latest-billed-entry-trigger {
   display: flex !important;
