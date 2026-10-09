@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, FileText, MapPin, MessageCircle, Phone, Search, ShieldCheck, Upload, X, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { SERVICE_CATALOG } from "@/app/dashboard/tools/serviceDocumentCatalog";
 import styles from "./home.module.css";
 
 type ServiceItem = {
@@ -202,6 +203,20 @@ export default function HomePage() {
     return value.toLowerCase().replace(/[^a-z0-9\u0D00-\u0D7F]+/g, "");
   }
 
+  function getCatalogDocuments(name: string): string[] | null {
+    const key = normalizeServiceKey(name);
+    if (!key) return null;
+
+    // Prefer exact English or Malayalam service-name matches to avoid showing
+    // another service's documents when names are similar.
+    const match = SERVICE_CATALOG.find(item =>
+      normalizeServiceKey(item.name) === key ||
+      normalizeServiceKey(item.ml) === key
+    );
+    if (!match) return null;
+    return match.docs.map(doc => doc.ml).filter(Boolean);
+  }
+
   function applyFeatured(item: HomepagePoster) {
     // First use the service explicitly linked to the poster. If it was renamed,
     // match it using a normalized key so "KTET", "K-TET", etc. still connect.
@@ -242,9 +257,22 @@ export default function HomePage() {
   function getConfiguredFlow(name: string) {
     const fallback = getFlow(name);
     const config = homepageSettings.serviceConfigs[name];
-    if (!config) return fallback;
-    const fields = config.fields.filter(Boolean) as FieldKey[];
-    return { audiences: fallback.audiences, fields: fields.length ? fields : fallback.fields, docs: config.documents.length ? config.documents : fallback.docs };
+    const catalogDocs = getCatalogDocuments(name);
+
+    // The Service Document Generator catalogue is the single source of truth
+    // for required documents on the customer homepage. Keep the homepage's
+    // existing field/audience configuration, and use its old docs only when
+    // the selected service is not present in the catalogue.
+    const fields = config?.fields?.filter(Boolean) as FieldKey[] | undefined;
+    const docs = catalogDocs && catalogDocs.length
+      ? catalogDocs
+      : (config?.documents?.length ? config.documents : fallback.docs);
+
+    return {
+      audiences: fallback.audiences,
+      fields: fields?.length ? fields : fallback.fields,
+      docs,
+    };
   }
 
   const flow = selected ? getConfiguredFlow(serviceName(selected)) : null;
