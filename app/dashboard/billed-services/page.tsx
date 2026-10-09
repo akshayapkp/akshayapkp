@@ -327,10 +327,22 @@ export default function BilledServicesPage() {
       // Use the bill-level performance/saved bill as the canonical staff owner
       // when legacy service lines have a missing or stale staffName.
       const canonicalStaffByBill = new Map<string, string>();
+      const completedPerformanceBillIds = new Set<string>();
       [...performanceRecords, ...(Array.isArray(savedBillsList) ? savedBillsList : [])].forEach((record: any) => {
         const id = getBillKey(record);
         const name = String(record?.staffName || record?.staff || '').trim();
         if (id && name) canonicalStaffByBill.set(id, name);
+
+        // Staff Performance records are written when a service is actually
+        // billed. Use them to avoid a stale saved-draft status hiding a bill.
+        const status = String(record?.status || '').trim().toLowerCase();
+        const total = Number(record?.totalAmount ?? record?.total ?? 0) || 0;
+        const fee = Number(record?.departmentFee ?? record?.deptFee ?? record?.walletChg ?? 0) || 0;
+        const charge = Number(record?.serviceCharge ?? record?.srvChg ?? record?.srvCharge ?? 0) || 0;
+        const hasBilledSignal =
+          ['completed', 'complete', 'paid', 'credit', 'pending'].includes(status) ||
+          total > 0 || fee > 0 || charge > 0;
+        if (id && hasBilledSignal && record?.staffName) completedPerformanceBillIds.add(id);
       });
 
       const performanceByBill = new Map<string, any[]>();
@@ -494,8 +506,9 @@ export default function BilledServicesPage() {
             savedStatus === 'paid' ||
             (savedStatus !== '' && savedBalance <= 0 && savedStatus !== 'pending' && savedStatus !== 'credit');
 
-          // Still only a Saved Bill / draft -> do NOT show it here.
-          if (!savedIsCredit && !savedIsCompleted) return false;
+          // A stale saved-draft record must not hide a bill that has a
+          // completed/non-zero performance record for the same bill ID.
+          if (!savedIsCredit && !savedIsCompleted && !completedPerformanceBillIds.has(billKey)) return false;
 
           // Saved Bill was later completed or converted to credit -> show it.
           return savedIsCredit || savedIsCompleted;
