@@ -15,6 +15,53 @@ interface TransactionItem {
   billId?: string;
 }
 
+const transactionDateKey = (value: unknown): string => {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+
+  const formatDateKey = (year: number, month: number, day: number): string => {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (
+      !Number.isInteger(year) ||
+      !Number.isInteger(month) ||
+      !Number.isInteger(day) ||
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() !== month - 1 ||
+      date.getUTCDate() !== day
+    ) {
+      return '';
+    }
+
+    return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };
+
+  const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[T\s])/);
+  if (isoMatch) {
+    return formatDateKey(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]));
+  }
+
+  const numericMatch = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:$|[,\s])/);
+  if (numericMatch) {
+    // Legacy transaction dates use the Indian day/month/year convention.
+    return formatDateKey(Number(numericMatch[3]), Number(numericMatch[2]), Number(numericMatch[1]));
+  }
+
+  const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const dayFirstMonthName = raw.match(/^(\d{1,2})\s+([a-z]{3,9})\.?\s+(\d{4})/i);
+  if (dayFirstMonthName) {
+    const month = monthNames.indexOf(dayFirstMonthName[2].slice(0, 3).toLowerCase()) + 1;
+    return formatDateKey(Number(dayFirstMonthName[3]), month, Number(dayFirstMonthName[1]));
+  }
+
+  const monthFirstName = raw.match(/^([a-z]{3,9})\.?\s+(\d{1,2}),?\s+(\d{4})/i);
+  if (monthFirstName) {
+    const month = monthNames.indexOf(monthFirstName[1].slice(0, 3).toLowerCase()) + 1;
+    return formatDateKey(Number(monthFirstName[3]), month, Number(monthFirstName[2]));
+  }
+
+  return '';
+};
+
 function TransactionHistoryContent() {
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const getToday = () => {
@@ -234,38 +281,13 @@ function TransactionHistoryContent() {
     let matchesDate = true;
 
     if (fromDate || toDate) {
-      try {
-        // Date String parsing guard
-        const datePart = tx.dateTime ? tx.dateTime.split(' ')[0] : '';
-        if (datePart) {
-          const dateComponents = datePart.includes('-') ? datePart.split('-') : datePart.split('/');
-          
-          let year = 0, month = 0, day = 0;
-          if (dateComponents[0].length === 4) {
-            // YYYY-MM-DD
-            [year, month, day] = dateComponents.map(Number);
-          } else {
-            // DD-MM-YYYY
-            [day, month, year] = dateComponents.map(Number);
-          }
-
-          const txDate = new Date(year, month - 1, day);
-
-          if (fromDate) {
-            const start = new Date(fromDate);
-            start.setHours(0, 0, 0, 0);
-            if (txDate < start) matchesDate = false;
-          }
-
-          if (toDate) {
-            const end = new Date(toDate);
-            end.setHours(23, 59, 59, 999);
-            if (txDate > end) matchesDate = false;
-          }
-        }
-      } catch (err) {
-        console.error("Date parse error", err);
-      }
+      const txDateKey = transactionDateKey(tx.dateTime);
+      // Exclude unknown/malformed dates while a date range is active; allowing
+      // them through would make old records appear in today's results.
+      matchesDate =
+        txDateKey !== '' &&
+        (!fromDate || txDateKey >= fromDate) &&
+        (!toDate || txDateKey <= toDate);
     }
 
     return matchesSearch && matchesDate;
