@@ -799,27 +799,25 @@ export default function BilledServicesPage() {
     const raw = String(value ?? '').trim();
     if (!raw) return NaN;
 
-    const native = new Date(raw).getTime();
-    if (Number.isFinite(native)) return native;
-
-    // Service Entry stores dateTime using the browser's locale string.
-    // In India this is commonly DD/MM/YYYY, which Date.parse() does not
-    // reliably understand across browsers.
-    const match = raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?$/i);
-    if (!match) return NaN;
-
-    const [, day, month, year, hourText, minuteText, secondText = '0', meridiem] = match;
-    let hour = Number(hourText);
-    const minute = Number(minuteText);
-    const second = Number(secondText);
-    if (meridiem) {
-      const lower = meridiem.toLowerCase();
-      if (lower === 'pm' && hour < 12) hour += 12;
-      if (lower === 'am' && hour === 12) hour = 0;
+    // Parse Indian DD/MM/YYYY strings before native parsing to prevent
+    // locale-dependent month/day swaps in browser sorting and filtering.
+    const match = raw.match(/^(\d{1,2})[\\/-](\d{1,2})[\\/-](\d{4})[,\\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\\s*(am|pm)?$/i);
+    if (match) {
+      const [, day, month, year, hourText, minuteText, secondText = '0', meridiem] = match;
+      let hour = Number(hourText);
+      const minute = Number(minuteText);
+      const second = Number(secondText);
+      if (meridiem) {
+        const lower = meridiem.toLowerCase();
+        if (lower === 'pm' && hour < 12) hour += 12;
+        if (lower === 'am' && hour === 12) hour = 0;
+      }
+      const date = new Date(Number(year), Number(month) - 1, Number(day), hour, minute, second);
+      return Number.isNaN(date.getTime()) ? NaN : date.getTime();
     }
 
-    const date = new Date(Number(year), Number(month) - 1, Number(day), hour, minute, second);
-    return Number.isNaN(date.getTime()) ? NaN : date.getTime();
+    const native = new Date(raw).getTime();
+    return Number.isFinite(native) ? native : NaN;
   };
 
   const formatDisplayDateTime = (value: unknown) => {
