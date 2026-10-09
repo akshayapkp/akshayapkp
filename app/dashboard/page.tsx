@@ -1728,8 +1728,7 @@ setServiceDirectory(filteredWithUrls);
       const gap = 8;
       const sidePadding = 12;
 
-      let left = rect.right - popupWidth;
-      left = Math.max(sidePadding, Math.min(left, window.innerWidth - popupWidth - sidePadding));
+      const left = Math.max(sidePadding, Math.min(rect.left, window.innerWidth - popupWidth - sidePadding));
 
       // Keep the popup clearly below the topbar so the trigger icon remains visible.
       const top = rect.bottom + 14;
@@ -2182,8 +2181,23 @@ setServiceDirectory(filteredWithUrls);
 
       <div className="dashboard-page-frame relative z-[100] isolate mx-auto w-full max-w-[1600px] space-y-2.5 pb-5">
         <div className="dashboard-topbar flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-2 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl mb-0">
-          <div>
+          <div className="flex items-center gap-3">
             <h2 className="text-lg font-bold text-slate-800">Dashboard</h2>
+            {canViewLatestEntry && (
+            <div className="relative z-[5]" ref={latestEntryRef}>
+              <button
+                ref={latestEntryButtonRef}
+                onClick={handleLatestEntryToggle}
+                className={`latest-billed-entry-trigger relative flex h-10 items-center justify-center gap-1.5 rounded-2xl border border-slate-200/80 bg-white/90 px-2.5 py-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md ${isLatestEntryOpen ? "ring-2 ring-blue-200" : ""}`}
+                style={{ display: "flex", width: "auto", minWidth: 128, height: 40, alignItems: "center", justifyContent: "center", gap: 6, color: "#334155", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}
+                aria-label="Latest billed entry"
+                title="Latest billed entry"
+              >
+                <FileText size={18} aria-hidden="true" />
+                <span>Latest Bill</span>
+              </button>
+            </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -2249,21 +2263,6 @@ setServiceDirectory(filteredWithUrls);
             )}
             </div>
 
-            {canViewLatestEntry && (
-            <div className="relative z-[5]" ref={latestEntryRef}>
-              <button
-                ref={latestEntryButtonRef}
-                onClick={handleLatestEntryToggle}
-                className={`latest-billed-entry-trigger relative flex h-10 items-center justify-center gap-1.5 rounded-2xl border border-slate-200/80 bg-white/90 px-2.5 py-2 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md ${isLatestEntryOpen ? "ring-2 ring-blue-200" : ""}`}
-                style={{ display: "flex", width: "auto", minWidth: 128, height: 40, alignItems: "center", justifyContent: "center", gap: 6, color: "#334155", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}
-                aria-label="Latest billed entry"
-                title="Latest billed entry"
-              >
-                <span style={{ fontSize: "18px", lineHeight: 1 }} aria-hidden="true">🧾</span>
-                Latest Bill
-              </button>
-            </div>
-            )}
           </div>
         </div>
 
