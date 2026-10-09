@@ -145,17 +145,6 @@ const refreshBilledServicesFromCentral = async () => {
     const local = readSharedArray(key);
     let merged = mergeSharedArraysForRead(remote, local, key);
 
-    if (key === 'serviceEntries') {
-      const localBillIds = new Set(local.map((item: any) => String(item?.billId || item?.billID || item?.invoiceId || '').trim()).filter(Boolean));
-      merged = [
-        ...remote.filter((item: any) => {
-          const billId = String(item?.billId || item?.billID || item?.invoiceId || '').trim();
-          return !billId || !localBillIds.has(billId);
-        }),
-        ...local,
-      ];
-    }
-
     if (deletedIds.length) {
       merged = merged.filter((item: any) => !deletedIds.includes(String(item?.billId || item?.billID || item?.invoiceId || item?.id || '')));
     }
@@ -328,7 +317,8 @@ export default function BilledServicesPage() {
       // when legacy service lines have a missing or stale staffName.
       const canonicalStaffByBill = new Map<string, string>();
       const completedPerformanceBillIds = new Set<string>();
-      [...performanceRecords, ...(Array.isArray(savedBillsList) ? savedBillsList : [])].forEach((record: any) => {
+      // Use saved bill metadata as fallback; current performance records win on conflicts.
+      [...(Array.isArray(savedBillsList) ? savedBillsList : []), ...performanceRecords].forEach((record: any) => {
         const id = getBillKey(record);
         const name = String(record?.staffName || record?.staff || '').trim();
         if (id && name) canonicalStaffByBill.set(id, name);
@@ -509,10 +499,9 @@ export default function BilledServicesPage() {
 
           // A stale saved-draft record must not hide a bill that has a
           // completed/non-zero performance record for the same bill ID.
+          // A performance record confirming billing overrides an out-of-date saved draft.
           if (!savedIsCredit && !savedIsCompleted && !completedPerformanceBillIds.has(billKey)) return false;
-
-          // Saved Bill was later completed or converted to credit -> show it.
-          return savedIsCredit || savedIsCompleted;
+          return savedIsCredit || savedIsCompleted || completedPerformanceBillIds.has(billKey);
         }
 
         // Bills that were never saved: show both completed/paid and credit.
