@@ -2375,21 +2375,24 @@ setServiceDirectory(filteredWithUrls);
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {quickLinks.map((tool, index) => {
-              const isCashCounter = tool.name.toLowerCase().includes("cash") || (tool.url && tool.url.toLowerCase().includes("cash"));
-              const isSslc = tool.name.toLowerCase().includes("sslc") || (tool.url && tool.url.toLowerCase().includes("sslc"));
-              const isCropResize = tool.name.toLowerCase().includes("crop") || (tool.url && tool.url.toLowerCase().includes("crop"));
-              const isPsc = tool.name.toLowerCase().includes("psc") || (tool.url && tool.url.toLowerCase().includes("psc"));
-              const isPassport = tool.name.toLowerCase().includes("passport") || (tool.url && tool.url.toLowerCase().includes("passport"));
-              const isPdfTool = tool.name.toLowerCase().includes("pdf") || tool.url === "pdf-toolkit-modal";
-              const isTranslatorTool = tool.name.toLowerCase().includes("translator") || tool.url === "translator-modal";
-              const isConverterTool = tool.name.toLowerCase().includes("converter") || tool.url === "converter-modal";
-              const isImageToTextTool = tool.name.toLowerCase().includes("image") || tool.url === "image-to-text-modal";
-              const isCalculatorTool = tool.name.toLowerCase().includes("calculator") || tool.url === "calculator-modal";
-              const isResumeBuilderTool = tool.url === "resume-builder-modal";
-              const isIncomeAffidavitTool = tool.url === "income-affidavit-modal";
-              const isAadhaarGazetteTool = tool.url === "aadhaar-gazette-modal";
-              const isServiceDocumentGeneratorTool = tool.url === "service-document-generator-modal";
-              const isStatusCenter = tool.url === "status-center";
+              // Only built-in dashboard tools may be routed to local modals.
+              // User-added Quick Hub links should always follow their URL.
+              const isInternalTool = tool.isInternal;
+              const isCashCounter = isInternalTool && (tool.name.toLowerCase().includes("cash") || (tool.url && tool.url.toLowerCase().includes("cash")));
+              const isSslc = isInternalTool && (tool.name.toLowerCase().includes("sslc") || (tool.url && tool.url.toLowerCase().includes("sslc")));
+              const isCropResize = isInternalTool && (tool.name.toLowerCase().includes("crop") || (tool.url && tool.url.toLowerCase().includes("crop")));
+              const isPsc = isInternalTool && (tool.name.toLowerCase().includes("psc") || (tool.url && tool.url.toLowerCase().includes("psc")));
+              const isPassport = isInternalTool && (tool.name.toLowerCase().includes("passport") || (tool.url && tool.url.toLowerCase().includes("passport")));
+              const isPdfTool = isInternalTool && (tool.name.toLowerCase().includes("pdf") || tool.url === "pdf-toolkit-modal");
+              const isTranslatorTool = isInternalTool && (tool.name.toLowerCase().includes("translator") || tool.url === "translator-modal");
+              const isConverterTool = isInternalTool && (tool.name.toLowerCase().includes("converter") || tool.url === "converter-modal");
+              const isImageToTextTool = isInternalTool && (tool.name.toLowerCase().includes("image") || tool.url === "image-to-text-modal");
+              const isCalculatorTool = isInternalTool && (tool.name.toLowerCase().includes("calculator") || tool.url === "calculator-modal");
+              const isResumeBuilderTool = isInternalTool && (tool.url === "resume-builder-modal");
+              const isIncomeAffidavitTool = isInternalTool && (tool.url === "income-affidavit-modal");
+              const isAadhaarGazetteTool = isInternalTool && (tool.url === "aadhaar-gazette-modal");
+              const isServiceDocumentGeneratorTool = isInternalTool && (tool.url === "service-document-generator-modal");
+              const isStatusCenter = isInternalTool && (tool.url === "status-center");
               return (
                 <div
                   key={`${tool.id}-${index}`}
