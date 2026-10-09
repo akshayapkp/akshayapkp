@@ -98,7 +98,17 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
 
         const status = String(saved?.status ?? item.status ?? "").toLowerCase();
         const pending = Number(saved?.balance ?? saved?.owedAmount ?? item.pendingAmount ?? item.balance ?? 0);
-        const validBill = status === "completed" || status === "paid" || status === "credit" || status === "pending" || pending > 0;
+        // Completed service-entry rows may not carry a status field in older
+        // staff sessions. Treat a missing status as a billed row, but still
+        // exclude explicitly unbilled/draft/cancelled records.
+        const validBill =
+          !status ||
+          status === "completed" ||
+          status === "complete" ||
+          status === "paid" ||
+          status === "credit" ||
+          status === "pending" ||
+          pending > 0;
         if (!validBill || !serviceName) return;
 
         const signature = [
