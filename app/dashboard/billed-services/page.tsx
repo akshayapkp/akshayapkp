@@ -342,7 +342,8 @@ export default function BilledServicesPage() {
         const hasBilledSignal =
           ['completed', 'complete', 'paid', 'credit', 'pending'].includes(status) ||
           total > 0 || fee > 0 || charge > 0;
-        if (id && hasBilledSignal && record?.staffName) completedPerformanceBillIds.add(id);
+        const isPerformanceRecord = performanceRecords.includes(record);
+        if (id && isPerformanceRecord && hasBilledSignal && record?.staffName) completedPerformanceBillIds.add(id);
       });
 
       const performanceByBill = new Map<string, any[]>();
