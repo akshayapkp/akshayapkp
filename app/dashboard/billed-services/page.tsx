@@ -324,6 +324,15 @@ export default function BilledServicesPage() {
           .filter(Boolean)
       );
 
+      // Use the bill-level performance/saved bill as the canonical staff owner
+      // when legacy service lines have a missing or stale staffName.
+      const canonicalStaffByBill = new Map<string, string>();
+      [...performanceRecords, ...(Array.isArray(savedBillsList) ? savedBillsList : [])].forEach((record: any) => {
+        const id = getBillKey(record);
+        const name = String(record?.staffName || record?.staff || '').trim();
+        if (id && name) canonicalStaffByBill.set(id, name);
+      });
+
       const performanceByBill = new Map<string, any[]>();
       performanceEntries.forEach((entry: any) => {
         const key = getBillKey(entry);
@@ -500,9 +509,15 @@ export default function BilledServicesPage() {
 
         const isCompleted =
           itemStatus === 'completed' ||
+          itemStatus === 'complete' ||
           itemStatus === 'paid';
 
-        return isCredit || isCompleted;
+        // Older completed service rows sometimes have no status field at all.
+        // If they are not present as a draft in savedBillsList, treat them as
+        // billed rather than silently hiding them.
+        const isLegacyBilled = itemStatus === '';
+
+        return isCredit || isCompleted || isLegacyBilled;
       });
 
       // One displayed row must represent one complete bill.
@@ -601,7 +616,9 @@ export default function BilledServicesPage() {
             gpayAmount: Number(savedBill?.gpay ?? gpayAmount) || 0,
             pendingAmount,
             staffName:
+              canonicalStaffByBill.get(billKey) ||
               savedBill?.staffName ||
+              savedBill?.staff ||
               firstItem.staffName ||
               firstItem.staff ||
               'Admin',
