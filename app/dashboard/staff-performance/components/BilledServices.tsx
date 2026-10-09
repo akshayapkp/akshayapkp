@@ -67,8 +67,19 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
 
       const savedMap = new Map<string, any>();
       (Array.isArray(savedBills) ? savedBills : []).forEach((bill: any) => {
-        const id = String(bill?.billId || bill?.id || "").trim();
+        const id = String(bill?.billId || bill?.id || bill?.billNumber || "").trim();
         if (id) savedMap.set(id, bill);
+      });
+
+      // The detailed service row can lack staffName or contain an older name.
+      // The bill-level performance/saved-bill record is the authoritative owner.
+      const staffByBillId = new Map<string, string>();
+      [...(Array.isArray(savedBills) ? savedBills : []),
+        ...(Array.isArray(performanceData) ? performanceData : []),
+        ...(Array.isArray(creditBills) ? creditBills : [])].forEach((bill: any) => {
+        const id = String(bill?.billId || bill?.id || bill?.billNumber || "").trim();
+        const name = String(bill?.staffName || bill?.staff || "").trim();
+        if (id && name) staffByBillId.set(id, name);
       });
 
       const seen = new Set<string>();
@@ -79,8 +90,11 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
 
         const billId = String(item.billId || item.billID || item.invoiceId || item.id || `row-${index}`).trim();
         const serviceName = String(item.serviceName || item.service || item.name || "").trim();
-        const staffName = String(item.staffName || item.staff || "Admin User").trim();
         const saved = savedMap.get(billId);
+        const staffName = String(
+          staffByBillId.get(billId) || saved?.staffName || saved?.staff ||
+          item.staffName || item.staff || "Admin User"
+        ).trim();
 
         const status = String(saved?.status ?? item.status ?? "").toLowerCase();
         const pending = Number(saved?.balance ?? saved?.owedAmount ?? item.pendingAmount ?? item.balance ?? 0);
@@ -130,7 +144,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
             departmentFee: Number(item?.walletChg ?? item?.deptChg ?? item?.deptFee ?? 0) || 0,
             serviceCharge: Number(item?.srvChg ?? item?.srvCharge ?? item?.serviceCharge ?? 0) || 0,
             totalAmount: Number(item?.totalAmount ?? item?.total ?? ((Number(item?.walletChg ?? item?.deptChg ?? item?.deptFee ?? 0) + Number(item?.srvChg ?? item?.srvCharge ?? item?.serviceCharge ?? 0)) * Number(item?.qty ?? item?.quantity ?? 1))) || 0,
-            staffName: String(bill?.staffName || item?.staffName || "Admin User"),
+            staffName: String(staffByBillId.get(billId) || bill?.staffName || item?.staffName || "Admin User").trim(),
             customerName: String(bill?.customerName || item?.customerName || "Walk-in Customer"),
           });
         });
@@ -159,7 +173,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
           departmentFee: Number(record?.departmentFee || 0),
           serviceCharge: Number(record?.serviceCharge || 0),
           totalAmount: Number(record?.totalAmount || 0),
-          staffName: String(record?.staffName || "Admin User"),
+          staffName: String(record?.staffName || record?.staff || "Admin User").trim(),
           customerName: String(record?.customerName || "Walk-in Customer"),
         });
         detailedBillIds.add(billId);
@@ -195,7 +209,9 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
 
     return rows.filter((row) => {
       const date = localDateKey(row.dateTime);
-      const staffMatch = selectedStaff === "All" || row.staffName.toLowerCase() === selectedStaff.toLowerCase();
+      const normalizedRowStaff = row.staffName.trim().replace(/\s+/g, " ").toLowerCase();
+      const normalizedSelectedStaff = selectedStaff.trim().replace(/\s+/g, " ").toLowerCase();
+      const staffMatch = selectedStaff === "All" || normalizedRowStaff === normalizedSelectedStaff;
       const fromMatch = !appliedFromDate || date >= appliedFromDate;
       const toMatch = !appliedToDate || date <= appliedToDate;
       const searchMatch =
