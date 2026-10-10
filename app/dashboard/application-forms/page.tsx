@@ -272,8 +272,8 @@ export default function ApplicationFormsPage() {
   const downloadUrl = selected ? `https://drive.google.com/uc?export=download&id=${selected.id}` : "";
 
   return (
-    <main className="min-h-[calc(100vh-72px)] bg-[#eaf5ff] p-3 sm:p-4">
-      <div className="mx-auto flex max-w-[1700px] flex-col gap-3">
+    <main className="h-[calc(100dvh-80px)] min-h-0 overflow-hidden bg-[#eaf5ff] p-3 sm:p-4">
+      <div className="mx-auto flex h-full min-h-0 max-w-[1700px] flex-col gap-3 overflow-hidden">
         <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white bg-white/90 px-4 py-3 shadow-sm">
           <div className="flex items-center gap-3"><div className="rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 p-2 text-white"><FolderOpen size={22}/></div><div><h1 className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">Application Forms Vault</h1><p className="text-xs text-slate-500">MPM250 · Akshaya Center Pookiparamba</p></div></div>
           <div className="flex flex-wrap gap-2">
@@ -285,8 +285,8 @@ export default function ApplicationFormsPage() {
 
         {uploadNotice && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">{uploadNotice}</div>}
 
-        <div className="grid min-h-[calc(100vh-175px)] grid-cols-1 gap-3 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="flex min-h-[520px] flex-col overflow-hidden rounded-[24px] border border-white bg-white/75 p-4 shadow-sm">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="flex min-h-0 flex-col overflow-hidden rounded-[24px] border border-white bg-white/75 p-4 shadow-sm">
             <div className="space-y-2.5">
               <label className="relative block"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search form, department or office..." className="w-full rounded-xl border border-sky-200 bg-white px-9 py-2.5 text-xs outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"/></label>
               <label className="relative block"><select value={department} onChange={e=>{setDepartment(e.target.value);setOffice("All offices");}} className="w-full appearance-none rounded-xl border border-sky-200 bg-white px-3 py-2.5 pr-9 text-xs text-slate-700 outline-none focus:border-sky-500">{["All departments",...DEPARTMENTS].map(d=><option key={d}>{d}</option>)}</select><ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"/></label>
@@ -301,7 +301,7 @@ export default function ApplicationFormsPage() {
             </div>
           </aside>
 
-          <section className="flex min-h-[520px] min-w-0 flex-col overflow-hidden rounded-[24px] border border-white bg-white/75 p-3 shadow-sm sm:p-4">
+          <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[24px] border border-white bg-white/75 p-3 shadow-sm sm:p-4">
             {selected ? <>
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
                 <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
@@ -310,9 +310,9 @@ export default function ApplicationFormsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2"><button onClick={()=>setZoom(z=>Math.max(50,z-10))} title="Zoom out" className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50"><ZoomOut size={16}/></button><span className="self-center text-xs font-bold text-slate-500">{zoom}%</span><button onClick={()=>setZoom(z=>Math.min(150,z+10))} title="Zoom in" className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50"><ZoomIn size={16}/></button><button onClick={()=>window.open(downloadUrl,"_blank","noopener,noreferrer")} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 px-3 py-2 text-xs font-extrabold text-white"><Download size={14}/> Download</button><button onClick={handlePrint} disabled={printing} title="Open the printer dialog for this PDF" className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-60"><Printer size={14}/>{printing ? "Preparing..." : "Print PDF"}</button>{isAdmin && <button onClick={handleDelete} disabled={deleting} className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-60"><Trash2 size={14}/>{deleting ? "Deleting..." : "Delete"}</button>}</div>
               </div>
-              <div className="relative mt-3 min-h-[420px] flex-1 overflow-auto rounded-xl bg-slate-100 p-2 sm:p-4">
-                <div className="mx-auto h-full min-h-[420px] bg-white shadow-md" style={{width:`${zoom}%`, minWidth:"min(100%, 520px)"}}>
-                  <iframe title={selected.name} src={previewUrl} className="h-full min-h-[650px] w-full border-0" allow="autoplay"/>
+              <div className="relative mt-3 min-h-0 flex-1 overflow-hidden rounded-xl bg-slate-100 p-2 sm:p-4">
+                <div className="mx-auto h-full min-h-0 bg-white shadow-md" style={{width:`${zoom}%`, minWidth:"min(100%, 520px)"}}>
+                  <iframe title={selected.name} src={previewUrl} className="h-full min-h-0 w-full border-0" allow="autoplay"/>
                 </div>
               </div>
               <p className="pt-2 text-center text-[10px] text-slate-400">Google Drive PDF preview · Print page ranges from the PDF viewer's print controls where supported.</p>
