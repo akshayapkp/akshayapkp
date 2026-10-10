@@ -57,7 +57,7 @@ export default function PDFViewerModal({
 
   if (!open) return null;
   const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-  const downloadUrl = fileUrl || `https://drive.google.com/uc?export=download&id=${fileId}`;
+  const downloadUrl = fileId.startsWith("link-") && fileUrl ? fileUrl : `https://drive.google.com/uc?export=download&id=${fileId}`;
 
   const toggleFullscreen = async () => {
     const element = document.getElementById("pdf-modal");
