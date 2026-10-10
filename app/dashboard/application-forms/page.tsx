@@ -95,13 +95,36 @@ export default function ApplicationFormsPage() {
     setFiles(next);
     try { localStorage.setItem("managedApplicationFiles", JSON.stringify(next)); } catch {}
   };
-  const handleUpload = () => {
+  const [uploading, setUploading] = useState(false);
+  const handleUpload = async () => {
     if (!formDepartment || !formOffice || !formName.trim() || !formFile) {
       setUploadNotice("Department, Office, Form name, PDF file എന്നിവ എല്ലാം നൽകണം."); return;
     }
-    if (formFile.type !== "application/pdf") { setUploadNotice("PDF ഫയൽ മാത്രം തിരഞ്ഞെടുക്കുക."); return; }
+    if (formFile.type !== "application/pdf" && !formFile.name.toLowerCase().endsWith(".pdf")) { setUploadNotice("PDF ഫയൽ മാത്രം തിരഞ്ഞെടുക്കുക."); return; }
     if (formFile.size > 5 * 1024 * 1024) { setUploadNotice("ഫയലിന്റെ പരമാവധി വലുപ്പം 5 MB ആണ്."); return; }
-    setUploadNotice("ഫയൽ തിരഞ്ഞെടുക്കപ്പെട്ടു. Google Drive-ലേക്ക് യഥാർത്ഥ upload ചെയ്യാൻ write-enabled Google Drive authorization വേണം. ഇപ്പോഴത്തെ API key-ന് file upload ചെയ്യാൻ കഴിയില്ല.");
+    setUploading(true); setUploadNotice("");
+    try {
+      const body = new FormData();
+      body.append("file", formFile);
+      body.append("name", formName.trim());
+      body.append("department", formDepartment);
+      body.append("office", formOffice);
+      const response = await fetch("/api/google-drive/upload", { method: "POST", body });
+      const result = await response.json();
+      if (response.status === 401 && result.authorizeUrl) {
+        setUploadNotice(result.error || "Google Drive connect ചെയ്യണം.");
+        window.location.href = result.authorizeUrl;
+        return;
+      }
+      if (!response.ok) throw new Error(result.error || "Upload failed");
+      const uploaded = result.file as DriveFile;
+      saveLocal([{...uploaded, department: formDepartment, office: formOffice}, ...files.filter(f => f.id !== uploaded.id)]);
+      setSelected(uploaded);
+      setUploadOpen(false); setFormFile(null); setFormName(""); setFormDepartment(""); setFormOffice("");
+      setUploadNotice("PDF Google Drive-ലേക്ക് വിജയകരമായി upload ചെയ്തു.");
+    } catch (error) {
+      setUploadNotice(error instanceof Error ? error.message : "Upload ചെയ്യാൻ കഴിഞ്ഞില്ല.");
+    } finally { setUploading(false); }
   };
   const previewUrl = selected ? (selected.id.startsWith("local-preview-") ? selected.webViewLink : `https://drive.google.com/file/d/${selected.id}/preview`) : "";
   const downloadUrl = selected ? `https://drive.google.com/uc?export=download&id=${selected.id}` : "";
@@ -112,6 +135,7 @@ export default function ApplicationFormsPage() {
         <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white bg-white/90 px-4 py-3 shadow-sm">
           <div className="flex items-center gap-3"><div className="rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 p-2 text-white"><FolderOpen size={22}/></div><div><h1 className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">Application Forms Vault</h1><p className="text-xs text-slate-500">MPM250 · Akshaya Center Pookiparamba</p></div></div>
           <div className="flex flex-wrap gap-2">
+            <a href="/api/google-drive/auth" className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2.5 text-xs font-extrabold text-emerald-700 shadow-sm hover:bg-emerald-50">Connect Google Drive</a>
             <button onClick={() => { setUploadNotice(""); setUploadOpen(true); }} className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm hover:brightness-105"><UploadCloud size={15}/> Upload Forms</button>
             <a href="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-violet-600 px-4 py-2.5 text-xs font-extrabold text-white"><LayoutDashboard size={15}/> Dashboard</a>
           </div>
@@ -155,7 +179,7 @@ export default function ApplicationFormsPage() {
         </div>
       </div>
 
-      {uploadOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"><div className="w-full max-w-lg rounded-3xl border border-white bg-white p-5 shadow-2xl sm:p-6"><div className="flex items-center justify-between"><div><h2 className="text-lg font-black text-slate-800">Upload Application Form</h2><p className="mt-1 text-xs text-slate-500">Choose the department, office and PDF.</p></div><button onClick={()=>setUploadOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-xs font-bold text-slate-700">1. Department<select value={formDepartment} onChange={e=>setFormDepartment(e.target.value)} className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-3 text-sm font-normal"><option value="">Search or select department...</option>{DEPARTMENTS.map(d=><option key={d}>{d}</option>)}</select></label><label className="block text-xs font-bold text-slate-700">2. Office<select value={formOffice} onChange={e=>setFormOffice(e.target.value)} disabled={!formDepartment} className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-3 text-sm font-normal disabled:bg-slate-100"><option value="">Select office...</option><option>Common Application Forms</option><option>General Office</option><option>Online Services</option></select></label><label className="block text-xs font-bold text-slate-700">Form name<input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="e.g. Income Certificate Application" className="mt-1.5 w-full rounded-xl border border-sky-200 px-3 py-3 text-sm font-normal"/></label><label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-slate-50 px-4 py-7 text-center"><UploadCloud size={28} className="text-slate-400"/><span className="mt-2 text-xs font-bold text-slate-600">{formFile?formFile.name:"Choose PDF file"}</span><span className="mt-1 text-[10px] text-slate-400">PDF only · max 5 MB</span><input type="file" accept="application/pdf,.pdf" onChange={e=>setFormFile(e.target.files?.[0]||null)} className="mt-3 max-w-full text-xs"/></label><div className="rounded-xl bg-sky-50 p-3 text-[11px] leading-5 text-sky-800">Files already stored in Google Drive are preserved. Direct upload requires Google Drive write authorization; this page currently uses a read-only API key.</div><div className="flex justify-end gap-2"><button onClick={()=>setUploadOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600">Cancel</button><button onClick={handleUpload} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-4 py-2.5 text-xs font-extrabold text-white"><UploadCloud size={14}/> Upload</button></div></div></div></div>}
+      {uploadOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"><div className="w-full max-w-lg rounded-3xl border border-white bg-white p-5 shadow-2xl sm:p-6"><div className="flex items-center justify-between"><div><h2 className="text-lg font-black text-slate-800">Upload Application Form</h2><p className="mt-1 text-xs text-slate-500">Choose the department, office and PDF.</p></div><button onClick={()=>setUploadOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={18}/></button></div><div className="mt-5 space-y-4"><label className="block text-xs font-bold text-slate-700">1. Department<select value={formDepartment} onChange={e=>setFormDepartment(e.target.value)} className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-3 text-sm font-normal"><option value="">Search or select department...</option>{DEPARTMENTS.map(d=><option key={d}>{d}</option>)}</select></label><label className="block text-xs font-bold text-slate-700">2. Office<select value={formOffice} onChange={e=>setFormOffice(e.target.value)} disabled={!formDepartment} className="mt-1.5 w-full rounded-xl border border-sky-200 bg-white px-3 py-3 text-sm font-normal disabled:bg-slate-100"><option value="">Select office...</option><option>Common Application Forms</option><option>General Office</option><option>Online Services</option></select></label><label className="block text-xs font-bold text-slate-700">Form name<input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="e.g. Income Certificate Application" className="mt-1.5 w-full rounded-xl border border-sky-200 px-3 py-3 text-sm font-normal"/></label><label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-slate-50 px-4 py-7 text-center"><UploadCloud size={28} className="text-slate-400"/><span className="mt-2 text-xs font-bold text-slate-600">{formFile?formFile.name:"Choose PDF file"}</span><span className="mt-1 text-[10px] text-slate-400">PDF only · max 5 MB</span><input type="file" accept="application/pdf,.pdf" onChange={e=>setFormFile(e.target.files?.[0]||null)} className="mt-3 max-w-full text-xs"/></label><div className="rounded-xl bg-sky-50 p-3 text-[11px] leading-5 text-sky-800">ആദ്യം Connect Google Drive അമർത്തി admin Google account authorize ചെയ്യുക. തുടർന്ന് ഈ PDF നിലവിലുള്ള Application Forms ഫോൾഡറിലേക്ക് upload ചെയ്യും.</div><div className="flex justify-end gap-2"><button onClick={()=>setUploadOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600">Cancel</button><button onClick={handleUpload} disabled={uploading} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-4 py-2.5 text-xs font-extrabold text-white disabled:opacity-60">{uploading ? <LoaderCircle size={14} className="animate-spin"/> : <UploadCloud size={14}/>} {uploading ? "Uploading..." : "Upload"}</button></div></div></div></div>}
     </main>
   );
 }
