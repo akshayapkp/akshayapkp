@@ -10,8 +10,7 @@ export async function GET(request: Request) {
 
   const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
-  const allowedEmail = process.env.GOOGLE_DRIVE_ALLOWED_EMAIL?.trim().toLowerCase();
-  if (!clientId || !clientSecret || !allowedEmail) return NextResponse.json({ error: "Google Drive OAuth settings are missing." }, { status: 500 });
+  if (!clientId || !clientSecret) return NextResponse.json({ error: "Google Drive OAuth settings are missing." }, { status: 500 });
 
   const fileId = new URL(request.url).searchParams.get("fileId")?.trim() || "";
   if (!/^[a-zA-Z0-9_-]+$/.test(fileId)) return NextResponse.json({ error: "Invalid Google Drive file ID." }, { status: 400 });
