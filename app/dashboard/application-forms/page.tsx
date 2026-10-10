@@ -196,29 +196,52 @@ export default function ApplicationFormsPage() {
   const handlePrint = async () => {
     if (!selected || printing) return;
     setPrinting(true);
+
     let objectUrl = "";
     let frame: HTMLIFrameElement | null = null;
-    let fallbackTimer: number | undefined;
+    let printTimer: number | undefined;
+    let resetTimer: number | undefined;
+    let didPrint = false;
     let cleaned = false;
-    const cleanup = () => {
+
+    const cleanup = (revoke = true) => {
       if (cleaned) return;
       cleaned = true;
-      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+      if (printTimer !== undefined) window.clearTimeout(printTimer);
+      if (resetTimer !== undefined) window.clearTimeout(resetTimer);
       frame?.remove();
       frame = null;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (revoke && objectUrl) URL.revokeObjectURL(objectUrl);
       setPrinting(false);
     };
+
+    const triggerPrint = () => {
+      if (didPrint || !frame?.contentWindow) return;
+      didPrint = true;
+      try {
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+      } catch {
+        // Keep the PDF available if this browser blocks printing from an embedded PDF viewer.
+        if (objectUrl) window.open(objectUrl, "_blank");
+      }
+      // Do not depend on afterprint: some built-in PDF viewers never fire it.
+      // Unlock the button quickly after the native print dialog has had time to open.
+      resetTimer = window.setTimeout(() => cleanup(false), 2500);
+    };
+
     try {
       const response = await fetch(`/api/google-drive/print?fileId=${encodeURIComponent(selected.id)}`, { cache: "no-store" });
       if (!response.ok) {
         const result = await response.json().catch(() => ({}));
         throw new Error(result.error || "Could not prepare the PDF for printing.");
       }
+
       const blob = await response.blob();
       objectUrl = URL.createObjectURL(blob);
       frame = document.createElement("iframe");
       frame.title = "Print application form";
+      frame.setAttribute("aria-hidden", "true");
       frame.style.position = "fixed";
       frame.style.left = "0";
       frame.style.bottom = "0";
@@ -227,26 +250,18 @@ export default function ApplicationFormsPage() {
       frame.style.border = "0";
       frame.style.opacity = "0.01";
       frame.onload = () => {
-        const printWindow = frame?.contentWindow;
-        if (!printWindow) { cleanup(); return; }
-        const handleAfterPrint = () => cleanup();
-        printWindow.addEventListener("afterprint", handleAfterPrint, { once: true });
-        try {
-          printWindow.focus();
-          printWindow.print();
-        } catch {
-          cleanup();
-          window.open(objectUrl, "_blank", "noopener,noreferrer");
-          return;
-        }
-        // Some browsers do not fire afterprint when the user cancels/closes the dialog.
-        // Always release the button state shortly after the dialog is dismissed.
-        fallbackTimer = window.setTimeout(cleanup, 5000);
+        // Some browsers fire load for the PDF viewer; others don't. Both paths are covered.
+        window.setTimeout(triggerPrint, 250);
       };
       frame.src = objectUrl;
       document.body.appendChild(frame);
-      // If the PDF frame never fires load, don't leave the button disabled forever.
-      fallbackTimer = window.setTimeout(cleanup, 20000);
+
+      // Chromium's built-in PDF viewer can fail to fire iframe.onload for blob PDFs.
+      // Trigger printing on a short fallback instead of waiting indefinitely.
+      printTimer = window.setTimeout(triggerPrint, 1200);
+      resetTimer = window.setTimeout(() => {
+        if (!didPrint) cleanup();
+      }, 12000);
     } catch (error) {
       cleanup();
       window.alert(error instanceof Error ? error.message : "Could not prepare the PDF for printing.");
