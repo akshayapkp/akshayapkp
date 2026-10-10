@@ -15,6 +15,7 @@ interface PDFViewerModalProps {
   open: boolean;
   title: string;
   fileId: string;
+  fileUrl?: string;
   onClose: () => void;
 }
 
@@ -22,6 +23,7 @@ export default function PDFViewerModal({
   open,
   title,
   fileId,
+  fileUrl,
   onClose,
 }: PDFViewerModalProps) {
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export default function PDFViewerModal({
 
   if (!open) return null;
   const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-  const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+  const downloadUrl = fileUrl || `https://drive.google.com/uc?export=download&id=${fileId}`;
 
   const toggleFullscreen = async () => {
     const element = document.getElementById("pdf-modal");
