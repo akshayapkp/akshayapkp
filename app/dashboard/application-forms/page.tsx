@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import {
   Search, RefreshCw, FileText, FileImage, FileSpreadsheet, File, UploadCloud,
   LayoutDashboard, LogOut, Printer, Download, ZoomIn, ZoomOut, X, ChevronDown,
-  ChevronRight, Clock3, Flame, FolderOpen, SlidersHorizontal, LoaderCircle
+  ChevronRight, Clock3, Flame, FolderOpen, SlidersHorizontal, LoaderCircle, Trash2
 } from "lucide-react";
 import { GOOGLE_DRIVE_CONFIG, DRIVE_ENDPOINT } from "@/app/lib/googledrive";
 
@@ -49,6 +49,15 @@ export default function ApplicationFormsPage() {
   const [formOffice, setFormOffice] = useState("");
   const [formFile, setFormFile] = useState<File | null>(null);
   const [uploadNotice, setUploadNotice] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+      setIsAdmin(String(user.role || "").toLowerCase() === "admin");
+    } catch { setIsAdmin(false); }
+  }, []);
 
   useEffect(() => {
     if (!uploadOpen) return;
@@ -154,6 +163,24 @@ export default function ApplicationFormsPage() {
       setUploadNotice(error instanceof Error ? error.message : "Upload ചെയ്യാൻ കഴിഞ്ഞില്ല.");
     } finally { setUploading(false); }
   };
+  const handleDelete = async () => {
+    if (!selected || !isAdmin || deleting) return;
+    if (!window.confirm(`Delete \"${selected.name}\" from Google Drive? This cannot be undone from this page.`)) return;
+    setDeleting(true); setUploadNotice("");
+    try {
+      const response = await fetch("/api/google-drive/delete", {
+        method: "DELETE", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId: selected.id }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not delete document.");
+      saveLocal(files.filter(file => file.id !== selected.id));
+      setSelected(null);
+      setUploadNotice("Document deleted from Google Drive.");
+    } catch (error) {
+      setUploadNotice(error instanceof Error ? error.message : "Could not delete document.");
+    } finally { setDeleting(false); }
+  };
   const previewUrl = selected ? (selected.id.startsWith("local-preview-") ? selected.webViewLink : `https://drive.google.com/file/d/${selected.id}/preview`) : "";
   const downloadUrl = selected ? `https://drive.google.com/uc?export=download&id=${selected.id}` : "";
 
@@ -194,7 +221,7 @@ export default function ApplicationFormsPage() {
                   {selected.thumbnailLink ? <button onClick={()=>setZoom(100)} title="First page" className="flex h-[66px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-lg border-2 border-sky-400 bg-white p-1 shadow-sm"><img src={selected.thumbnailLink} alt="PDF thumbnail" className="max-h-full max-w-full object-contain"/></button> : <div className="flex h-[66px] w-[52px] shrink-0 items-center justify-center rounded-lg border-2 border-sky-400 bg-white text-rose-500"><FileText size={24}/></div>}
                   <div className="min-w-0"><h2 className="line-clamp-2 text-sm font-extrabold text-slate-800">{selected.name}</h2><p className="mt-1 text-[11px] text-slate-500">{selected.department || departmentFor(selected)} · {prettySize(selected.size) || "PDF / document"}</p></div>
                 </div>
-                <div className="flex flex-wrap gap-2"><button onClick={()=>setZoom(z=>Math.max(50,z-10))} title="Zoom out" className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50"><ZoomOut size={16}/></button><span className="self-center text-xs font-bold text-slate-500">{zoom}%</span><button onClick={()=>setZoom(z=>Math.min(150,z+10))} title="Zoom in" className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50"><ZoomIn size={16}/></button><button onClick={()=>window.open(downloadUrl,"_blank","noopener,noreferrer")} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 px-3 py-2 text-xs font-extrabold text-white"><Download size={14}/> Download</button><button onClick={()=>window.open(previewUrl,"_blank","noopener,noreferrer")} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white"><Printer size={14}/> Print / Open</button></div>
+                <div className="flex flex-wrap gap-2"><button onClick={()=>setZoom(z=>Math.max(50,z-10))} title="Zoom out" className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50"><ZoomOut size={16}/></button><span className="self-center text-xs font-bold text-slate-500">{zoom}%</span><button onClick={()=>setZoom(z=>Math.min(150,z+10))} title="Zoom in" className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50"><ZoomIn size={16}/></button><button onClick={()=>window.open(downloadUrl,"_blank","noopener,noreferrer")} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 px-3 py-2 text-xs font-extrabold text-white"><Download size={14}/> Download</button><button onClick={()=>window.open(previewUrl,"_blank","noopener,noreferrer")} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white"><Printer size={14}/> Print / Open</button>{isAdmin && <button onClick={handleDelete} disabled={deleting} className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-60"><Trash2 size={14}/>{deleting ? "Deleting..." : "Delete"}</button>}</div>
               </div>
               <div className="relative mt-3 min-h-[420px] flex-1 overflow-auto rounded-xl bg-slate-100 p-2 sm:p-4">
                 <div className="mx-auto h-full min-h-[420px] bg-white shadow-md" style={{width:`${zoom}%`, minWidth:"min(100%, 520px)"}}>
