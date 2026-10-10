@@ -313,7 +313,7 @@ export default function ApplicationFormsPage() {
           </div>
         </div>
       )}
-      <PDFViewerModal open={viewerOpen} title={selectedFile?.name || ""} fileId={selectedFile?.id || ""} onClose={() => { setViewerOpen(false); setSelectedFile(null); }} />
+      <PDFViewerModal open={viewerOpen} title={selectedFile?.name || ""} fileId={selectedFile?.id || ""} fileUrl={selectedFile?.webViewLink} onClose={() => { setViewerOpen(false); setSelectedFile(null); }} />
     </main>
   );
 }
