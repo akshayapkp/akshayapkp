@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import {
   Search, RefreshCw, FileText, FileImage, FileSpreadsheet, File, UploadCloud,
   LayoutDashboard, LogOut, Printer, Download, ZoomIn, ZoomOut, X, ChevronDown,
-  ChevronRight, Clock3, Flame, FolderOpen, SlidersHorizontal, LoaderCircle, Trash2
+  ChevronRight, Clock3, Star, FolderOpen, SlidersHorizontal, LoaderCircle, Trash2
 } from "lucide-react";
 import { GOOGLE_DRIVE_CONFIG, DRIVE_ENDPOINT } from "@/app/lib/googledrive";
 
@@ -40,7 +40,8 @@ export default function ApplicationFormsPage() {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All departments");
   const [office, setOffice] = useState("All offices");
-  const [sortMode, setSortMode] = useState<"latest" | "frequent">("latest");
+  const [sortMode, setSortMode] = useState<"latest" | "starred">("latest");
+  const [starredIds, setStarredIds] = useState<string[]>([]);
   const [selected, setSelected] = useState<DriveFile | null>(null);
   const [zoom, setZoom] = useState(100);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -97,6 +98,7 @@ export default function ApplicationFormsPage() {
     } finally { setLoading(false); }
   };
   useEffect(() => { void loadFiles(); }, []);
+  useEffect(() => { try { setStarredIds(JSON.parse(localStorage.getItem("applicationFormStarredIds") || "[]")); } catch { setStarredIds([]); } }, []);
 
   const offices = useMemo(() => {
     const names = files.filter(f => department === "All departments" || departmentFor(f) === department)
@@ -110,11 +112,20 @@ export default function ApplicationFormsPage() {
       const d = f.department || departmentFor(f);
       const matches = !term || clean(f.name).includes(term) || clean(d).includes(term) || clean(f.office || "").includes(term);
       return matches && (department === "All departments" || d === department) &&
-        (office === "All offices" || (f.office || "") === office);
+        (office === "All offices" || (f.office || "") === office) &&
+        (sortMode !== "starred" || starredIds.includes(f.id));
     }).sort((a,b) => sortMode === "latest"
       ? new Date(b.modifiedTime || 0).getTime() - new Date(a.modifiedTime || 0).getTime()
-      : (Number(b.isPinned) - Number(a.isPinned)) || a.name.localeCompare(b.name));
-  }, [files, search, department, office, sortMode]);
+       : a.name.localeCompare(b.name));
+  }, [files, search, department, office, sortMode, starredIds]);
+
+  const toggleStar = (file: DriveFile) => {
+    setStarredIds(current => {
+      const next = current.includes(file.id) ? current.filter(id => id !== file.id) : [...current, file.id];
+      try { localStorage.setItem("applicationFormStarredIds", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   const openFile = (f: DriveFile) => { setSelected(f); setZoom(100); };
   const saveLocal = (next: DriveFile[]) => {
@@ -187,6 +198,17 @@ export default function ApplicationFormsPage() {
     setPrinting(true);
     let objectUrl = "";
     let frame: HTMLIFrameElement | null = null;
+    let fallbackTimer: number | undefined;
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+      frame?.remove();
+      frame = null;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setPrinting(false);
+    };
     try {
       const response = await fetch(`/api/google-drive/print?fileId=${encodeURIComponent(selected.id)}`, { cache: "no-store" });
       if (!response.ok) {
@@ -198,31 +220,35 @@ export default function ApplicationFormsPage() {
       frame = document.createElement("iframe");
       frame.title = "Print application form";
       frame.style.position = "fixed";
-      frame.style.right = "0";
+      frame.style.left = "0";
       frame.style.bottom = "0";
       frame.style.width = "1px";
       frame.style.height = "1px";
       frame.style.border = "0";
       frame.style.opacity = "0.01";
+      frame.onload = () => {
+        const printWindow = frame?.contentWindow;
+        if (!printWindow) { cleanup(); return; }
+        const handleAfterPrint = () => cleanup();
+        printWindow.addEventListener("afterprint", handleAfterPrint, { once: true });
+        try {
+          printWindow.focus();
+          printWindow.print();
+        } catch {
+          cleanup();
+          window.open(objectUrl, "_blank", "noopener,noreferrer");
+          return;
+        }
+        // Some browsers do not fire afterprint when the user cancels/closes the dialog.
+        // Always release the button state shortly after the dialog is dismissed.
+        fallbackTimer = window.setTimeout(cleanup, 5000);
+      };
       frame.src = objectUrl;
       document.body.appendChild(frame);
-      frame.onload = () => {
-        try {
-          frame?.contentWindow?.focus();
-          frame?.contentWindow?.print();
-        } catch {
-          window.open(objectUrl, "_blank", "noopener,noreferrer");
-        }
-        window.setTimeout(() => {
-          frame?.remove();
-          if (objectUrl) URL.revokeObjectURL(objectUrl);
-          setPrinting(false);
-        }, 60000);
-      };
+      // If the PDF frame never fires load, don't leave the button disabled forever.
+      fallbackTimer = window.setTimeout(cleanup, 20000);
     } catch (error) {
-      frame?.remove();
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      setPrinting(false);
+      cleanup();
       window.alert(error instanceof Error ? error.message : "Could not prepare the PDF for printing.");
     }
   };
@@ -251,11 +277,11 @@ export default function ApplicationFormsPage() {
               <label className="relative block"><select value={department} onChange={e=>{setDepartment(e.target.value);setOffice("All offices");}} className="w-full appearance-none rounded-xl border border-sky-200 bg-white px-3 py-2.5 pr-9 text-xs text-slate-700 outline-none focus:border-sky-500">{["All departments",...DEPARTMENTS].map(d=><option key={d}>{d}</option>)}</select><ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"/></label>
               <label className="relative block"><select value={office} onChange={e=>setOffice(e.target.value)} className="w-full appearance-none rounded-xl border border-sky-200 bg-white px-3 py-2.5 pr-9 text-xs text-slate-700 outline-none focus:border-sky-500 disabled:bg-slate-100" disabled={department==="All departments"}>{(department==="All departments"?["All offices"]:offices).map(o=><option key={o}>{o}</option>)}</select><ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"/></label>
               <p className="text-[11px] text-slate-500">Searching {department === "All departments" ? "all departments" : department}{office !== "All offices" ? ` · ${office}` : ""}</p>
-              <div className="grid grid-cols-2 gap-2"><button onClick={()=>setSortMode("latest")} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-extrabold transition ${sortMode==="latest"?"border-orange-400 bg-gradient-to-r from-amber-400 to-orange-600 text-white shadow-md":"border-slate-200 bg-white text-slate-600"}`}><Clock3 size={14}/> Latest</button><button onClick={()=>setSortMode("frequent")} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-extrabold transition ${sortMode==="frequent"?"border-orange-400 bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md":"border-slate-200 bg-white text-slate-600"}`}><Flame size={14}/> Frequent</button></div>
+              <div className="grid grid-cols-2 gap-2"><button onClick={()=>setSortMode("latest")} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-extrabold transition ${sortMode==="latest"?"border-orange-400 bg-gradient-to-r from-amber-400 to-orange-600 text-white shadow-md":"border-slate-200 bg-white text-slate-600"}`}><Clock3 size={14}/> Latest</button><button onClick={()=>setSortMode("starred")} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-extrabold transition ${sortMode==="starred"?"border-amber-400 bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md":"border-slate-200 bg-white text-slate-600"}`}><Star size={14} fill={sortMode==="starred"?"currentColor":"none"}/> Starred</button></div>
             </div>
             <div className="mt-4 flex items-center justify-between border-b border-slate-200 pb-2"><div className="flex items-center gap-2 text-sm font-black text-slate-800"><FolderOpen size={16} className="text-sky-500"/> {department==="All departments"?"Application Forms":department}</div><span className="text-[10px] font-bold text-slate-500">{visible.length} Forms</span></div>
             <div className="mt-2 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
-              {loading ? <div className="flex items-center justify-center gap-2 py-12 text-xs text-slate-500"><LoaderCircle size={16} className="animate-spin"/> Loading forms...</div> : visible.map(file=><button key={file.id} onClick={()=>openFile(file)} className={`flex w-full items-center gap-2.5 rounded-xl border p-2.5 text-left transition hover:border-sky-300 hover:bg-white ${selected?.id===file.id?"border-sky-400 bg-white shadow-sm":"border-transparent bg-white/60"}`}><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500"><FileText size={19}/></span><span className="min-w-0 flex-1"><span className="block line-clamp-2 text-xs font-bold leading-4 text-slate-700">{file.name}</span><span className="mt-0.5 block truncate text-[10px] text-slate-400">{file.department || departmentFor(file)}{file.office? ` · ${file.office}`:""}{file.size? ` · ${prettySize(file.size)}`:""}</span></span><ChevronRight size={15} className="shrink-0 text-slate-400"/></button>)}
+              {loading ? <div className="flex items-center justify-center gap-2 py-12 text-xs text-slate-500"><LoaderCircle size={16} className="animate-spin"/> Loading forms...</div> : visible.map(file=><div key={file.id} className={`flex w-full items-center gap-1 rounded-xl border p-1.5 transition hover:border-sky-300 ${selected?.id===file.id?"border-sky-400 bg-white shadow-sm":"border-transparent bg-white/60"}`}><button onClick={()=>openFile(file)} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1 text-left"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500"><FileText size={19}/></span><span className="min-w-0 flex-1"><span className="block line-clamp-2 text-xs font-bold leading-4 text-slate-700">{file.name}</span><span className="mt-0.5 block truncate text-[10px] text-slate-400">{file.department || departmentFor(file)}{file.office? ` · ${file.office}`:""}{file.size? ` · ${prettySize(file.size)}`:""}</span></button><button onClick={()=>toggleStar(file)} title={starredIds.includes(file.id)?"Remove from Starred":"Add to Starred"} aria-label={starredIds.includes(file.id)?"Remove from Starred":"Add to Starred"} className={`shrink-0 rounded-lg p-2 transition ${starredIds.includes(file.id)?"text-amber-500 hover:bg-amber-50":"text-slate-300 hover:bg-amber-50 hover:text-amber-500"}`}><Star size={17} fill={starredIds.includes(file.id)?"currentColor":"none"}/></button><ChevronRight size={14} className="shrink-0 text-slate-400"/></div>)}
               {!loading && !visible.length && <div className="py-10 text-center text-xs text-slate-500">No forms found. Try another search.</div>}
             </div>
           </aside>
