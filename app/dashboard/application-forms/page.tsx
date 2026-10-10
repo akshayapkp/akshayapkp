@@ -49,6 +49,20 @@ export default function ApplicationFormsPage() {
   const [formFile, setFormFile] = useState<File | null>(null);
   const [uploadNotice, setUploadNotice] = useState("");
 
+  useEffect(() => {
+    if (!uploadOpen) return;
+    const body = document.body;
+    const html = document.documentElement;
+    const previousBodyOverflow = body.style.overflow;
+    const previousHtmlOverflow = html.style.overflow;
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+    return () => {
+      body.style.overflow = previousBodyOverflow;
+      html.style.overflow = previousHtmlOverflow;
+    };
+  }, [uploadOpen]);
+
   const loadFiles = async () => {
     setLoading(true); setUploadNotice("");
     try {
