@@ -374,6 +374,27 @@ export default function HomePage() {
       </div>
     </header>
 
+    <section className={styles.hero}>
+      <div className={styles.container + " " + styles.heroLayout}>
+        <div className={styles.heroCopy}>
+          <span className={styles.eyebrow}><ShieldCheck size={14}/> വിശ്വസിക്കാവുന്ന ഡിജിറ്റൽ സേവനങ്ങൾ</span>
+          <h1>സർക്കാർ സേവനങ്ങൾ,<br/><span>ഇനി കൂടുതൽ എളുപ്പത്തിൽ.</span></h1>
+          <p>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പിലൂടെ വിവിധ സർക്കാർ സേവനങ്ങൾക്ക് അപേക്ഷിക്കാം. ശരിയായ വിവരങ്ങൾ, ലളിതമായ അപേക്ഷ, വേഗത്തിലുള്ള സഹായം — എല്ലാം ഒരിടത്ത്.</p>
+          <div className={styles.heroActions}>
+            <a href="#services" className={styles.primaryButton}>സേവനങ്ങൾ കാണുക <ArrowRight size={17}/></a>
+            <a href="#status" className={styles.outlineButton}>അപേക്ഷാ സ്റ്റാറ്റസ് <Search size={16}/></a>
+          </div>
+          <div className={styles.heroTrust}><span><CheckCircle2 size={16}/> വ്യക്തിഗത സഹായം</span><span><ShieldCheck size={16}/> സുരക്ഷിതമായ വിവര കൈകാര്യം</span><span><MessageCircle size={16}/> WhatsApp പിന്തുണ</span></div>
+        </div>
+        <div className={styles.heroVisual} aria-label="Akshaya service highlights">
+          <div className={styles.heroVisualGlow}/>
+          <div className={styles.heroCardMain}><div className={styles.heroCardIcon}><FileText size={25}/></div><span>എല്ലാ സേവനങ്ങളും</span><strong>ഒരു ലളിതമായ തുടക്കം</strong><small>നിങ്ങളുടെ ആവശ്യത്തിന് അനുയോജ്യമായ സേവനം കണ്ടെത്തൂ</small></div>
+          <div className={styles.heroMiniCard}><MapPin size={17}/><span>പൂക്കിപ്പറമ്പ്, കേരളം</span></div>
+          <div className={styles.heroMiniCard + " " + styles.heroMiniCardBottom}><CheckCircle2 size={17}/><span>സഹായം ഇവിടെ ലഭ്യമാണ്</span></div>
+        </div>
+      </div>
+    </section>
+
     <section className={styles.updatesSection}>
       <div className={styles.container}>
         <div className={styles.updatesHeading}>
