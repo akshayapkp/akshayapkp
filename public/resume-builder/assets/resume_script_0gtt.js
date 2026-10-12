@@ -1297,6 +1297,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function escapeHistoryText(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    }
+
     // --- FETCH & RENDER HISTORY LIST ---
     async function fetchResumeHistory(search = '') {
         const listContainer = document.getElementById('historyListContainer');
@@ -1328,15 +1332,15 @@ document.addEventListener('DOMContentLoaded', () => {
             json.data.forEach(item => {
                 html += `
                     <tr style="border-bottom: 1px solid #e2e8f0;">
-                        <td style="padding: 10px 14px; font-weight:600;">${item.name || '<i>Untitled</i>'}</td>
-                        <td style="padding: 10px 14px;">${item.mobile || '-'}</td>
-                        <td style="padding: 10px 14px;">${item.email || '-'}</td>
-                        <td style="padding: 10px 14px; font-size:0.8rem; color:#64748b;">${item.formatted_date || ''}</td>
+                        <td style="padding: 10px 14px; font-weight:600;">${item.name ? escapeHistoryText(item.name) : '<i>Untitled</i>'}</td>
+                        <td style="padding: 10px 14px;">${escapeHistoryText(item.mobile || '-')}</td>
+                        <td style="padding: 10px 14px;">${escapeHistoryText(item.email || '-')}</td>
+                        <td style="padding: 10px 14px; font-size:0.8rem; color:#64748b;">${escapeHistoryText(item.formatted_date || '')}</td>
                         <td style="padding: 10px 14px; text-align: right; white-space:nowrap;">
-                            <button type="button" class="secondary-btn" style="padding: 4px 10px; font-size:0.78rem; margin-right:4px;" onclick="loadResumeById(${item.id})">
+                            <button type="button" class="secondary-btn" style="padding: 4px 10px; font-size:0.78rem; margin-right:4px;" onclick="loadResumeById('${escapeHistoryText(item.id)}')">
                                 <i class="fas fa-edit"></i> Open
                             </button>
-                            <button type="button" class="remove-btn" style="position:static; padding: 4px 8px; font-size:0.85rem;" onclick="deleteResumeById(${item.id})">
+                            <button type="button" class="remove-btn" style="position:static; padding: 4px 8px; font-size:0.85rem;" onclick="deleteResumeById('${escapeHistoryText(item.id)}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
