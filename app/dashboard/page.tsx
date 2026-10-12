@@ -2009,24 +2009,24 @@ setServiceDirectory(filteredWithUrls);
         {showServiceDocumentGeneratorModal && <ServiceDocumentGeneratorTool onClose={() => setShowServiceDocumentGeneratorModal(false)} />}
         {showResumeBuilderModal && (
   <div
-    className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[6px] sm:p-5"
+    className="fixed inset-0 z-[10000] flex items-stretch justify-stretch bg-slate-950/55 backdrop-blur-[6px]"
     onMouseDown={(e) => {
       if (e.target === e.currentTarget) {
         setShowResumeBuilderModal(false);
       }
     }}
   >
-    <div className="relative h-[94vh] w-full max-w-[1450px] overflow-hidden rounded-3xl bg-slate-100 shadow-2xl dark:bg-slate-950">
+    <div className="relative h-[100dvh] w-full max-w-none overflow-hidden rounded-none bg-slate-100 shadow-2xl dark:bg-slate-950">
       <button
         type="button"
         aria-label="Close Resume Builder"
         onClick={() => setShowResumeBuilderModal(false)}
-        className="absolute right-4 top-4 z-[100] flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-xl font-bold text-slate-600 shadow-lg"
+        className="absolute right-3 top-3 z-[100] flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-xl font-bold text-slate-600 shadow-lg"
       >
         ×
       </button>
 
-      <div className="h-full overflow-y-auto">
+      <div className="h-full min-h-0 overflow-hidden">
         <ResumeBuilder />
       </div>
     </div>
