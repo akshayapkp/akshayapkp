@@ -80,6 +80,20 @@ body > div:first-child,
   background: #94a3b8;
 }
 
+/* Hide only the outer page scrollbar; keep page scrolling and inner panel scrollbars. */
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 
 /* =========================================================
    SMART AKSHAYA — GLOBAL LIGHT / DARK THEME
