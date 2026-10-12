@@ -58,12 +58,6 @@ const serviceCategory = (name: string) => {
   return "Other";
 };
 
-const defaultFeaturedServices = [
-  { id: "demo-aadhaar", title: "Aadhaar Services", subtitle: "Update • Correction • Enrolment", image: "/demo-posters/aadhaar-update.svg", serviceName: "", apply: true },
-  { id: "demo-pan", title: "PAN Card Service", subtitle: "New PAN • Correction • Reprint", image: "/demo-posters/pan-card.svg", serviceName: "", apply: true },
-  { id: "demo-passport", title: "Passport Services", subtitle: "New Passport • Renewal • Support", image: "/demo-posters/passport.svg", serviceName: "", apply: true },
-];
-
 const maskMobile = (mobile: string) => {
   const digits = String(mobile || "").replace(/\D/g, "");
   if (!digits) return "—";
@@ -137,7 +131,7 @@ export default function HomePage() {
   });
 
   const whatsappNumber = homepageSettings.contact.whatsapp.replace(/\D/g, "") || homepageSettings.contact.mobile.replace(/\D/g, "") || process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
-  const featuredServices = homepageSettings.posters.length ? homepageSettings.posters : defaultFeaturedServices;
+  const featuredServices = homepageSettings.posters;
 
   useEffect(() => {
     let cancelled = false;
@@ -147,9 +141,10 @@ export default function HomePage() {
         const local = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("managedServices") || "[]") : [];
         const localList = Array.isArray(local) ? local : [];
         const primary = await supabase.from("feature_permissions").select("permissions").eq("id", HOMEPAGE_SETTINGS_ROW_ID).maybeSingle();
-        const legacy = primary.data?.permissions ? primary.data.permissions : (await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle()).data?.permissions;
-        const payload = legacy;
-        const savedSettings = payload?.data?.homepageSettings;
+        const legacy = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+        const primarySettings = primary.data?.permissions?.data?.homepageSettings;
+        const legacySettings = legacy.data?.permissions?.data?.homepageSettings;
+        const savedSettings = primarySettings || legacySettings;
         if (savedSettings) {
           setHomepageSettings(prev => ({
             ...prev,
@@ -391,19 +386,19 @@ export default function HomePage() {
             {featuredServices.map((item, i) => <button key={item.id} aria-label={item.title} className={i === featuredIndex ? styles.sliderDotActive : styles.sliderDot} onClick={() => setFeaturedIndex(i)} />)}
           </div>
         </div>
-        <div className={styles.posterViewport} onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
-          <div className={styles.posterTrack} style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>
-            {featuredServices.map((item) => (
-              <article className={styles.servicePoster} key={item.id} style={{ "--poster-image": `url("${item.image}")` } as React.CSSProperties}>
-                <img src={item.image} alt={item.title} />
-                <div className={styles.posterOverlay}>
-                  <div><span>New Service</span><h3>{item.title}</h3><p>{item.subtitle}</p></div>
-                  {item.apply !== false && <button type="button" onClick={() => applyFeatured(item)}>Apply Now <ArrowRight size={16}/></button>}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
+  <div className={styles.posterViewport} onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
+  {featuredServices.length ? <div className={styles.posterTrack} style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>
+  {featuredServices.map((item) => (
+  <article className={styles.servicePoster} key={item.id} style={{ "--poster-image": `url("${item.image}")` } as React.CSSProperties}>
+  <img src={item.image} alt={item.title} />
+  <div className={styles.posterOverlay}>
+  <div><span>New Service</span><h3>{item.title}</h3><p>{item.subtitle}</p></div>
+  {item.apply !== false && <button type="button" onClick={() => applyFeatured(item)}>Apply Now <ArrowRight size={16}/></button>}
+  </div>
+  </article>
+  ))}
+  </div> : <div className={styles.servicePoster}><div className={styles.posterOverlay}><div><span>Announcements</span><h3>New updates will appear here</h3><p>Admin add ചെയ്ത ads ഇവിടെ customer home page-ൽ കാണിക്കും.</p></div></div></div>}
+  </div>
       </div>
     </section>
 
