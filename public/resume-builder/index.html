@@ -275,6 +275,7 @@
                     <div class="form-group">
                         <textarea id="summaryInput" data-preview="prev-summary" rows="4">Driven and enthusiastic professional with a strong passion for delivering high-quality results.</textarea>
                         <button type="button" class="add-btn generate-content-btn" onclick="window.generateResumeContent('summary')"><i class="fas fa-wand-magic-sparkles"></i> Generate Summary / Objective</button>
+                        <button type="button" id="aiSummaryBtn" class="ai-gen-btn"><i class="fas fa-wand-magic-sparkles"></i> AI Summary</button>
                     </div>
                 </div>
 
@@ -464,6 +465,49 @@
                         <div class="form-group"><label>Date</label><input type="date" id="dateInput"></div>
                     </div>
                 </div>
+
+            <!-- AI Professional Summary Modal -->
+            <div id="aiSummaryModal" class="ai-modal" aria-hidden="true">
+              <div class="ai-modal-content" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+                <div class="ai-modal-head">
+                  <div>
+                    <h3 id="aiModalTitle"><i class="fas fa-wand-magic-sparkles"></i> AI Summary</h3>
+                    <p>Create a professional, ATS-friendly summary from your resume details.</p>
+                  </div>
+                  <button type="button" id="aiCloseBtn" class="ai-close" aria-label="Close AI Summary">&times;</button>
+                </div>
+                <div class="ai-modal-body">
+                  <div class="ai-row">
+                    <label for="aiJobApplied">Job applying for</label>
+                    <input id="aiJobApplied" type="text" maxlength="120" placeholder="e.g. Sales Executive, Accountant, Teacher">
+                  </div>
+                  <div class="ai-row">
+                    <label for="aiInstructions">Additional instructions / keywords <span class="ai-hint">(optional)</span></label>
+                    <textarea id="aiInstructions" rows="3" maxlength="1000" placeholder="Add relevant strengths, keywords, or tone preferences"></textarea>
+                  </div>
+                  <label class="ai-ats-row" for="aiAtsToggle">
+                    <input id="aiAtsToggle" type="checkbox" checked>
+                    <span><strong>ATS-friendly</strong><small>Use clear language and relevant job keywords.</small></span>
+                  </label>
+                  <div class="ai-row ai-limit-row">
+                    <label for="aiCharLimit">Maximum characters</label>
+                    <div><input id="aiCharLimit" type="number" min="400" max="1500" step="50" value="700"><span>400–1500</span></div>
+                  </div>
+                  <button type="button" id="aiGenerateBtn" class="ai-generate-btn"><i class="fas fa-wand-magic-sparkles"></i> Generate Summary</button>
+                  <p id="aiStatus" class="ai-status" aria-live="polite"></p>
+                  <div class="ai-row ai-output-row">
+                    <label for="aiOutput">Generated summary <span class="ai-hint">You can edit this before applying.</span></label>
+                    <textarea id="aiOutput" rows="7" maxlength="1500" placeholder="Your generated summary will appear here." disabled></textarea>
+                    <div class="ai-out-meta"><span>Review the content before adding it to your resume.</span><span><strong id="aiOutCount">0</strong> / 1500</span></div>
+                  </div>
+                </div>
+                <div class="ai-modal-actions">
+                  <button type="button" id="aiCancelBtn" class="ai-secondary-btn">Cancel</button>
+                  <button type="button" id="aiApplyBtn" class="ai-apply-btn" disabled><i class="fas fa-check"></i> Apply to Resume</button>
+                </div>
+              </div>
+            </div>
+
             </form>
         </div>
 
@@ -631,6 +675,7 @@
     </script>
     <script src="assets/resume_script_0gtt.js"></script>
     <script src="assets/resume-enhancements.js"></script>
+    <script src="assets/resume-ai-summary.js" defer></script>
     <script>
   document.querySelectorAll(".signature-line").forEach((element) => {
     element.remove();
