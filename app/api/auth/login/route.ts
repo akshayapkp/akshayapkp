@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, message: "Secure login is not configured yet. Please contact the administrator." }, { status: 503 });
       }
       const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-      const { data, error } = await db.from("staff").select("id, staff_id, name, username, email, role, password");
+      const { data, error } = await db.from("staff").select("id, staff_id, name, email, role, password");
       if (error) {
         return NextResponse.json({ success: false, message: "Could not verify staff account. Check the staff table configuration." }, { status: 503 });
       }
