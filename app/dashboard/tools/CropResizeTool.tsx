@@ -15,10 +15,14 @@ import { useCropResize } from "../hooks/useCropResize";
 
 interface CropResizeToolProps {
   onClose: () => void;
+  isActive?: boolean;
+  onSwitchMode?: (mode: "crop" | "psc") => void;
 }
 
 export default function CropResizeTool({
   onClose,
+  isActive = true,
+  onSwitchMode,
 }: CropResizeToolProps) {
   const crop = useCropResize();
 
@@ -88,7 +92,7 @@ export default function CropResizeTool({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5">
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5 ${isActive ? "" : "hidden"}`}>
       <div className="my-4 flex max-h-[95vh] w-full max-w-6xl flex-col overflow-y-auto rounded-[30px] border border-white/80 bg-white/95 shadow-[0_30px_100px_rgba(15,23,42,0.28)] backdrop-blur-2xl">
 
         <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-500 px-5 py-5 text-white shadow-lg sm:px-7 sm:py-6">
@@ -101,14 +105,22 @@ export default function CropResizeTool({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition-all hover:-translate-y-0.5 hover:bg-white/20"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {onSwitchMode && (
+              <div className="mr-1 flex items-center gap-1 rounded-xl border border-white/20 bg-white/10 p-1">
+                <button type="button" onClick={() => onSwitchMode("crop")} className="rounded-lg bg-white px-3 py-2 text-xs font-black text-blue-700 shadow-sm">Crop & Resize</button>
+                <button type="button" onClick={() => onSwitchMode("psc")} className="rounded-lg px-3 py-2 text-xs font-black text-white/90 transition hover:bg-white/15">PSC Creator</button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition-all hover:-translate-y-0.5 hover:bg-white/20"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 p-4 sm:p-5 lg:grid-cols-12 lg:gap-5 lg:p-6">
