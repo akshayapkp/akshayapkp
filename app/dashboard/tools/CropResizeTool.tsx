@@ -92,7 +92,7 @@ export default function CropResizeTool({
   };
 
   return (
-    <div className={`fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5 ${isActive ? "" : "hidden"}`}>
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5 ${isActive ? "" : "hidden"}`} style={{ display: isActive ? "flex" : "none" }}>
       <div className="my-4 flex max-h-[95vh] w-full max-w-6xl flex-col overflow-y-auto rounded-[30px] border border-white/80 bg-white/95 shadow-[0_30px_100px_rgba(15,23,42,0.28)] backdrop-blur-2xl">
 
         <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-500 px-5 py-5 text-white shadow-lg sm:px-7 sm:py-6">
