@@ -5,8 +5,8 @@ function ResumeBuilder() {
     <div
       style={{
         width: "100%",
-        height: "calc(100vh - 120px)",
-        minHeight: "700px",
+        height: "100%",
+        minHeight: 0,
         overflow: "hidden",
         borderRadius: "12px",
         background: "#ffffff",
