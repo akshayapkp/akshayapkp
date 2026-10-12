@@ -312,7 +312,7 @@ export default function ApplicationFormsPage() {
               </div>
               <div className="relative mt-3 min-h-0 flex-1 overflow-hidden rounded-xl bg-slate-100 p-2 sm:p-3">
                 <div className={`mx-auto h-full min-h-0 bg-white shadow-md transition-[width] duration-200 ${zoomMode === "fit" ? "w-[min(52%,680px)] min-w-[280px]" : "w-full"}`}>
-                  <iframe key={`${selected.id}-${zoomMode}`} title={selected.name} src={previewUrl} className="block h-full min-h-0 w-full border-0" allow="autoplay"/>
+                  <iframe key={`${selected.id}-${zoomMode}`} title={selected.name} src={previewUrl} className={`block h-full min-h-0 w-full border-0 transition-transform duration-200 ${zoomMode === "zoom" ? "scale-[1.3] origin-center" : "scale-100"}`} allow="autoplay"/>
                 </div>
               </div>
             </> : <div className="flex flex-1 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-sky-50 text-center"><div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white bg-white text-sky-600 shadow-sm"><FileText size={30}/></div><h2 className="mt-4 text-lg font-black text-slate-800">Select an application form</h2><p className="mt-1 max-w-sm px-4 text-xs leading-5 text-slate-500">Choose a form from the left panel to preview it here, then download or print it.</p><button onClick={()=>void loadFiles()} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50"><RefreshCw size={14} className={loading?"animate-spin":""}/> Refresh Forms</button></div>}
