@@ -89,7 +89,7 @@
                 <div class="center-badge"><i class="fas fa-briefcase"></i> Create your resume</div>
             </div>
 
-            <div class="header-actions"><span class="btn-text">Your resumes stay in this browser</span></div>
+            <div class="header-actions"><span class="btn-text">Your resumes are saved securely to the centre database</span></div>
         </div>
     </header>
 
@@ -584,7 +584,7 @@
         const CSRF_TOKEN = '';
         const PDF_ENDPOINT = 'browser-print';
 
-        // Local-only storage adapter: no PHP API or database is required.
+        // Legacy localStorage adapter retained only for backward compatibility with old API URLs. New saves use /api/resume-builder.
         (() => {
             const storageKey = 'resume-builder-resumes-v1';
             const read = () => JSON.parse(localStorage.getItem(storageKey) || '[]');
