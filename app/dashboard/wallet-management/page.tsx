@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import PrototypeOperationsPanel from "@/app/dashboard/components/PrototypeOperationsPanel";
+import CashCounterTool from "@/app/dashboard/tools/CashCounterTool";
 import {
   Wallet,
   Search,
@@ -14,6 +15,7 @@ import {
   RotateCcw,
   TrendingUp,
   ShieldCheck,
+  Banknote,
 } from "lucide-react";
 
 interface WalletItem {
@@ -54,6 +56,7 @@ export default function WalletManagementPage() {
   const [showAdjustBalanceModal, setShowAdjustBalanceModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCashCounter, setShowCashCounter] = useState(false);
 
   const [selectedWallet, setSelectedWallet] = useState<WalletItem | null>(null);
   const [newWalletName, setNewWalletName] = useState("");
@@ -238,8 +241,17 @@ export default function WalletManagementPage() {
           <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Wallet Management</h1>
           <p className="mt-1 text-xs font-medium text-slate-500 sm:text-sm">Track, transfer, and manage all your digital & physical balances seamlessly.</p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-xs font-black text-cyan-700 shadow-sm">
-          <ShieldCheck size={16} /> Secure Ledger System
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowCashCounter(true)}
+            className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-black text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100"
+          >
+            <Banknote size={16} /> Cash Counter & Update Wallet
+          </button>
+          <div className="flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2.5 text-xs font-black text-cyan-700 shadow-sm">
+            <ShieldCheck size={16} /> Secure Ledger System
+          </div>
         </div>
       </div>
 
@@ -381,6 +393,25 @@ export default function WalletManagementPage() {
       >
         <Plus size={26} />
       </button>
+
+      {/* Cash Counter integration: count physical cash, then reconcile the Cash wallet. */}
+      {showCashCounter && (
+        <CashCounterTool
+          onClose={() => setShowCashCounter(false)}
+          onComplete={(countedTotal) => {
+            const cashWallet = wallets.find((wallet) => wallet.name.trim().toLowerCase() === "cash");
+            if (!cashWallet) {
+              alert('A wallet named "Cash" was not found. Please create or rename a wallet to "Cash" first.');
+              return;
+            }
+            setShowCashCounter(false);
+            setSelectedWallet(cashWallet);
+            setAdjustAmount((countedTotal - cashWallet.currentBalance).toFixed(2));
+            setAdjustNote("Cash counter reconciliation");
+            setShowAdjustBalanceModal(true);
+          }}
+        />
+      )}
 
       {/* History Modal */}
       {showHistoryModal && (
