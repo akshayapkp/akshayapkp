@@ -140,11 +140,12 @@ export default function HomePage() {
       try {
         const local = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("managedServices") || "[]") : [];
         const localList = Array.isArray(local) ? local : [];
+        const localHomepage = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("homepageSettings") || "null") : null;
         const primary = await supabase.from("feature_permissions").select("permissions").eq("id", HOMEPAGE_SETTINGS_ROW_ID).maybeSingle();
         const legacy = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
         const primarySettings = primary.data?.permissions?.data?.homepageSettings;
         const legacySettings = legacy.data?.permissions?.data?.homepageSettings;
-        const savedSettings = primarySettings || legacySettings;
+        const savedSettings = primarySettings || legacySettings || localHomepage;
         if (savedSettings) {
           setHomepageSettings(prev => ({
             ...prev,
@@ -414,7 +415,7 @@ export default function HomePage() {
   <img src={item.image} alt={item.title} />
   <div className={styles.posterOverlay}>
   <div><span>New Service</span><h3>{item.title}</h3><p>{item.subtitle}</p></div>
-  {item.apply !== false && <button type="button" onClick={() => applyFeatured(item)}>Apply Now <ArrowRight size={16}/></button>}
+  {item.apply !== false && <button type="button" onClick={() => applyFeatured(item)}>Apply Now · അപേക്ഷിക്കാം <ArrowRight size={16}/></button>}
   </div>
   </article>
   ))}
