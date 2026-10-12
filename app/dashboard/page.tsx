@@ -3,8 +3,7 @@
 import SSLCCalculatorTool from "./tools/SSLCCalculatorTool";
 import CashCounterTool from "./tools/CashCounterTool";
 import PassportSize from "./tools/PassportSize";
-import CropResizeTool from "./tools/CropResizeTool";
-import PSCPhotoTool from "./tools/PSCPhotoTool";
+import PhotoStudioTool from "./tools/PhotoStudioTool";
 import PDFToolkitTool from "./tools/PDFTool";
 import LandAreaConverterTool from "./tools/ConverterTool";
 import ImageToTextTool from "./tools/ImageToText";
@@ -1174,9 +1173,8 @@ export default function DashboardPage() {
   // Popup States for Tools
   const [showCashCounterModal, setShowCashCounterModal] = useState(false);
   const [showSslcModal, setShowSslcModal] = useState(false);
-  const [showCropResizeModal, setShowCropResizeModal] = useState(false);
+  const [showPhotoStudioModal, setShowPhotoStudioModal] = useState(false);
   const [showPassportToolModal, setShowPassportToolModal] = useState(false);
-  const [showPscModal, setShowPscModal] = useState(false);
   const [showPdfToolkitModal, setShowPdfToolkitModal] = useState(false);
   const [showTranslatorModal, setShowTranslatorModal] = useState(false);
   const [showConverterModal, setShowConverterModal] = useState(false);
@@ -1232,17 +1230,10 @@ export default function DashboardPage() {
       isInternal: true,
     },
     {
-      id: 3,
-      name: "Crop & Resize",
-      url: "crop-resize-modal",
-      bgColor: "from-pink-500 to-pink-600",
-      isInternal: true,
-    },
-    {
-      id: 4,
-      name: "PSC Creator",
-      url: "psc-modal",
-      bgColor: "from-teal-500 to-teal-700",
+      id: "photo-studio",
+      name: "Photo Studio",
+      url: "photo-studio-modal",
+      bgColor: "from-blue-600 to-teal-600",
       isInternal: true,
     },
     {
@@ -1381,13 +1372,39 @@ const loadDashboardData = () => {
           if (Array.isArray(parsedOrder) && parsedOrder.length > 0) {
             // Preserve the user's saved order, but merge in any tools added
             // in a newer version so new dashboard cards never disappear.
+            // Migrate older saved layouts: Crop & Resize + PSC Creator now open one Photo Studio.
+            const normalizedOrder: any[] = [];
+            let photoStudioAdded = false;
+            for (const item of parsedOrder) {
+              const legacyUrl = String(item?.url || "");
+              const legacyName = String(item?.name || "").toLowerCase();
+              const isLegacyPhotoTool =
+                legacyUrl === "crop-resize-modal" ||
+                legacyUrl === "psc-modal" ||
+                legacyName === "crop & resize" ||
+                legacyName === "psc creator";
+              if (isLegacyPhotoTool) {
+                if (!photoStudioAdded) {
+                  normalizedOrder.push({
+                    id: "photo-studio",
+                    name: "Photo Studio",
+                    url: "photo-studio-modal",
+                    bgColor: "from-blue-600 to-teal-600",
+                    isInternal: true,
+                  });
+                  photoStudioAdded = true;
+                }
+                continue;
+              }
+              normalizedOrder.push(item);
+            }
             const savedKeys = new Set(
-              parsedOrder.map((item: any) => String(item?.url || item?.id || ""))
+              normalizedOrder.map((item: any) => String(item?.url || item?.id || ""))
             );
             const newlyAddedTools = quickLinks.filter(
               (item: any) => !savedKeys.has(String(item?.url || item?.id || ""))
             );
-            baseTools = [...parsedOrder, ...newlyAddedTools];
+            baseTools = [...normalizedOrder, ...newlyAddedTools];
           }
         } catch (e) {}
       }
@@ -1994,9 +2011,8 @@ setServiceDirectory(filteredWithUrls);
       <div className="smart-akshaya-tool-layer contents">
         {showCashCounterModal && <CashCounterTool onClose={() => setShowCashCounterModal(false)} />}
         {showSslcModal && <SSLCCalculatorTool onClose={() => setShowSslcModal(false)} />}
-        {showCropResizeModal && <CropResizeTool onClose={() => setShowCropResizeModal(false)} />}
+        {showPhotoStudioModal && <PhotoStudioTool onClose={() => setShowPhotoStudioModal(false)} />}
         {showPassportToolModal && <PassportSize onClose={() => setShowPassportToolModal(false)} />}
-        {showPscModal && <PSCPhotoTool onClose={() => setShowPscModal(false)} />}
         {showPdfToolkitModal && <PDFToolkitTool onClose={() => setShowPdfToolkitModal(false)} />}
         {showTranslatorModal && <TranslatorTool onClose={() => setShowTranslatorModal(false)} />}
         {showConverterModal && <LandAreaConverterTool onClose={() => setShowConverterModal(false)} />}
@@ -2388,6 +2404,7 @@ setServiceDirectory(filteredWithUrls);
               const isInternalTool = tool.isInternal;
               const isCashCounter = isInternalTool && (tool.name.toLowerCase().includes("cash") || (tool.url && tool.url.toLowerCase().includes("cash")));
               const isSslc = isInternalTool && (tool.name.toLowerCase().includes("sslc") || (tool.url && tool.url.toLowerCase().includes("sslc")));
+              const isPhotoStudio = isInternalTool && (tool.url === "photo-studio-modal" || tool.name.toLowerCase().includes("photo studio"));
               const isCropResize = isInternalTool && (tool.name.toLowerCase().includes("crop") || (tool.url && tool.url.toLowerCase().includes("crop")));
               const isPsc = isInternalTool && (tool.name.toLowerCase().includes("psc") || (tool.url && tool.url.toLowerCase().includes("psc")));
               const isPassport = isInternalTool && (tool.name.toLowerCase().includes("passport") || (tool.url && tool.url.toLowerCase().includes("passport")));
@@ -2417,6 +2434,7 @@ setServiceDirectory(filteredWithUrls);
                       isCustomizing ||
                       isCashCounter ||
                       isSslc ||
+                      isPhotoStudio ||
                       isCropResize ||
                       isPsc ||
                       isPassport ||
@@ -2443,12 +2461,9 @@ setServiceDirectory(filteredWithUrls);
                       } else if (isSslc) {
                         e.preventDefault();
                         setShowSslcModal(true);
-                      } else if (isCropResize) {
+                      } else if (isPhotoStudio || isCropResize || isPsc) {
                         e.preventDefault();
-                        setShowCropResizeModal(true);
-                      } else if (isPsc) {
-                        e.preventDefault();
-                        setShowPscModal(true);
+                        setShowPhotoStudioModal(true);
                       } else if (isPassport) {
                         e.preventDefault();
                         setShowPassportToolModal(true);
