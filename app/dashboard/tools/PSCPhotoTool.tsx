@@ -7,10 +7,14 @@ import { usePSCPhoto } from "../hooks/usePSCPhoto";
 
 interface PSCPhotoToolProps {
   onClose: () => void;
+  isActive?: boolean;
+  onSwitchMode?: (mode: "crop" | "psc") => void;
 }
 
 export default function PSCPhotoTool({
   onClose,
+  isActive = true,
+  onSwitchMode,
 }: PSCPhotoToolProps) {
   const psc = usePSCPhoto();
 
@@ -52,7 +56,7 @@ export default function PSCPhotoTool({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5">
+    <div className={`fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5 ${isActive ? "" : "hidden"}`}>
       <div className="my-4 flex max-h-[95vh] w-full max-w-6xl flex-col overflow-y-auto rounded-[30px] border border-white/80 bg-white/95 shadow-[0_30px_100px_rgba(15,23,42,0.28)] backdrop-blur-2xl">
 
         {/* HEADER */}
@@ -67,12 +71,22 @@ export default function PSCPhotoTool({
             </p>
           </div>
 
-          <button
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition-all hover:-translate-y-0.5 hover:bg-white/20"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            {onSwitchMode && (
+              <div className="mr-1 flex items-center gap-1 rounded-xl border border-white/20 bg-white/10 p-1">
+                <button type="button" onClick={() => onSwitchMode("crop")} className="rounded-lg px-3 py-2 text-xs font-black text-white/90 transition hover:bg-white/15">Crop & Resize</button>
+                <button type="button" onClick={() => onSwitchMode("psc")} className="rounded-lg bg-white px-3 py-2 text-xs font-black text-emerald-700 shadow-sm">PSC Creator</button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close Photo Studio"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition-all hover:-translate-y-0.5 hover:bg-white/20"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className="p-4 sm:p-6">
