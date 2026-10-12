@@ -1015,17 +1015,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (saveBtn) saveBtn.disabled = true;
 
         try {
-            const res = await fetch('resume_api.php?action=save', {
+            const res = await fetch('/api/resume-builder?action=save', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : ''
-                },
-                body: JSON.stringify({
-                    id: currentResumeId,
-                    csrf_token: typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : '',
-                    data: payloadData
-                })
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ id: currentResumeId, data: payloadData })
             });
 
             const result = await res.json();
@@ -1310,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         listContainer.innerHTML = '<div style="padding: 1.5rem; text-align:center; color:#64748b;">Loading resumes...</div>';
 
         try {
-            const res = await fetch(`resume_api.php?action=list&search=${encodeURIComponent(search)}`);
+            const res = await fetch(`/api/resume-builder?action=list&search=${encodeURIComponent(search)}`);
             const json = await res.json();
 
             if (!json.success || !json.data || json.data.length === 0) {
@@ -1359,7 +1353,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- GLOBAL ACTIONS: LOAD & DELETE ---
     window.loadResumeById = async function(id) {
         try {
-            const res = await fetch(`resume_api.php?action=get&id=${id}`);
+            const res = await fetch(`/api/resume-builder?action=get&id=${encodeURIComponent(id)}`, { credentials: 'same-origin' });
             const json = await res.json();
             if (json.success && json.data) {
                 currentResumeId = json.id;
@@ -1379,16 +1373,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm('Are you sure you want to delete this resume?')) return;
 
         try {
-            const res = await fetch('resume_api.php?action=delete', {
+            const res = await fetch('/api/resume-builder', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : ''
-                },
-                body: JSON.stringify({ 
-                    id,
-                    csrf_token: typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : ''
-                })
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ action: 'delete', id })
             });
             const json = await res.json();
             if (json.success) {
