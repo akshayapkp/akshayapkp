@@ -37,63 +37,29 @@ export default function LoginPage() {
     e.preventDefault();
     if (isSigningIn) return;
     setIsSigningIn(true);
-    const cleanUsername = username.trim().toLowerCase();
-    const cleanPassword = password.trim();
-    let isValid = cleanUsername === "admin" && cleanPassword === "admin";
-    let assignedRole = isValid ? "admin" : "staff";
-    let displayName = isValid ? "Admin User" : "";
-    if (!isValid) {
-      try {
-        const passwordHash = await hashPassword(cleanPassword);
-        const { data } = await supabase.from("staff").select("id, staff_id, name, email, role, password");
-        const matched = (data ?? []).find((staff: any) => {
-          const usernameMatches = [staff.name, staff.username, staff.email, staff.staff_id, staff.id].some(value => String(value ?? "").trim().toLowerCase() === cleanUsername);
-          const storedPassword = String(staff.password ?? "").trim();
-          return usernameMatches && (storedPassword === cleanPassword || storedPassword === passwordHash);
-        });
-        if (matched) {
-          isValid = true;
-          const matchedRole = String(matched.role ?? "").trim().toLowerCase();
-          assignedRole = matchedRole === "admin"
-            ? "admin"
-            : matchedRole.includes("account")
-              ? "accountant"
-              : matchedRole.includes("online")
-                ? "online_staff"
-                : "staff";
-          displayName = matched.name || matched.email || matched.staff_id || "Staff";
-        }
-      } catch (error) { console.error("Staff login failed:", error); }
-      if (!isValid) {
-        try {
-          const saved = JSON.parse(localStorage.getItem("smart_akshaya_staff") || "[]");
-          const staffArray = Array.isArray(saved) ? saved : saved?.staff || saved?.staffs || saved?.data || [];
-          const matched = staffArray.find((staff: any) => {
-            const usernameMatches = [staff.name, staff.staffName, staff.username, staff.userName, staff.email, staff.staffId, staff.id].some(value => String(value ?? "").trim().toLowerCase() === cleanUsername);
-            const storedPassword = String(staff.password ?? staff.pass ?? staff.staffPassword ?? staff.loginPassword ?? "").trim();
-            const firstName = cleanUsername.split(" ")[0] || "staff";
-            return usernameMatches && (storedPassword ? storedPassword === cleanPassword : [cleanPassword.toLowerCase(), "akshaya123"].includes(`${firstName}akshaya`));
-          });
-          if (matched) {
-            isValid = true;
-            const matchedRole = String(matched.role ?? "").trim().toLowerCase();
-            assignedRole = matchedRole === "admin"
-              ? "admin"
-              : matchedRole.includes("account")
-                ? "accountant"
-                : matchedRole.includes("online")
-                  ? "online_staff"
-                  : "staff";
-            displayName = matched.name || matched.staffName || matched.username || matched.email || matched.staffId || "Staff";
-          }
-        } catch (error) { console.error("Local staff login failed:", error); }
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        window.alert(result.message || "Invalid Username or Password. Please check your credentials.");
+        setIsSigningIn(false);
+        return;
       }
-    }
-    if (isValid) {
-      localStorage.setItem("loggedInUser", JSON.stringify({ username: displayName, role: assignedRole }));
+      // Keep these client-side values for existing dashboard UI only.
+      // Authorization for server APIs uses the HttpOnly signed cookie.
+      localStorage.setItem("loggedInUser", JSON.stringify({ username: result.username, role: result.role }));
       localStorage.setItem("loginSessionDate", getLocalDateKey());
       router.push("/dashboard");
-    } else { setIsSigningIn(false); window.alert("Invalid Username or Password. Please check your credentials."); }
+    } catch (error) {
+      console.error("Login request failed:", error);
+      window.alert("Unable to connect to the secure login service. Please try again.");
+      setIsSigningIn(false);
+    }
   };
 
   return <main className={styles.page}>
