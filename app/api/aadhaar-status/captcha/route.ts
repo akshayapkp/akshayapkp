@@ -36,6 +36,8 @@ export async function POST() {
       );
     }
 
+    // UIDAI does not publish a stable response schema.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let data: any;
     try {
       data = JSON.parse(text);

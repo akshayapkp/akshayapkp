@@ -14,6 +14,8 @@ export async function POST(req: Request) {
       );
     }
 
+    // The public UIDAI endpoint accepts a loosely shaped JSON payload.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let body: any;
     try {
       body = JSON.parse(raw);
@@ -73,6 +75,8 @@ export async function POST(req: Request) {
       );
     }
 
+    // UIDAI does not publish a stable response schema.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let data: any;
     try {
       data = JSON.parse(text);

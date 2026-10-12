@@ -84,6 +84,8 @@ export default function AppServicesPage() {
     const storedUser = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
     const role = String(storedUser.role || "").toLowerCase();
     const admin = role === "admin";
+    // Auth is read from browser storage, so these updates intentionally follow mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsAdmin(admin);
     setAuthChecked(true);
     if (!admin) {

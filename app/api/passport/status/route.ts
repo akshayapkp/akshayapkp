@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
 
     const raw = await upstream.text();
 
+    // Passport Seva's response shape varies by status and error condition.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let data: any;
     try {
       data = JSON.parse(raw);
@@ -121,12 +123,13 @@ export async function POST(req: NextRequest) {
         policeVerificationCode: row?.PV_VERIFICATION_FK ?? null,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "";
     return NextResponse.json(
       {
         ok: false,
         error:
-          error?.message ||
+          message ||
           "Unable to connect to Passport Seva. Please try again.",
       },
       { status: 502 }
