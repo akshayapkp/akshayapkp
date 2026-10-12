@@ -5,10 +5,12 @@ import { useCashCounter } from "../hooks/useCashCounter";
 
 interface CashCounterToolProps {
   onClose: () => void;
+  onComplete?: (amount: number) => void;
 }
 
 export default function CashCounterTool({
   onClose,
+  onComplete,
 }: CashCounterToolProps) {
   const cash = useCashCounter();
 
@@ -158,10 +160,11 @@ export default function CashCounterTool({
             </div>
 
             <button
-              onClick={onClose}
-              className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 font-black text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
+              type="button"
+              onClick={() => onComplete ? onComplete(cash.grandTotal) : onClose()}
+              className="w-full rounded-2xl border border-emerald-600 bg-gradient-to-r from-emerald-600 to-teal-600 py-3.5 font-black text-white shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5 hover:shadow-xl"
             >
-              Done / Close
+              {onComplete ? "Use Total & Update Wallet" : "Done / Close"}
             </button>
 
           </div>
