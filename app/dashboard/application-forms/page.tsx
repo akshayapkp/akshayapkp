@@ -272,7 +272,7 @@ export default function ApplicationFormsPage() {
   const downloadUrl = selected ? `https://drive.google.com/uc?export=download&id=${selected.id}` : "";
 
   return (
-    <main className="h-[calc(100dvh-80px)] min-h-0 overflow-hidden bg-[#eaf5ff] p-3 sm:p-4">
+    <main className="-mt-6 h-[calc(100dvh-16px)] min-h-0 overflow-hidden bg-[#eaf5ff] p-2 sm:p-3">
       <div className="mx-auto flex h-full min-h-0 max-w-[1700px] flex-col gap-3 overflow-hidden">
         <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white bg-white/90 px-4 py-3 shadow-sm">
           <div className="flex items-center gap-3"><div className="rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 p-2 text-white"><FolderOpen size={22}/></div><div><h1 className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">Application Forms Vault</h1><p className="text-xs text-slate-500">MPM250 · Akshaya Center Pookiparamba</p></div></div>
