@@ -405,8 +405,13 @@ export default function WalletManagementPage() {
               return;
             }
             setShowCashCounter(false);
+            const difference = Number((countedTotal - cashWallet.currentBalance).toFixed(2));
+            if (difference === 0) {
+              alert("The counted cash already matches the Cash wallet balance. No adjustment is needed.");
+              return;
+            }
             setSelectedWallet(cashWallet);
-            setAdjustAmount((countedTotal - cashWallet.currentBalance).toFixed(2));
+            setAdjustAmount(difference.toFixed(2));
             setAdjustNote("Cash counter reconciliation");
             setShowAdjustBalanceModal(true);
           }}
