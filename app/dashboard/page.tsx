@@ -1322,6 +1322,13 @@ export default function DashboardPage() {
       bgColor: "from-cyan-500 to-blue-700",
       isInternal: true,
     },
+    {
+      id: "aadhaar-name-change-check",
+      name: "Aadhaar Name Check",
+      url: "aadhaar-name-check-modal",
+      bgColor: "from-blue-600 to-violet-700",
+      isInternal: true,
+    },
   ]);
 
   const [announcements, setAnnouncements] = useState<any[]>([]);
@@ -2393,6 +2400,7 @@ setServiceDirectory(filteredWithUrls);
               const isIncomeAffidavitTool = isInternalTool && (tool.url === "income-affidavit-modal");
               const isAadhaarGazetteTool = isInternalTool && (tool.url === "aadhaar-gazette-modal");
               const isServiceDocumentGeneratorTool = isInternalTool && (tool.url === "service-document-generator-modal");
+              const isAadhaarNameCheckTool = isInternalTool && (tool.url === "aadhaar-name-check-modal");
               const isStatusCenter = isInternalTool && (tool.url === "status-center");
               return (
                 <div
@@ -2419,7 +2427,8 @@ setServiceDirectory(filteredWithUrls);
                       isResumeBuilderTool ||
                       isIncomeAffidavitTool ||
                       isAadhaarGazetteTool ||
-                      isServiceDocumentGeneratorTool
+                      isServiceDocumentGeneratorTool ||
+                      isAadhaarNameCheckTool
                         ? undefined
                         : tool.url
                     }
@@ -2470,6 +2479,9 @@ setServiceDirectory(filteredWithUrls);
                       } else if (isServiceDocumentGeneratorTool) {
                         e.preventDefault();
                         setShowServiceDocumentGeneratorModal(true);
+                      } else if (isAadhaarNameCheckTool) {
+                        e.preventDefault();
+                        setStatusCenterView("aadhaar-name");
                       } else if (isStatusCenter) {
                         e.preventDefault();
                         setStatusCenterView("center");
@@ -2508,7 +2520,8 @@ setServiceDirectory(filteredWithUrls);
     isResumeBuilderTool ||
     isIncomeAffidavitTool ||
     isAadhaarGazetteTool ||
-    isServiceDocumentGeneratorTool
+    isServiceDocumentGeneratorTool ||
+    isAadhaarNameCheckTool
   )
     ? "Internal Tool"
     : "External Link"}
