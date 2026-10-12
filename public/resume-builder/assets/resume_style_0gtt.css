@@ -692,3 +692,54 @@ body {
         break-inside: avoid;
     }
 }
+
+
+/* AI Professional Summary — isolated styles; existing Resume Builder styles remain unchanged. */
+.ai-gen-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  margin-top: .6rem; padding: .68rem .95rem; border: 1px solid #a5b4fc; border-radius: 10px;
+  color: #3730a3; background: linear-gradient(135deg,#eef2ff,#f5f3ff); font: inherit;
+  font-size: .82rem; font-weight: 700; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease;
+}
+.ai-gen-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(99,102,241,.15); }
+.ai-modal { display: none; position: fixed; z-index: 2500; inset: 0; padding: 18px; overflow-y: auto; background: rgba(15,23,42,.62); align-items: center; justify-content: center; }
+.ai-modal.is-open { display: flex; }
+.ai-modal-content { width: min(620px,100%); max-height: min(92vh,900px); overflow-y: auto; border-radius: 18px; background: #fff; color: #0f172a; box-shadow: 0 24px 70px rgba(15,23,42,.3); }
+.ai-modal-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:22px 24px 16px; border-bottom:1px solid #e5e7eb; }
+.ai-modal-head h3 { margin:0 0 6px; font-size:1.12rem; color:#111827; }
+.ai-modal-head h3 i { color:#6366f1; margin-right:7px; }
+.ai-modal-head p { margin:0; font-size:.82rem; line-height:1.5; color:#64748b; }
+.ai-close { border:0; background:transparent; color:#64748b; font-size:1.8rem; line-height:1; cursor:pointer; padding:0 3px; }
+.ai-modal-body { padding:20px 24px 8px; }
+.ai-row { display:flex; flex-direction:column; gap:7px; margin-bottom:16px; }
+.ai-row > label { font-size:.82rem; color:#334155; font-weight:700; }
+.ai-row input, .ai-row textarea { width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #cbd5e1; border-radius:9px; color:#0f172a; background:#fff; font:inherit; font-size:.86rem; }
+.ai-row input:focus, .ai-row textarea:focus { outline:2px solid rgba(99,102,241,.22); border-color:#818cf8; }
+.ai-hint { color:#94a3b8; font-weight:400; }
+.ai-ats-row { display:flex; align-items:center; gap:10px; margin:0 0 18px; padding:12px; border:1px solid #e0e7ff; border-radius:10px; background:#f8faff; cursor:pointer; }
+.ai-ats-row input { accent-color:#4f46e5; width:17px; height:17px; }
+.ai-ats-row span { display:flex; flex-direction:column; gap:3px; }
+.ai-ats-row strong { font-size:.83rem; color:#334155; }
+.ai-ats-row small { font-size:.75rem; color:#64748b; }
+.ai-limit-row > div { display:flex; align-items:center; gap:10px; }
+.ai-limit-row input { max-width:120px; }
+.ai-limit-row > div span { color:#64748b; font-size:.78rem; }
+.ai-generate-btn, .ai-apply-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:0; border-radius:10px; padding:11px 16px; color:#fff; background:#4f46e5; font:inherit; font-size:.84rem; font-weight:700; cursor:pointer; }
+.ai-generate-btn { width:100%; }
+.ai-generate-btn:disabled, .ai-apply-btn:disabled { opacity:.55; cursor:not-allowed; }
+.ai-status { min-height:18px; margin:10px 0; font-size:.8rem; color:#64748b; }
+.ai-status.is-error { color:#b91c1c; }
+.ai-status.is-success { color:#047857; }
+.ai-output-row textarea { min-height:145px; resize:vertical; }
+.ai-out-meta { display:flex; justify-content:space-between; gap:10px; color:#94a3b8; font-size:.73rem; }
+.ai-modal-actions { display:flex; justify-content:flex-end; gap:10px; padding:16px 24px 22px; border-top:1px solid #e5e7eb; }
+.ai-secondary-btn { border:1px solid #cbd5e1; background:#fff; color:#334155; border-radius:10px; padding:10px 15px; font:inherit; font-size:.83rem; cursor:pointer; }
+.ai-apply-btn { background:#059669; }
+@media (max-width:560px) {
+  .ai-modal { padding:8px; align-items:flex-start; }
+  .ai-modal-content { margin:auto 0; max-height:96vh; border-radius:14px; }
+  .ai-modal-head, .ai-modal-body { padding-left:16px; padding-right:16px; }
+  .ai-modal-actions { padding:14px 16px 18px; }
+  .ai-out-meta { flex-direction:column; gap:3px; }
+}
+@media print { .ai-modal, .ai-gen-btn { display:none !important; } }
