@@ -247,8 +247,7 @@ export default function DashboardLayout({
       }
 
       const storedUser = JSON.parse(
-        localStorage.getItem("loggedInUser") || "{}"
-      );
+        localStorage.getItem("loggedInUser") || "{}"      );
 
       const username = (storedUser.username || "User").trim();
       const role = (storedUser.role || "staff").toLowerCase();
@@ -497,8 +496,7 @@ export default function DashboardLayout({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>      )}
 
       <div
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
@@ -644,8 +642,6 @@ export default function DashboardLayout({
 
       <div className="dashboard-surface dashboard-depth relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
-          onMouseEnter={openSidebar}
-          onMouseLeave={closeSidebar}
           className={`
             fixed inset-y-3 left-3
             z-50
@@ -797,8 +793,7 @@ export default function DashboardLayout({
   title="Log out"
   className="cursor-pointer rounded-xl p-2 text-slate-600 transition-all hover:bg-rose-500/10 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400"
   >
-  <LogOut size={18} />
-            </button>
+  <LogOut size={18} />            </button>
           </div>
         </aside>
 
