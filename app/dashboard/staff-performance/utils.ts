@@ -51,11 +51,11 @@ export function getDailyBilledTotals(
       localStorage.getItem("performanceRecords") || "[]"
     );
 
-    const normalizedSelectedStaff = selectedStaff.trim().replace(/\\s+/g, " ").toLowerCase();
+    const normalizedSelectedStaff = selectedStaff.trim().replace(/\s+/g, " ").toLowerCase();
     const matchingCandidates = (Array.isArray(performance) ? performance : []).filter(
       (record: any) => {
         const key = normalizeLocalDateKey(record.date || record.timestamp);
-        const staffName = String(record.staffName || record.staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
+        const staffName = String(record.staffName || record.staff || "").trim().replace(/\s+/g, " ").toLowerCase();
 
         return (
           key === date &&
