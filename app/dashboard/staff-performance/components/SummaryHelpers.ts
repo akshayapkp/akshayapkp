@@ -2,6 +2,7 @@
 
 import { BillRecord, Summary } from "./types";
 import { PerformanceRecord } from "../types";
+import { normalizeLocalDateKey } from "../utils";
 
 export const formatCurrency = (value: number) =>
   `₹${Number(value || 0).toLocaleString("en-IN", {
@@ -10,16 +11,18 @@ export const formatCurrency = (value: number) =>
   })}`;
 
 export const getDate = (value: any): Date => {
-  // Prefer the business-local bill date over the UTC timestamp to avoid
-  // shifting near-midnight IST entries to another day.
+  // Prefer a validated business-local bill date to avoid DD/MM/YYYY swaps
+  // and JavaScript's silent rollover of impossible dates (for example, 31/02).
   const rawDate = String(value?.date ?? "").trim();
-  const iso = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-  const indian = rawDate.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
-  if (indian) return new Date(Number(indian[3]), Number(indian[2]) - 1, Number(indian[1]));
+  if (rawDate) {
+    const key = normalizeLocalDateKey(rawDate);
+    if (!key) return new Date(0);
+    const [year, month, day] = key.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
 
-  const fallback = value?.timestamp ?? value?.created_at ?? value?.createdAt ?? value?.date;
-  const parsed = fallback ? new Date(fallback) : new Date();
+  const fallback = value?.timestamp ?? value?.created_at ?? value?.createdAt;
+  const parsed = fallback ? new Date(fallback) : new Date(0);
   return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
 };
 
