@@ -248,7 +248,6 @@ export default function DashboardLayout({
 
       const storedUser = JSON.parse(
         localStorage.getItem("loggedInUser") || "{}"      );
-
       const username = (storedUser.username || "User").trim();
       const role = (storedUser.role || "staff").toLowerCase();
 
@@ -497,7 +496,6 @@ export default function DashboardLayout({
             </div>
           </div>
         </div>      )}
-
       <div
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
         aria-hidden="true"
@@ -615,30 +613,26 @@ export default function DashboardLayout({
             </span>
           </button>
 
-          <div
-            aria-label="Akshaya logo"
-            title="Akshaya Pookiparamba"
-            className="absolute bottom-2 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-white shadow-lg shadow-blue-500/20"
+          <button
+            type="button"
+            onClick={toggleSidebarArrow}
+            aria-label={sidebarOpen ? "Collapse and unpin sidebar" : "Expand and pin sidebar"}
+            title={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
+            className="group absolute bottom-2 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-[#171923] text-white shadow-lg shadow-blue-500/20 transition-all duration-300 hover:scale-110 hover:bg-blue-600 active:scale-95"
           >
-            <img
-              src="/akshaya-logo.png"
-              alt="Akshaya Pookiparamba"
-              className="h-8 w-8 rounded-full object-contain"
-            />
-          </div>
+            <ChevronRight size={18} strokeWidth={2.8} className={`transition-transform duration-500 ${sidebarOpen ? "rotate-180" : "animate-[sidebarArrow_1.2s_ease-in-out_infinite]"}`} />
+          </button>
         </div>
       </div>
 
-      {/* The arrow stays at the sidebar's top edge; click to pin/open or collapse/unpin. */}
-      <button
-        type="button"
-        aria-label={sidebarOpen ? "Collapse and unpin sidebar" : "Expand and pin sidebar"}
-        title={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
-        onClick={toggleSidebarArrow}
-        className={`fixed top-[22px] z-[70] flex h-7 w-7 items-center justify-center rounded-full border border-white/80 bg-[#171923] text-white shadow-lg transition-[left,transform,background-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-blue-600 active:scale-90 ${sidebarOpen ? "left-[270px] rotate-180 md:left-[278px]" : "left-[43px] md:left-[43px]"}`}
+      {/* Akshaya logo at the top of the collapsed navigation rail. */}
+      <div
+        aria-label="Akshaya logo"
+        title="Akshaya Pookiparamba"
+        className="fixed left-[9px] top-[calc(50%-360px+8px)] z-[70] hidden h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-white shadow-lg shadow-blue-500/20 md:flex"
       >
-        <ChevronRight size={15} strokeWidth={2.8} className="transition-transform duration-300" />
-      </button>
+        <img src="/akshaya-logo.png" alt="Akshaya Pookiparamba" className="h-8 w-8 rounded-full object-contain" />
+      </div>
 
       <div className="dashboard-surface dashboard-depth relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
@@ -797,8 +791,7 @@ export default function DashboardLayout({
           </div>
         </aside>
 
-        {/* Mobile navigation */}
-        {sidebarOpen && (
+        {/* Mobile navigation */}        {sidebarOpen && (
           <button
             type="button"
             aria-label="Close navigation"
