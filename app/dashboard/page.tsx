@@ -12,6 +12,7 @@ import ResumeBuilder from "./tools/ResumeBuilder";
 import AadhaarStatusPage from "./tools/aadhaar-status/page";
 import AadhaarNameChangePage from "./tools/aadhaar-name-change/page";
 import PanStatusPage from "./tools/pan-status/page";
+import PassportStatusPage from "./tools/passport-status/page";
 import TranslatorTool from "./tools/TranslatorTool";
 import IncomeAffidavitTool from "./tools/IncomeAffidavitTool";
 import AadhaarGazetteTool from "./tools/AadhaarGazetteTool";
@@ -2667,7 +2668,7 @@ setServiceDirectory(filteredWithUrls);
 
                       <button
                         type="button"
-                        onClick={() => window.open("https://myaadhaar.uidai.gov.in/CheckAadhaarStatus", "_blank", "noopener,noreferrer")}
+                        onClick={() => setStatusCenterView("aadhaar")}
                         className="group min-h-[104px] rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -2683,13 +2684,7 @@ setServiceDirectory(filteredWithUrls);
 
                       <button
                         type="button"
-                        onClick={() =>
-                          window.open(
-                            "https://www.passportindia.gov.in/psp/trackApplicationService",
-                            "_blank",
-                            "noopener,noreferrer"
-                          )
-                        }
+                        onClick={() => setStatusCenterView("passport")}
                         className="group min-h-[104px] rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -2706,7 +2701,7 @@ setServiceDirectory(filteredWithUrls);
 
                       <button
                         type="button"
-                        onClick={() => window.open("https://www.trackpan.utiitsl.com/PANONLINE/forms/TrackPan/trackApp", "_blank", "noopener,noreferrer")}
+                        onClick={() => setStatusCenterView("pan")}
                         className="group min-h-[104px] rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -2736,6 +2731,8 @@ setServiceDirectory(filteredWithUrls);
   <AadhaarNameChangePage />
 ) : statusCenterView === "pan" ? (
      <PanStatusPage />
+   ) : statusCenterView === "passport" ? (
+     <PassportStatusPage />
    ) : null}
 </div>
                 )}
