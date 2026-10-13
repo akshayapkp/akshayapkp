@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Copy } from "lucide-react";
+import { Copy, History, Trash2, Save, ArrowLeft } from "lucide-react";
 import Tesseract from "tesseract.js";
 import { extractWorkData } from "@/app/dashboard/work-status/parser";
 import { addWork } from "@/app/dashboard/work-status/storage";
@@ -15,6 +15,67 @@ export default function ImageToTextTool({ onClose }: ImageToTextProps) {
   const [ocrText, setOcrText] = useState("");
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyItems, setHistoryItems] = useState<Array<{id:string;extracted_text:string;created_at:string;status:string}>>([]);
+  const [selectedHistoryId, setSelectedHistoryId] = useState("");
+  const [historyText, setHistoryText] = useState("");
+  const [historyBusy, setHistoryBusy] = useState(false);
+  const [historyMessage, setHistoryMessage] = useState("");
+
+  const loadHistory = async () => {
+    setHistoryBusy(true);
+    setHistoryMessage("");
+    try {
+      const response = await fetch("/api/receipt-ocr", { cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "History load failed.");
+      setHistoryItems(result.data || []);
+      if (selectedHistoryId) {
+        const selected = (result.data || []).find((item: any) => item.id === selectedHistoryId);
+        if (selected) setHistoryText(selected.extracted_text);
+      }
+    } catch (error) {
+      setHistoryMessage(error instanceof Error ? error.message : "History തുറക്കാൻ കഴിഞ്ഞില്ല.");
+    } finally { setHistoryBusy(false); }
+  };
+
+  const saveHistoryText = async () => {
+    if (!selectedHistoryId) return;
+    setHistoryBusy(true);
+    try {
+      const response = await fetch("/api/receipt-ocr", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: selectedHistoryId, text: historyText }) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Save failed.");
+      setHistoryMessage("മാറ്റങ്ങൾ സൂക്ഷിച്ചു.");
+      await loadHistory();
+    } catch (error) { setHistoryMessage(error instanceof Error ? error.message : "സൂക്ഷിക്കാൻ കഴിഞ്ഞില്ല."); }
+    finally { setHistoryBusy(false); }
+  };
+
+  const deleteHistoryItem = async (id: string) => {
+    if (!window.confirm("ഈ History item ഡിലീറ്റ് ചെയ്യണോ?")) return;
+    setHistoryBusy(true);
+    try {
+      const response = await fetch("/api/receipt-ocr?id=" + encodeURIComponent(id), { method: "DELETE" });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Delete failed.");
+      if (selectedHistoryId === id) { setSelectedHistoryId(""); setHistoryText(""); }
+      await loadHistory();
+    } catch (error) { setHistoryMessage(error instanceof Error ? error.message : "ഡിലീറ്റ് ചെയ്യാൻ കഴിഞ്ഞില്ല."); }
+    finally { setHistoryBusy(false); }
+  };
+
+  const clearHistory = async () => {
+    if (!window.confirm("എല്ലാ Receipt OCR History-യും സ്ഥിരമായി Clear ചെയ്യണോ?")) return;
+    setHistoryBusy(true);
+    try {
+      const response = await fetch("/api/receipt-ocr", { method: "DELETE" });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Clear failed.");
+      setHistoryItems([]); setSelectedHistoryId(""); setHistoryText(""); setHistoryMessage("History clear ചെയ്തു.");
+    } catch (error) { setHistoryMessage(error instanceof Error ? error.message : "History clear ചെയ്യാൻ കഴിഞ്ഞില്ല."); }
+    finally { setHistoryBusy(false); }
+  };
 
   const handleFileToText = async (file: File) => {
     setOcrImage(file);
@@ -112,20 +173,40 @@ if (work) {
             <h3 className="text-lg font-black tracking-tight text-slate-800 sm:text-xl">Image & PDF To Text</h3>
             <p className="mt-0.5 text-[11px] font-medium text-slate-500 sm:text-xs">Extract text from images or PDF files instantly</p>
           </div>
-          <button
-            onClick={() => {
-              onClose();
-              setOcrImage(null);
-              setOcrText("");
-              setOcrProgress(0);
-            }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-all hover:-translate-y-0.5 hover:bg-slate-100 hover:text-slate-900"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => { setShowHistory(v => !v); if (!showHistory) void loadHistory(); }} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><History size={15}/>{showHistory ? "OCR Tool" : "History"}</button>
+            <button
+              onClick={() => {
+                onClose();
+                setOcrImage(null);
+                setOcrText("");
+                setOcrProgress(0);
+              }}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-all hover:-translate-y-0.5 hover:bg-slate-100 hover:text-slate-900"
+            >✕</button>
+          </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5">
+        {showHistory && <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="mb-4 flex items-center justify-between gap-2"><h4 className="font-black text-slate-800">Receipt OCR History</h4><button type="button" disabled={historyBusy || !historyItems.length} onClick={clearHistory} className="rounded-xl border border-red-200 px-3 py-2 text-xs font-bold text-red-600 disabled:opacity-40"><Trash2 size={14} className="mr-1 inline"/>Clear History</button></div>
+          {historyMessage && <p role="status" className="mb-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{historyMessage}</p>}
+          {historyBusy && <p className="py-3 text-sm text-slate-500">Loading...</p>}
+          {!historyBusy && historyItems.length === 0 && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-slate-500">History-യിൽ receipts ഒന്നുമില്ല.</p>}
+          <div className="grid gap-3 md:grid-cols-[minmax(220px,0.8fr)_minmax(0,1.4fr)]">
+            <div className="space-y-2">{historyItems.map(item => <div key={item.id} className={`rounded-xl border p-3 ${selectedHistoryId===item.id ? "border-blue-400 bg-blue-50/50" : "border-slate-200"}`}>
+              <button type="button" onClick={() => {setSelectedHistoryId(item.id);setHistoryText(item.extracted_text);setHistoryMessage("");}} className="w-full text-left"><strong className="block text-xs text-slate-700">{new Date(item.created_at).toLocaleString("en-IN")}</strong><span className="mt-1 block text-xs text-slate-500">{item.extracted_text.slice(0,110)}{item.extracted_text.length>110?"…":""}</span></button>
+              <button type="button" onClick={() => void deleteHistoryItem(item.id)} className="mt-2 text-xs font-bold text-red-600"><Trash2 size={13} className="mr-1 inline"/>Delete</button>
+            </div>)}</div>
+            <div className="min-w-0">{selectedHistoryId ? <>
+              <textarea value={historyText} onChange={e=>setHistoryText(e.target.value)} className="min-h-[260px] w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-800 outline-none focus:border-blue-400"/>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button type="button" onClick={()=>{void navigator.clipboard.writeText(historyText);setHistoryMessage("Text copy ചെയ്തു.");}} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white"><Copy size={15} className="mr-1 inline"/>Copy Text</button>
+                <button type="button" disabled={historyBusy} onClick={()=>void saveHistoryText()} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"><Save size={15} className="mr-1 inline"/>Save Changes</button>
+              </div>
+            </> : <p className="rounded-xl bg-slate-50 p-6 text-sm text-slate-500">ഒരു History item തിരഞ്ഞെടുക്കുക.</p>}</div>
+          </div>
+        </div>}
+        <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5" style={{ display: showHistory ? "none" : undefined }}>
           <div className="space-y-4">
             <div>
               <label className="group flex min-h-16 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-orange-300/80 bg-orange-50/40 px-3 py-2 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400 hover:bg-orange-50 hover:shadow-[0_14px_35px_rgba(249,115,22,0.12)] sm:min-h-20">
