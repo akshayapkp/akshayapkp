@@ -57,6 +57,14 @@ const CENTRAL_STORAGE_ROW_ID = 999999;
 const CENTRAL_STORAGE_VERSION = 1;
 const CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";
 
+const createUniqueBillId = (prefix: string): string => {
+  const randomPart =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID().replace(/-/g, "").slice(0, 12)
+      : Math.random().toString(36).slice(2, 14);
+  return `${prefix}-${Date.now()}-${randomPart}`;
+};
+
 const SHARED_STORAGE_KEYS = [
   "managedServices",
   "managedWallets",
@@ -1252,7 +1260,7 @@ function ServiceEntryForm() {
     registerNewServicesIfNeeded();
 
     // Save is only a draft. Do not create a billed-service transaction yet.
-    const billId = resumeId || ("SB-" + Date.now());
+    const billId = resumeId || createUniqueBillId("SB");
     const billTimestamp = new Date().toLocaleString();
     const savedBillsList = JSON.parse(localStorage.getItem('savedBillsList') || '[]');
 
@@ -1327,7 +1335,7 @@ function ServiceEntryForm() {
       saveCustomerToDirectory();
     }
 
-    const billId = editId || resumeId || ("BILL-" + Date.now());
+    const billId = editId || resumeId || createUniqueBillId("BILL");
     const existingEditData = editDataRef.current;
     const billDate = editId
       ? String(existingEditData?.dateTime || new Date().toLocaleDateString('en-GB'))
@@ -1430,7 +1438,7 @@ function ServiceEntryForm() {
     );
 
     existingRecords.unshift({
-      id: "PERF-" + Date.now(),
+      id: "PERF-" + billId,
       billId,
       date: billDate,
       timestamp: new Date().toISOString(),
