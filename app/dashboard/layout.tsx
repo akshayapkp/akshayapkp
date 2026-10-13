@@ -29,6 +29,7 @@ import {
   ClipboardList,
   Smartphone,
   Menu,
+  ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -247,8 +248,7 @@ export default function DashboardLayout({
 
       setCurrentUser({
         username,
-        role,
-      });
+        role,      });
 
       const versionKey = `app_version_${username.toLowerCase()}`;
       const savedVersion = localStorage.getItem(versionKey);
@@ -497,11 +497,17 @@ export default function DashboardLayout({
       <div
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
         aria-hidden="true"
-      >
-        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
+      >        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
         <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
       </div>
+
+      <style jsx global>{`
+        @keyframes sidebarArrow {
+          0%, 100% { transform: translateX(-1px); opacity: .75; }
+          50% { transform: translateX(2px); opacity: 1; }
+        }
+      `}</style>
 
       {/* Collapsed desktop navigation rail — locked until the blue expand button is clicked */}
       <div
@@ -611,10 +617,16 @@ export default function DashboardLayout({
             onClick={openSidebar}
             aria-label="Expand sidebar"
             title="Open sidebar"
-            className="group absolute bottom-2 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:scale-110 hover:shadow-blue-500/40 active:scale-95"
+            className="group absolute bottom-2 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-white shadow-lg shadow-blue-500/20 transition-all duration-300 hover:scale-110 hover:shadow-blue-500/40 active:scale-95"
           >
-            <span className="transition-transform duration-500 group-hover:rotate-90">
-              <Menu size={17} />
+            <img
+              src="/akshaya-logo.png"
+              alt=""
+              aria-hidden="true"
+              className="h-8 w-8 rounded-full object-contain transition-transform duration-500 group-hover:scale-95"
+            />
+            <span className="absolute -right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-white bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-md transition-transform duration-300 group-hover:translate-x-1">
+              <ChevronRight size={13} strokeWidth={3} className="animate-[sidebarArrow_1.2s_ease-in-out_infinite]" />
             </span>
           </button>
         </div>
@@ -798,7 +810,6 @@ export default function DashboardLayout({
         >
           <Menu size={21} />
         </button>
-
         <main
           className={`
             dashboard-content relative z-10 flex-1 min-w-0 min-h-screen overflow-y-auto overflow-x-hidden bg-transparent premium-enter
