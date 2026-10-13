@@ -747,8 +747,7 @@ function StatusGazetteTool() {
                   : "text"
               }
               value={searchValue}
-              onChange={(event) => {
-                const nextValue = event.target.value;
+              onChange={(event) => {                const nextValue = event.target.value;
                 setSearchValue(
                   searchType === "applicationNumber" ||
                     searchType === "mobileNumber"
@@ -1497,8 +1496,7 @@ setServiceDirectory(filteredWithUrls);
         // bills belonging to the logged-in user are shown. Different versions
         // of the billing data used different staff identity field names, so
         // compare all known identity fields without changing the stored data.
-        try {
-          let savedCreditBills = JSON.parse(
+        try {          let savedCreditBills = JSON.parse(
             localStorage.getItem("smart_akshaya_bills") || "[]"
           );
 
@@ -2247,8 +2245,7 @@ setServiceDirectory(filteredWithUrls);
                   )}
                 </div>
                 <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
-                  {announcements.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 text-sm">No new notifications.</div>
+                  {announcements.length === 0 ? (                    <div className="p-8 text-center text-slate-400 text-sm">No new notifications.</div>
                   ) : (
                     announcements.map((item) => (
                       <div key={item.id} className="p-4 hover:bg-slate-50/80 transition flex items-start gap-3 relative">
@@ -2663,56 +2660,6 @@ setServiceDirectory(filteredWithUrls);
                         <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Kerala Gazette</h5>
                         <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
                           Gazette application status
-                        </p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setStatusCenterView("aadhaar")}
-                        className="group min-h-[104px] rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
-                            <FileText size={16} />
-                          </div>
-                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-emerald-600" />                        </div>
-                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Aadhaar Status</h5>
-                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
-                          Aadhaar enrolment / update status
-                        </p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setStatusCenterView("passport")}
-                        className="group min-h-[104px] rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm">
-                            <FileText size={16} />
-                          </div>
-                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-sky-600" />
-                        </div>
-                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Passport Status</h5>
-                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
-                          Passport application tracking
-                        </p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setStatusCenterView("pan")}
-                        className="group min-h-[104px] rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm">
-                            <FileText size={16} />
-                          </div>
-                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-amber-500" />
-                        </div>
-                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">PAN Card</h5>
-                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
-                          PAN application status
                         </p>
                       </button>
 
