@@ -1060,47 +1060,45 @@ export default function BilledServicesPage() {
 
   const getBillDateKey = (value: unknown): string => {
     const raw = String(value ?? '').trim();
-
     if (!raw) return '';
 
-    const isoDateOnly = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const makeDateKey = (year: number, month: number, day: number): string => {
+      const date = new Date(year, month - 1, day);
+      if (
+        !Number.isInteger(year) ||
+        !Number.isInteger(month) ||
+        !Number.isInteger(day) ||
+        date.getFullYear() !== year ||
+        date.getMonth() !== month - 1 ||
+        date.getDate() !== day
+      ) return '';
+      return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    };
 
-    if (isoDateOnly) {
-      return `${isoDateOnly[1]}-${isoDateOnly[2]}-${isoDateOnly[3]}`;
+    const isoDate = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[T\s])/);
+    if (isoDate) {
+      return makeDateKey(Number(isoDate[1]), Number(isoDate[2]), Number(isoDate[3]));
     }
 
-    const indianDate = raw.match(
-      /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/
-    );
-
+    const indianDate = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:$|[,\s])/);
     if (indianDate) {
-      const day = String(Number(indianDate[1])).padStart(2, '0');
-      const month = String(Number(indianDate[2])).padStart(2, '0');
-      const year = indianDate[3];
-
-      return `${year}-${month}-${day}`;
+      return makeDateKey(Number(indianDate[3]), Number(indianDate[2]), Number(indianDate[1]));
     }
 
     const parsed = new Date(raw);
-
-    if (!Number.isNaN(parsed.getTime())) {
-      const year = parsed.getFullYear();
-      const month = String(parsed.getMonth() + 1).padStart(2, '0');
-      const day = String(parsed.getDate()).padStart(2, '0');
-
-      return `${year}-${month}-${day}`;
-    }
-
-    return '';
+    if (Number.isNaN(parsed.getTime())) return '';
+    return makeDateKey(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
   };
 
   const filteredServices = services.filter((s) => {
     const billStaff = String(s.staffName || '')
       .trim()
+      .replace(/\s+/g, ' ')
       .toLowerCase();
 
     const selectedStaffName = String(effectiveStaffFilter || '')
       .trim()
+      .replace(/\s+/g, ' ')
       .toLowerCase();
 
     const matchesStaff =
