@@ -312,13 +312,13 @@ export function getMonthlyRecords(
     // Normalize first so native Date parsing cannot swap day/month or reject
     // valid dates such as 13/10/2026.
     const dateKey = normalizeLocalDateKey(record.date);
-    const match = dateKey.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!match) return false;
     const recordYear = Number(match[1]);
     const recordMonth = Number(match[2]) - 1;
 
-    const normalizedStaff = String(record.staffName || "").trim().replace(/\\s+/g, " ").toLowerCase();
-    const normalizedFilter = String(staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
+    const normalizedStaff = String(record.staffName || "").trim().replace(/\s+/g, " ").toLowerCase();
+    const normalizedFilter = String(staff || "").trim().replace(/\s+/g, " ").toLowerCase();
     const matchesStaff =
       !staff ||
       normalizedFilter === "all" ||
@@ -335,12 +335,12 @@ export function getYearlyRecords(
 ) {
   return records.filter((record) => {
     const dateKey = normalizeLocalDateKey(record.date);
-    const match = dateKey.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!match) return false;
     const recordYear = Number(match[1]);
 
-    const normalizedStaff = String(record.staffName || "").trim().replace(/\\s+/g, " ").toLowerCase();
-    const normalizedFilter = String(staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
+    const normalizedStaff = String(record.staffName || "").trim().replace(/\s+/g, " ").toLowerCase();
+    const normalizedFilter = String(staff || "").trim().replace(/\s+/g, " ").toLowerCase();
     const matchesStaff =
       !staff ||
       normalizedFilter === "all" ||
