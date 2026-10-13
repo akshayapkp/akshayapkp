@@ -44,8 +44,13 @@ export async function GET() {
       details: error.details,
       hint: error.hint,
     });
+    const diagnosticCode = error.code ?? "UNKNOWN";
+    const diagnosticMessage = error.message ?? "Unknown database error";
     return NextResponse.json(
-      { error: "Unable to load staff records.", diagnostic: { code: error.code ?? null, message: error.message ?? "Unknown database error" } },
+      {
+        error: `Unable to load staff records (database code ${diagnosticCode}): ${diagnosticMessage}`,
+        diagnostic: { code: diagnosticCode, message: diagnosticMessage },
+      },
       { status: 500 }
     );
   }
