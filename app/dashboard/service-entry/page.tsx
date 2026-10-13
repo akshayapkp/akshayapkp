@@ -865,6 +865,7 @@ function ServiceEntryForm() {
   
   const handlePrint = () => {
     const targetBill = lastCompletedBill || {
+      billId: "",
       customerName: customerName || "Walk-in",
       mobile: mobile || "-",
       items: items.length > 0 ? items : [{ name: "Current Session", walletChg, srvChg, qty, status: "Completed" }],
@@ -930,7 +931,7 @@ function ServiceEntryForm() {
             <div class="center">
               <div class="title">INVOICE</div>
               <div style="text-align:left">
-                <b>Bill # :</b> MPM${Date.now()}<br>
+                <b>Bill # :</b> ${targetBill.billId || "Not saved"}<br>
                 <b>Date :</b> ${targetBill.date}<br>
                 <b>Created By :</b> ${currentStaff}
               </div>
@@ -1392,18 +1393,21 @@ function ServiceEntryForm() {
 
     localStorage.setItem('serviceEntries', JSON.stringify(entriesWithoutThisBill));
 
-    if (isCredit || editId) {
-      const creditBills = JSON.parse(localStorage.getItem("smart_akshaya_bills") || "[]");
-      const creditWithoutThisBill = Array.isArray(creditBills)
-        ? creditBills.filter(
-            (bill: any) => String(bill.id || bill.billId || '') !== String(billId)
-          )
-        : [];
+    // Keep the credit ledger aligned with the latest bill state. Editing a
+    // credit bill into a fully-paid bill must remove its stale credit entry.
+    const creditBillsRaw = JSON.parse(localStorage.getItem("smart_akshaya_bills") || "[]");
+    const creditWithoutThisBill = Array.isArray(creditBillsRaw)
+      ? creditBillsRaw.filter(
+          (bill: any) => String(bill.id || bill.billId || bill.billNumber || '') !== String(billId)
+        )
+      : [];
 
+    if (balance > 0) {
       creditWithoutThisBill.unshift({
         id: billId,
+        billId,
         billNumber: billId,
-        customerName,
+        customerName: customerName || 'Walk-in',
         mobileNumber: mobile,
         date: billDate,
         dateTime: billTimestamp,
@@ -1414,12 +1418,12 @@ function ServiceEntryForm() {
         owedAmount: balance,
         items: [...items],
       });
-
-      localStorage.setItem(
-        "smart_akshaya_bills",
-        JSON.stringify(creditWithoutThisBill)
-      );
     }
+
+    localStorage.setItem(
+      "smart_akshaya_bills",
+      JSON.stringify(creditWithoutThisBill)
+    );
 
     const existingRecordsRaw = JSON.parse(
       localStorage.getItem("performanceRecords") || "[]"
@@ -1481,6 +1485,7 @@ function ServiceEntryForm() {
     await pushCurrentLocalStorageToCentral();
 
     setLastCompletedBill({
+      billId,
       customerName,
       mobile,
       items: [...items],
