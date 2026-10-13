@@ -94,15 +94,28 @@ function TransactionHistoryContent() {
 
               if (!billId) {
                 const description = String(tx.description || '').toLowerCase();
-                const matchedBill = allBills.find((bill: any) => {
-                  const customer = String(bill.customerName || '').toLowerCase();
-                  if (customer && description.includes(customer)) return true;
-                  return Array.isArray(bill.items) && bill.items.some((item: any) =>
-                    String(item.name || '').toLowerCase() &&
-                    description.includes(String(item.name || '').toLowerCase())
-                  );
+                // Legacy transactions without a bill ID must not be attached to
+                // the first vaguely matching bill: the same customer/service can
+                // appear on several dates. Only backfill when the description
+                // identifies exactly one candidate bill; ambiguous rows remain
+                // unlinked for manual review instead of corrupting bill history.
+                const matchedBills = allBills.filter((bill: any) => {
+                  const customer = String(bill.customerName || '').trim().toLowerCase();
+                  const customerMatch = customer.length > 0 && description.includes(customer);
+                  const itemNames = Array.isArray(bill.items)
+                    ? bill.items
+                        .map((item: any) => String(item?.name || '').trim().toLowerCase())
+                        .filter((name: string) => name.length >= 4)
+                    : [];
+                  const serviceMatch = itemNames.some((name: string) => description.includes(name));
+                  return customerMatch || serviceMatch;
                 });
-                billId = matchedBill?.billId || matchedBill?.billNumber || matchedBill?.id || '';
+                const uniqueBillIds = Array.from(new Set(
+                  matchedBills
+                    .map((bill: any) => String(bill.billId || bill.billNumber || bill.id || '').trim())
+                    .filter(Boolean)
+                ));
+                billId = uniqueBillIds.length === 1 ? uniqueBillIds[0] : '';
               }
 
               return {
