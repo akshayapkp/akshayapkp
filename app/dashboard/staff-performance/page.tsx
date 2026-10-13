@@ -25,6 +25,7 @@ import {
   loadSalaryHistory,
   getAttendanceRecord,
   getHoliday,
+  normalizeLocalDateKey,
 } from "./utils";
 
 export default function StaffPerformancePage() {
@@ -394,14 +395,8 @@ export default function StaffPerformancePage() {
           const timestamp = log?.timestamp || log?.date;
           if (!timestamp || !log?.staffName) return null;
 
-          const parsedDate = new Date(timestamp);
-          if (Number.isNaN(parsedDate.getTime())) return null;
-
-          const date = `${parsedDate.getFullYear()}-${String(
-            parsedDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(
-            parsedDate.getDate()
-          ).padStart(2, "0")}`;
+          const date = normalizeLocalDateKey(timestamp);
+          if (!date) return null;
 
           return {
             id: log.id || `${log.staffName}-${date}`,
