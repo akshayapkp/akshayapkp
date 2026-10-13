@@ -578,42 +578,47 @@
         </div>
     </div>
 
-    <!-- Gemini AI Professional Summary Modal -->
+    <!-- AI Summary modal: reference-matched layout -->
     <div id="aiSummaryModal" role="dialog" aria-modal="true" aria-labelledby="aiSummaryTitle"
-         style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,.58); padding:20px; overflow:auto; align-items:center; justify-content:center;">
-      <div style="width:min(640px,100%); margin:auto; background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:22px; box-shadow:0 24px 70px rgba(15,23,42,.28); color:#0f172a;">
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:16px;">
-          <div>
-            <h3 id="aiSummaryTitle" style="margin:0 0 6px; font-size:1.15rem;"><i class="fas fa-sparkles" style="color:#2563eb;"></i> AI Professional Summary</h3>
-            <p style="margin:0; color:#64748b; font-size:.9rem;">Generate a professional summary using your existing resume details and Gemini AI.</p>
+         style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,.58); padding:16px; overflow:auto; align-items:center; justify-content:center;">
+      <div style="width:min(512px,100%); max-height:calc(100vh - 32px); overflow:auto; margin:auto; background:#fff; border:1px solid #e2e8f0; border-radius:11px; padding:17px 16px 15px; box-shadow:0 24px 70px rgba(15,23,42,.28); color:#0f172a; font-family:inherit;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:9px;">
+          <h3 id="aiSummaryTitle" style="margin:0; font-size:1rem; font-weight:700; color:#0f172a;"><i class="fas fa-wand-magic-sparkles" style="color:#2563eb; margin-right:5px;"></i>AI Summary</h3>
+          <button type="button" id="aiSummaryCloseBtn" aria-label="Close" style="border:0; background:transparent; color:#64748b; font-size:1.1rem; cursor:pointer; padding:2px 0 2px 8px;"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label for="aiSummaryJobTitle" style="display:block; font-size:11px; font-weight:600; margin-bottom:4px; color:#334155;">Job applying for (optional)</label>
+          <textarea id="aiSummaryJobTitle" rows="1" maxlength="120" placeholder="e.g. Nurse" style="display:block; width:100%; min-height:34px; padding:8px 11px; border:1px solid #dbeafe; border-radius:8px; font:inherit; font-size:12px; resize:vertical; color:#0f172a;"></textarea>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label for="aiSummaryInstructions" style="display:block; font-size:11px; font-weight:600; margin-bottom:4px; color:#334155;">Additional instructions / keywords (optional)</label>
+          <textarea id="aiSummaryInstructions" rows="2" maxlength="600" placeholder="e.g. Highlight 2 years of customer-service experience, mention teamwork" style="display:block; width:100%; min-height:45px; padding:8px 11px; border:1px solid #dbeafe; border-radius:8px; font:inherit; font-size:12px; resize:vertical; color:#0f172a;"></textarea>
+        </div>
+        <label for="aiSummaryAts" style="display:flex; align-items:center; gap:8px; font-size:11px; color:#334155; margin:2px 0 12px; cursor:pointer;">
+          <input id="aiSummaryAts" type="checkbox" style="width:15px; height:15px; margin:0; accent-color:#2563eb;">
+          ATS-friendly (keyword-optimised, plain text)
+        </label>
+        <div style="display:flex; align-items:flex-end; gap:10px; margin-bottom:9px; flex-wrap:wrap;">
+          <div style="width:120px; max-width:45%;">
+            <label for="aiSummaryCharacters" style="display:block; font-size:11px; font-weight:600; margin-bottom:4px; color:#334155;">Characters</label>
+            <input id="aiSummaryCharacters" type="number" min="400" max="1500" step="50" value="700" style="width:100%; height:33px; padding:6px 10px; border:1px solid #dbeafe; border-radius:7px; font:inherit; font-size:12px;">
+            <div style="font-size:10px; color:#64748b; margin-top:3px;">400 – 1500</div>
           </div>
-          <button type="button" id="aiSummaryCloseBtn" aria-label="Close" style="border:0; background:transparent; color:#64748b; font-size:1.25rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+          <button type="button" id="aiSummaryRegenerateBtn" style="border:0; border-radius:20px; padding:8px 14px; color:white; background:linear-gradient(110deg,#0ea5e9,#635bff); box-shadow:0 4px 10px rgba(59,130,246,.22); font-size:11px; font-weight:700; cursor:pointer;"><i class="fas fa-bolt"></i> Regenerate</button>
         </div>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label for="aiSummaryJobTitle" style="display:block; margin-bottom:6px;">Target Job Title (optional)</label>
-          <input id="aiSummaryJobTitle" type="text" maxlength="120" placeholder="e.g. Sales Executive" style="width:100%;">
+        <div id="aiSummaryStatus" role="status" aria-live="polite" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; font-size:11px;"></div>
+        <div style="margin-top:8px;">
+          <label for="aiSummaryResult" style="display:block; font-size:11px; font-weight:600; margin-bottom:5px; color:#334155;">Generated summary (editable)</label>
+          <textarea id="aiSummaryResult" rows="6" maxlength="1500" placeholder="Your professional summary will appear here." style="display:block; width:100%; min-height:128px; padding:9px 11px; border:1px solid #dbeafe; border-radius:8px; font:inherit; font-size:12px; line-height:1.35; resize:vertical; color:#0f172a;"></textarea>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px; font-size:10px; color:#64748b;">
+            <span>Review before applying</span><span id="aiSummaryCharCount" aria-live="polite">0 / 700 chars</span>
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label for="aiSummaryStyle" style="display:block; margin-bottom:6px;">Writing Style</label>
-          <select id="aiSummaryStyle" style="width:100%;">
-            <option value="professional" selected>Professional and concise</option>
-            <option value="entry-level">Entry-level / Fresher</option>
-            <option value="experienced">Experienced professional</option>
-            <option value="ats">ATS-friendly</option>
-          </select>
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap;">
+          <button type="button" id="aiSummaryCancelBtn" style="padding:7px 14px; border:1px solid #dbeafe; border-radius:20px; background:#fff; color:#334155; font-size:11px; cursor:pointer;">Cancel</button>
+          <button type="button" id="aiSummaryUseBtn" style="padding:8px 15px; border:0; border-radius:20px; background:linear-gradient(110deg,#0ea5e9,#635bff); color:#fff; font-size:11px; font-weight:700; box-shadow:0 4px 10px rgba(59,130,246,.2); cursor:pointer;"><i class="fas fa-check"></i> Apply to Resume</button>
         </div>
-        <div id="aiSummaryStatus" role="status" aria-live="polite" style="display:none; margin:12px 0; padding:10px 12px; border-radius:9px; font-size:.9rem;"></div>
-        <div id="aiSummaryResultWrap" style="display:none; margin-top:14px;">
-          <label for="aiSummaryResult" style="display:block; margin-bottom:6px; font-weight:600;">Generated Summary (editable)</label>
-          <textarea id="aiSummaryResult" rows="5" maxlength="1800" style="width:100%; resize:vertical;" placeholder="Your generated summary will appear here."></textarea>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-top:18px;">
-          <button type="button" id="aiSummaryCancelBtn" class="secondary-btn">Cancel</button>
-          <button type="button" id="aiSummaryRegenerateBtn" class="secondary-btn" disabled><i class="fas fa-rotate"></i> Regenerate</button>
-          <button type="button" id="aiSummaryUseBtn" class="primary-btn" disabled><i class="fas fa-check"></i> Use This Summary</button>
-          <button type="button" id="aiSummaryGenerateBtn" class="primary-btn"><i class="fas fa-sparkles"></i> Generate with Gemini AI</button>
-        </div>
-        <p style="margin:14px 0 0; font-size:.78rem; line-height:1.5; color:#64748b;">Review the result before using it. The AI should only describe information supplied in your resume.</p>
+        <p style="margin:10px 0 0; font-size:10px; line-height:1.45; color:#64748b;">AI-generated content may need review. Only use qualifications and experience that are accurate for you.</p>
       </div>
     </div>
 
@@ -669,36 +674,49 @@
         })();
     </script>
     <script>
-      // Gemini AI summary uses a same-origin server endpoint; the API key never reaches this page.
+      // Reference-matched AI summary modal. The Gemini API key stays server-side.
       (() => {
         const modal = document.getElementById('aiSummaryModal');
         const openBtn = document.getElementById('aiSummaryOpenBtn');
         const closeBtn = document.getElementById('aiSummaryCloseBtn');
         const cancelBtn = document.getElementById('aiSummaryCancelBtn');
-        const generateBtn = document.getElementById('aiSummaryGenerateBtn');
         const regenerateBtn = document.getElementById('aiSummaryRegenerateBtn');
         const useBtn = document.getElementById('aiSummaryUseBtn');
         const jobTitleInput = document.getElementById('aiSummaryJobTitle');
-        const styleInput = document.getElementById('aiSummaryStyle');
-        const resultWrap = document.getElementById('aiSummaryResultWrap');
+        const instructionsInput = document.getElementById('aiSummaryInstructions');
+        const atsInput = document.getElementById('aiSummaryAts');
+        const charactersInput = document.getElementById('aiSummaryCharacters');
         const resultInput = document.getElementById('aiSummaryResult');
+        const charCount = document.getElementById('aiSummaryCharCount');
         const status = document.getElementById('aiSummaryStatus');
         let loading = false;
 
         const value = selector => document.querySelector(selector)?.value?.trim() || '';
+        const targetLength = () => {
+          const parsed = Number.parseInt(charactersInput.value, 10);
+          const safe = Number.isFinite(parsed) ? Math.max(400, Math.min(1500, parsed)) : 700;
+          charactersInput.value = String(safe);
+          return safe;
+        };
+        const updateCount = () => {
+          const limit = targetLength();
+          if (resultInput.value.length > limit) resultInput.value = resultInput.value.slice(0, limit);
+          charCount.textContent = resultInput.value.length + ' / ' + limit + ' chars';
+          useBtn.disabled = loading || !resultInput.value.trim();
+        };
         const showStatus = (message, type = 'info') => {
           status.textContent = message;
-          status.style.display = 'block';
+          status.style.display = message ? 'block' : 'none';
           status.style.background = type === 'error' ? '#fef2f2' : type === 'success' ? '#f0fdf4' : '#eff6ff';
           status.style.color = type === 'error' ? '#b91c1c' : type === 'success' ? '#166534' : '#1d4ed8';
           status.style.border = '1px solid ' + (type === 'error' ? '#fecaca' : type === 'success' ? '#bbf7d0' : '#bfdbfe');
         };
         const setLoading = isLoading => {
           loading = isLoading;
-          generateBtn.disabled = isLoading;
-          regenerateBtn.disabled = isLoading || !resultInput.value.trim();
+          regenerateBtn.disabled = isLoading;
           useBtn.disabled = isLoading || !resultInput.value.trim();
-          generateBtn.innerHTML = isLoading ? '<i class="fas fa-spinner fa-spin"></i> Generating...' : '<i class="fas fa-sparkles"></i> Generate with Gemini AI';
+          regenerateBtn.innerHTML = isLoading ? '<i class="fas fa-spinner fa-spin"></i> Generating...' : '<i class="fas fa-bolt"></i> Regenerate';
+          regenerateBtn.style.opacity = isLoading ? '.7' : '1';
           openBtn.disabled = isLoading;
         };
         const collectResumeDetails = () => {
@@ -730,12 +748,14 @@
           document.body.style.overflow = '';
         };
         const openModal = () => {
-          resultWrap.style.display = 'none';
-          resultInput.value = '';
-          status.style.display = 'none';
-          regenerateBtn.disabled = true;
-          useBtn.disabled = true;
+          const currentSummary = value('#summaryInput');
+          resultInput.value = currentSummary;
           jobTitleInput.value = value('[data-preview="prev-title"]');
+          instructionsInput.value = '';
+          atsInput.checked = false;
+          charactersInput.value = '700';
+          updateCount();
+          showStatus('', 'info');
           modal.style.display = 'flex';
           document.body.style.overflow = 'hidden';
           jobTitleInput.focus();
@@ -747,9 +767,17 @@
             showStatus('Please enter a job title, skills, education, experience, or an existing summary first.', 'error');
             return;
           }
-          const payload = { resume, targetJobTitle: jobTitleInput.value.trim(), style: styleInput.value };
+          const maxCharacters = targetLength();
+          const payload = {
+            resume,
+            targetJobTitle: jobTitleInput.value.trim(),
+            instructions: instructionsInput.value.trim(),
+            atsFriendly: atsInput.checked,
+            maxCharacters,
+            style: atsInput.checked ? 'ats' : 'professional'
+          };
           setLoading(true);
-          showStatus('Preparing your summary with Gemini AI. This may take a few seconds.');
+          showStatus('Generating a professional summary with Gemini AI…');
           try {
             const response = await fetch('/api/resume-builder/ai-summary', {
               method: 'POST',
@@ -761,29 +789,25 @@
             if (!response.ok || !data.success || !data.summary) {
               throw new Error(data.message || 'Could not generate the summary. Please try again.');
             }
-            resultInput.value = String(data.summary).trim();
-            resultWrap.style.display = 'block';
-            setLoading(false);
-            regenerateBtn.disabled = false;
-            useBtn.disabled = false;
-            showStatus('Summary generated. Review or edit it before adding it to your resume.', 'success');
+            resultInput.value = String(data.summary).trim().slice(0, maxCharacters);
+            updateCount();
+            showStatus('Summary generated. Review or edit it before applying to your resume.', 'success');
           } catch (error) {
-            setLoading(false);
             showStatus(error instanceof Error ? error.message : 'Something went wrong. Please try again.', 'error');
+          } finally {
+            setLoading(false);
+            updateCount();
           }
         };
 
         openBtn?.addEventListener('click', openModal);
         closeBtn?.addEventListener('click', closeModal);
         cancelBtn?.addEventListener('click', closeModal);
-        generateBtn?.addEventListener('click', generate);
         regenerateBtn?.addEventListener('click', generate);
         modal?.addEventListener('click', event => { if (event.target === modal) closeModal(); });
         document.addEventListener('keydown', event => { if (event.key === 'Escape' && modal.style.display !== 'none') closeModal(); });
-        resultInput?.addEventListener('input', () => {
-          useBtn.disabled = loading || !resultInput.value.trim();
-          regenerateBtn.disabled = loading || !resultInput.value.trim();
-        });
+        resultInput?.addEventListener('input', updateCount);
+        charactersInput?.addEventListener('change', updateCount);
         useBtn?.addEventListener('click', () => {
           const field = document.getElementById('summaryInput');
           const summary = resultInput.value.trim();
