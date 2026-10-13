@@ -203,7 +203,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
       const staffNamesByDetailedBill = new Map<string, Set<string>>();
       [...serviceEntries, ...billedData].forEach((item: any) => {
         const id = String(item?.billId || item?.billID || item?.invoiceId || "").trim();
-        const staff = String(item?.staffName || item?.staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
+        const staff = String(item?.staffName || item?.staff || "").trim().replace(/\s+/g, " ").toLowerCase();
         if (!id || !staff) return;
         const names = staffNamesByDetailedBill.get(id) || new Set<string>();
         names.add(staff);
@@ -211,7 +211,7 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
       });
       let staffNameConflicts = 0;
       staffNamesByDetailedBill.forEach((names, id) => {
-        const canonical = String(staffByBillId.get(id) || "").trim().replace(/\\s+/g, " ").toLowerCase();
+        const canonical = String(staffByBillId.get(id) || "").trim().replace(/\s+/g, " ").toLowerCase();
         if (canonical && Array.from(names).some((name) => name !== canonical)) staffNameConflicts += 1;
       });
       setIntegrityReport({
