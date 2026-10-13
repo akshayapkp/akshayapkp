@@ -69,20 +69,16 @@ export function getDailyBilledTotals(
     // once even if a legacy sync left duplicate rows with different record IDs.
     // Keep the first/newest occurrence in the stored newest-first order.
     const seenPerformanceBills = new Set<string>();
-    const matching = matchingCandidates.filter((record: any) => {
+    const matching = matchingCandidates.filter((record: any, index: number) => {
       const billId = String(record.billId || record.billID || record.invoiceId || "").trim();
+      const recordId = String(record.id || "").trim();
+      // Do not guess that two legacy records are duplicates from matching
+      // amounts/names alone; that could hide two genuine same-day bills.
       const identity = billId
         ? `bill:${billId}`
-        : String(record.id || "").trim()
-          ? `record:${String(record.id).trim()}`
-          : `legacy:${[
-              normalizeLocalDateKey(record.date || record.timestamp),
-              String(record.staffName || record.staff || "").trim().toLowerCase(),
-              String(record.customerName || "").trim().toLowerCase(),
-              Number(record.totalAmount || 0),
-              Number(record.departmentFee || 0),
-              Number(record.serviceCharge || 0),
-            ].join("|")}`;
+        : recordId
+          ? `record:${recordId}`
+          : `legacy-index:${index}`;
       if (seenPerformanceBills.has(identity)) return false;
       seenPerformanceBills.add(identity);
       return true;
