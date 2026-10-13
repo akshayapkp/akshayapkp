@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const UTI_BASE = "https://www.trackpan.utiitsl.com";
+const UTI_BASE = "https://trackpan.utiitsl.com";
 const TRACK_PAGE = `${UTI_BASE}/PANONLINE/forms/TrackPan/trackApp`;
 const CAPTCHA_URL = `${UTI_BASE}/PANONLINE/forms/TrackPan/captcha.jpg`;
 
