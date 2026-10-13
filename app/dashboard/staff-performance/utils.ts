@@ -34,9 +34,9 @@ export function normalizeLocalDateKey(value: unknown): string {
     ) return "";
     return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   };
-  const iso = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})(?:$|[T\\s])/);
+  const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[T\s])/);
   if (iso) return makeValidatedDateKey(Number(iso[1]), Number(iso[2]), Number(iso[3]));
-  const indian = raw.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})(?:$|[,\\s])/);
+  const indian = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:$|[,\s])/);
   if (indian) {
     return makeValidatedDateKey(Number(indian[3]), Number(indian[2]), Number(indian[1]));
   }
@@ -148,8 +148,8 @@ export function getDailyBilledTotals(
       );
       if (key !== date) return;
 
-      const staffName = String(item.staffName || item.staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
-      const normalizedFilterStaff = selectedStaff.trim().replace(/\\s+/g, " ").toLowerCase();
+      const staffName = String(item.staffName || item.staff || "").trim().replace(/\s+/g, " ").toLowerCase();
+      const normalizedFilterStaff = selectedStaff.trim().replace(/\s+/g, " ").toLowerCase();
       if (normalizedFilterStaff !== "all" && staffName !== normalizedFilterStaff) {
         return;
       }
