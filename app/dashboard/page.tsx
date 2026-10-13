@@ -2667,7 +2667,7 @@ setServiceDirectory(filteredWithUrls);
 
                       <button
                         type="button"
-                        onClick={() => setStatusCenterView("aadhaar")}
+                        onClick={() => window.open("https://myaadhaar.uidai.gov.in/CheckAadhaarStatus", "_blank", "noopener,noreferrer")}
                         className="group min-h-[104px] rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -2679,21 +2679,6 @@ setServiceDirectory(filteredWithUrls);
                         <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">
                           Aadhaar enrolment / update status
                         </p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setStatusCenterView("aadhaar-name")}
-                        className="group min-h-[104px] rounded-2xl border border-fuchsia-100 bg-gradient-to-br from-fuchsia-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-fuchsia-300 hover:shadow-md"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-fuchsia-600 text-white shadow-sm">
-                            <FileText size={16} />
-                          </div>
-                          <ArrowUpRight size={15} className="text-slate-300 transition group-hover:text-fuchsia-600" />
-                        </div>
-                        <h5 className="mt-2.5 text-[11px] font-black text-slate-800">Name Change Check</h5>
-                        <p className="mt-0.5 text-[9px] leading-3.5 text-slate-500">Aadhaar Gazette eligibility check</p>
                       </button>
 
                       <button
@@ -2721,7 +2706,7 @@ setServiceDirectory(filteredWithUrls);
 
                       <button
                         type="button"
-                        onClick={() => setStatusCenterView("pan")}
+                        onClick={() => window.open("https://www.trackpan.utiitsl.com/PANONLINE/forms/TrackPan/trackApp", "_blank", "noopener,noreferrer")}
                         className="group min-h-[104px] rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white p-3.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
                       >
                         <div className="flex items-start justify-between gap-2">
