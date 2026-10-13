@@ -1186,7 +1186,7 @@ export default function DashboardPage() {
   const [showAadhaarGazetteModal, setShowAadhaarGazetteModal] = useState(false);
   const [showServiceDocumentGeneratorModal, setShowServiceDocumentGeneratorModal] = useState(false);
   const [showServiceDirectory, setShowServiceDirectory] = useState(false);
-  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "aadhaar-name" | "pan" | null>(null);
+  const [statusCenterView, setStatusCenterView] = useState<"center" | "edistrict" | "gazette" | "aadhaar" | "aadhaar-name" | "pan" | "passport" | null>(null);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const draggedItemIndex = useRef<number | null>(null);
   const draggedOverItemIndex = useRef<number | null>(null);
