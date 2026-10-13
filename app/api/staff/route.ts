@@ -36,7 +36,21 @@ function normalize(input: any) {
 export async function GET() {
   const auth = await adminDb();
   if ("response" in auth) return auth.response;
-  const { data, error } = await auth.db.from("staff").select(publicFields).order("created_at", { ascending: true });
+  let { data, error } = await auth.db.from("staff").select(publicFields).order("created_at", { ascending: true });
+
+  // Some deployments have an outdated service-role key while the publishable
+  // key is still valid. Staff management is already protected by the admin
+  // session, so retry reads with the anon key to keep the directory available.
+  if (error && /invalid api key/i.test(error.message ?? "")) {
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (anonKey && anonKey !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const fallbackDb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      ({ data, error } = await fallbackDb.from("staff").select(publicFields).order("created_at", { ascending: true }));
+    }
+  }
+
   if (error) {
     console.error("[staff-api] GET query failed", {
       code: error.code,
