@@ -51,18 +51,31 @@ export function getDailyBilledTotals(
       localStorage.getItem("performanceRecords") || "[]"
     );
 
-    const matching = (Array.isArray(performance) ? performance : []).filter(
+    const normalizedSelectedStaff = selectedStaff.trim().replace(/\\s+/g, " ").toLowerCase();
+    const matchingCandidates = (Array.isArray(performance) ? performance : []).filter(
       (record: any) => {
         const key = normalizeLocalDateKey(record.date || record.timestamp);
-        const staffName = String(record.staffName || record.staff || "").trim();
+        const staffName = String(record.staffName || record.staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
 
         return (
           key === date &&
-          (selectedStaff === "All" ||
-            staffName.toLowerCase() === selectedStaff.trim().toLowerCase())
+          (normalizedSelectedStaff === "all" ||
+            staffName === normalizedSelectedStaff)
         );
       }
     );
+
+    // performanceRecords is a bill-summary store: one bill must contribute
+    // once even if a legacy sync left duplicate rows with different record IDs.
+    // Keep the first/newest occurrence in the stored newest-first order.
+    const seenPerformanceBills = new Set<string>();
+    const matching = matchingCandidates.filter((record: any) => {
+      const billId = String(record.billId || record.billID || record.invoiceId || "").trim();
+      const identity = billId ? `bill:${billId}` : `record:${String(record.id || "")}`;
+      if (seenPerformanceBills.has(identity)) return false;
+      seenPerformanceBills.add(identity);
+      return true;
+    });
 
     if (matching.length > 0) {
       return matching.reduce(
