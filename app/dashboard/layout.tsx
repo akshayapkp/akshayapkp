@@ -200,12 +200,19 @@ export default function DashboardLayout({
     setSidebarOpen(true);
   };
 
+  // Sidebar visibility changes only when the top arrow is clicked.
+  // Moving the pointer away must never auto-hide the open sidebar.
   const closeSidebar = () => {
-    if (sidebarPinned) return;
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+  };
 
-    hideTimer.current = setTimeout(() => {
-      setSidebarOpen(false);
-    }, 150);
+  const toggleSidebarArrow = () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    const nextOpen = !sidebarOpen;
+    setSidebarPinned(nextOpen);
+    setSidebarOpen(nextOpen);
+    const pinKey = `sidebar_pinned_${currentUser.username.toLowerCase()}`;
+    localStorage.setItem(pinKey, String(nextOpen));
   };
 
   useEffect(() => {
@@ -240,15 +247,13 @@ export default function DashboardLayout({
       }
 
       const storedUser = JSON.parse(
-        localStorage.getItem("loggedInUser") || "{}"
-      );
+        localStorage.getItem("loggedInUser") || "{}"      );
 
       const username = (storedUser.username || "User").trim();
       const role = (storedUser.role || "staff").toLowerCase();
 
       setCurrentUser({
-        username,
-        role,      });
+        username,        role,      });
 
       const versionKey = `app_version_${username.toLowerCase()}`;
       const savedVersion = localStorage.getItem(versionKey);
@@ -491,14 +496,12 @@ export default function DashboardLayout({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>      )}
 
       <div
         className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
         aria-hidden="true"
-      >        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
-        <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
+      >        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />        <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
       </div>
 
@@ -612,30 +615,33 @@ export default function DashboardLayout({
             </span>
           </button>
 
-          <button
-            type="button"
-            onClick={openSidebar}
-            aria-label="Expand sidebar"
-            title="Open sidebar"
-            className="group absolute bottom-2 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-white shadow-lg shadow-blue-500/20 transition-all duration-300 hover:scale-110 hover:shadow-blue-500/40 active:scale-95"
+          <div
+            aria-label="Akshaya logo"
+            title="Akshaya Pookiparamba"
+            className="absolute bottom-2 z-30 flex h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-white shadow-lg shadow-blue-500/20"
           >
             <img
               src="/akshaya-logo.png"
-              alt=""
-              aria-hidden="true"
-              className="h-8 w-8 rounded-full object-contain transition-transform duration-500 group-hover:scale-95"
+              alt="Akshaya Pookiparamba"
+              className="h-8 w-8 rounded-full object-contain"
             />
-            <span className="absolute -right-1 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-white bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-md transition-transform duration-300 group-hover:translate-x-1">
-              <ChevronRight size={13} strokeWidth={3} className="animate-[sidebarArrow_1.2s_ease-in-out_infinite]" />
-            </span>
-          </button>
+          </div>
         </div>
       </div>
 
+      {/* The arrow stays at the sidebar's top edge; click to pin/open or collapse/unpin. */}
+      <button
+        type="button"
+        aria-label={sidebarOpen ? "Collapse and unpin sidebar" : "Expand and pin sidebar"}
+        title={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
+        onClick={toggleSidebarArrow}
+        className={`fixed top-[22px] z-[70] flex h-7 w-7 items-center justify-center rounded-full border border-white/80 bg-[#171923] text-white shadow-lg transition-[left,transform,background-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-blue-600 active:scale-90 ${sidebarOpen ? "left-[270px] rotate-180 md:left-[278px]" : "left-[43px] md:left-[43px]"}`}
+      >
+        <ChevronRight size={15} strokeWidth={2.8} className="transition-transform duration-300" />
+      </button>
+
       <div className="dashboard-surface dashboard-depth relative flex h-screen w-full overflow-hidden bg-[#f4f8ff] dark:bg-[#071225] text-slate-800 dark:text-slate-100 font-sans">
         <aside
-          onMouseEnter={openSidebar}
-          onMouseLeave={closeSidebar}
           className={`
             fixed inset-y-3 left-3
             z-50
@@ -787,8 +793,7 @@ export default function DashboardLayout({
   title="Log out"
   className="cursor-pointer rounded-xl p-2 text-slate-600 transition-all hover:bg-rose-500/10 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400"
   >
-  <LogOut size={18} />
-            </button>
+  <LogOut size={18} />            </button>
           </div>
         </aside>
 
@@ -797,8 +802,7 @@ export default function DashboardLayout({
           <button
             type="button"
             aria-label="Close navigation"
-            onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[2px] md:hidden"
+            onClick={() => setSidebarOpen(false)}            className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[2px] md:hidden"
           />
         )}
 
