@@ -18,13 +18,7 @@ interface Staff {
   password?: string;
 }
 
-const INITIAL_STAFF: Staff[] = [
-  { id: '1', staffId: '#1', name: 'Admin User', email: 'admin@gmail.com', phone: '8589868773', role: 'Admin', salary: 10000 },
-  { id: '2', staffId: '#2', name: 'FASNIL', email: 'fasnil@gmail.com', phone: '9544739520', role: 'Accountant', salary: 10000 },
-  { id: '3', staffId: '#3', name: 'SUMAYYA', email: 'sumayya@gmail.com', phone: '7025400130', role: 'Staff', salary: 10000 },
-  { id: '4', staffId: '#4', name: 'SHEEJA', email: 'sheeja@gmail.com', phone: '8907428080', role: 'Staff', salary: 10000 },
-  { id: '5', staffId: '#5', name: 'SAHLA', email: 'sahla@gmail.com', phone: '9037977659', role: 'Staff', salary: 10000 },
-];
+
 
 export default function StaffManagementPage() {
   const [staffList, setStaffList] = useState<Staff[]>([]);
