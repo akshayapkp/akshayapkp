@@ -274,7 +274,7 @@
                     </div>
                     <div class="form-group">
                         <textarea id="summaryInput" data-preview="prev-summary" rows="4">Driven and enthusiastic professional with a strong passion for delivering high-quality results.</textarea>
-                        <button type="button" class="add-btn generate-content-btn" onclick="window.generateResumeContent('summary')"><i class="fas fa-wand-magic-sparkles"></i> Generate Summary / Objective</button>
+                        <button type="button" class="add-btn generate-content-btn ai-summary-trigger" id="aiSummaryOpenBtn"><i class="fas fa-sparkles"></i> AI Generate Summary</button>
                     </div>
                 </div>
 
@@ -578,6 +578,45 @@
         </div>
     </div>
 
+    <!-- Gemini AI Professional Summary Modal -->
+    <div id="aiSummaryModal" role="dialog" aria-modal="true" aria-labelledby="aiSummaryTitle"
+         style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,.58); padding:20px; overflow:auto; align-items:center; justify-content:center;">
+      <div style="width:min(640px,100%); margin:auto; background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:22px; box-shadow:0 24px 70px rgba(15,23,42,.28); color:#0f172a;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:16px;">
+          <div>
+            <h3 id="aiSummaryTitle" style="margin:0 0 6px; font-size:1.15rem;"><i class="fas fa-sparkles" style="color:#2563eb;"></i> AI Professional Summary</h3>
+            <p style="margin:0; color:#64748b; font-size:.9rem;">Generate a professional summary using your existing resume details and Gemini AI.</p>
+          </div>
+          <button type="button" id="aiSummaryCloseBtn" aria-label="Close" style="border:0; background:transparent; color:#64748b; font-size:1.25rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label for="aiSummaryJobTitle" style="display:block; margin-bottom:6px;">Target Job Title (optional)</label>
+          <input id="aiSummaryJobTitle" type="text" maxlength="120" placeholder="e.g. Sales Executive" style="width:100%;">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label for="aiSummaryStyle" style="display:block; margin-bottom:6px;">Writing Style</label>
+          <select id="aiSummaryStyle" style="width:100%;">
+            <option value="professional" selected>Professional and concise</option>
+            <option value="entry-level">Entry-level / Fresher</option>
+            <option value="experienced">Experienced professional</option>
+            <option value="ats">ATS-friendly</option>
+          </select>
+        </div>
+        <div id="aiSummaryStatus" role="status" aria-live="polite" style="display:none; margin:12px 0; padding:10px 12px; border-radius:9px; font-size:.9rem;"></div>
+        <div id="aiSummaryResultWrap" style="display:none; margin-top:14px;">
+          <label for="aiSummaryResult" style="display:block; margin-bottom:6px; font-weight:600;">Generated Summary (editable)</label>
+          <textarea id="aiSummaryResult" rows="5" maxlength="1800" style="width:100%; resize:vertical;" placeholder="Your generated summary will appear here."></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-top:18px;">
+          <button type="button" id="aiSummaryCancelBtn" class="secondary-btn">Cancel</button>
+          <button type="button" id="aiSummaryRegenerateBtn" class="secondary-btn" disabled><i class="fas fa-rotate"></i> Regenerate</button>
+          <button type="button" id="aiSummaryUseBtn" class="primary-btn" disabled><i class="fas fa-check"></i> Use This Summary</button>
+          <button type="button" id="aiSummaryGenerateBtn" class="primary-btn"><i class="fas fa-sparkles"></i> Generate with Gemini AI</button>
+        </div>
+        <p style="margin:14px 0 0; font-size:.78rem; line-height:1.5; color:#64748b;">Review the result before using it. The AI should only describe information supplied in your resume.</p>
+      </div>
+    </div>
+
     <div class="toast" id="toast"><i class="fas fa-circle-check"></i> <span id="toastMsg"></span></div>
 
     <script>
@@ -628,6 +667,145 @@
                 return json({ success: false, message: 'Unsupported request' });
             };
         })();
+    </script>
+    <script>
+      // Gemini AI summary uses a same-origin server endpoint; the API key never reaches this page.
+      (() => {
+        const modal = document.getElementById('aiSummaryModal');
+        const openBtn = document.getElementById('aiSummaryOpenBtn');
+        const closeBtn = document.getElementById('aiSummaryCloseBtn');
+        const cancelBtn = document.getElementById('aiSummaryCancelBtn');
+        const generateBtn = document.getElementById('aiSummaryGenerateBtn');
+        const regenerateBtn = document.getElementById('aiSummaryRegenerateBtn');
+        const useBtn = document.getElementById('aiSummaryUseBtn');
+        const jobTitleInput = document.getElementById('aiSummaryJobTitle');
+        const styleInput = document.getElementById('aiSummaryStyle');
+        const resultWrap = document.getElementById('aiSummaryResultWrap');
+        const resultInput = document.getElementById('aiSummaryResult');
+        const status = document.getElementById('aiSummaryStatus');
+        let loading = false;
+
+        const value = selector => document.querySelector(selector)?.value?.trim() || '';
+        const showStatus = (message, type = 'info') => {
+          status.textContent = message;
+          status.style.display = 'block';
+          status.style.background = type === 'error' ? '#fef2f2' : type === 'success' ? '#f0fdf4' : '#eff6ff';
+          status.style.color = type === 'error' ? '#b91c1c' : type === 'success' ? '#166534' : '#1d4ed8';
+          status.style.border = '1px solid ' + (type === 'error' ? '#fecaca' : type === 'success' ? '#bbf7d0' : '#bfdbfe');
+        };
+        const setLoading = isLoading => {
+          loading = isLoading;
+          generateBtn.disabled = isLoading;
+          regenerateBtn.disabled = isLoading || !resultInput.value.trim();
+          useBtn.disabled = isLoading || !resultInput.value.trim();
+          generateBtn.innerHTML = isLoading ? '<i class="fas fa-spinner fa-spin"></i> Generating...' : '<i class="fas fa-sparkles"></i> Generate with Gemini AI';
+          openBtn.disabled = isLoading;
+        };
+        const collectResumeDetails = () => {
+          const experiences = [...document.querySelectorAll('#experienceList .dynamic-item')].map(item => ({
+            title: item.querySelector('.exp-title')?.value?.trim() || '',
+            company: item.querySelector('.exp-company')?.value?.trim() || '',
+            dates: item.querySelector('.exp-date')?.value?.trim() || '',
+            details: item.querySelector('.exp-desc')?.value?.trim() || ''
+          })).filter(item => Object.values(item).some(Boolean));
+          const education = [...document.querySelectorAll('#educationList .dynamic-item')].map(item => ({
+            qualification: item.querySelector('.edu-degree')?.value?.trim() || '',
+            institution: item.querySelector('.edu-school')?.value?.trim() || '',
+            dates: item.querySelector('.edu-date')?.value?.trim() || ''
+          })).filter(item => Object.values(item).some(Boolean));
+          return {
+            name: value('[data-preview="prev-name"]'),
+            currentTitle: value('[data-preview="prev-title"]'),
+            category: value('#resumeCategory'),
+            skills: value('#skills'),
+            strengths: value('#strengths'),
+            experience: experiences,
+            education,
+            currentSummary: value('#summaryInput')
+          };
+        };
+        const closeModal = () => {
+          if (loading) return;
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+        };
+        const openModal = () => {
+          resultWrap.style.display = 'none';
+          resultInput.value = '';
+          status.style.display = 'none';
+          regenerateBtn.disabled = true;
+          useBtn.disabled = true;
+          jobTitleInput.value = value('[data-preview="prev-title"]');
+          modal.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+          jobTitleInput.focus();
+        };
+        const generate = async () => {
+          if (loading) return;
+          const resume = collectResumeDetails();
+          if (!resume.currentTitle && !resume.skills && !resume.experience.length && !resume.education.length && !resume.currentSummary) {
+            showStatus('Please enter a job title, skills, education, experience, or an existing summary first.', 'error');
+            return;
+          }
+          const payload = { resume, targetJobTitle: jobTitleInput.value.trim(), style: styleInput.value };
+          setLoading(true);
+          showStatus('Preparing your summary with Gemini AI. This may take a few seconds.');
+          try {
+            const response = await fetch('/api/resume-builder/ai-summary', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify(payload)
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.success || !data.summary) {
+              throw new Error(data.message || 'Could not generate the summary. Please try again.');
+            }
+            resultInput.value = String(data.summary).trim();
+            resultWrap.style.display = 'block';
+            setLoading(false);
+            regenerateBtn.disabled = false;
+            useBtn.disabled = false;
+            showStatus('Summary generated. Review or edit it before adding it to your resume.', 'success');
+          } catch (error) {
+            setLoading(false);
+            showStatus(error instanceof Error ? error.message : 'Something went wrong. Please try again.', 'error');
+          }
+        };
+
+        openBtn?.addEventListener('click', openModal);
+        closeBtn?.addEventListener('click', closeModal);
+        cancelBtn?.addEventListener('click', closeModal);
+        generateBtn?.addEventListener('click', generate);
+        regenerateBtn?.addEventListener('click', generate);
+        modal?.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape' && modal.style.display !== 'none') closeModal(); });
+        resultInput?.addEventListener('input', () => {
+          useBtn.disabled = loading || !resultInput.value.trim();
+          regenerateBtn.disabled = loading || !resultInput.value.trim();
+        });
+        useBtn?.addEventListener('click', () => {
+          const field = document.getElementById('summaryInput');
+          const summary = resultInput.value.trim();
+          if (!field || !summary) return;
+          field.value = summary;
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+          const toggle = document.querySelector('[data-toggle="prev-summary-container"]');
+          if (toggle && !toggle.checked) {
+            toggle.checked = true;
+            toggle.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          closeModal();
+          const toastMsg = document.getElementById('toastMsg');
+          const toast = document.getElementById('toast');
+          if (toastMsg && toast) {
+            toastMsg.textContent = 'AI Summary added to your resume';
+            toast.style.display = 'flex';
+            window.setTimeout(() => { toast.style.display = ''; }, 2600);
+          }
+        });
+      })();
     </script>
     <script src="assets/resume_script_0gtt.js"></script>
     <script src="assets/resume-enhancements.js"></script>
