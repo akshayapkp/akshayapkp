@@ -71,7 +71,18 @@ export function getDailyBilledTotals(
     const seenPerformanceBills = new Set<string>();
     const matching = matchingCandidates.filter((record: any) => {
       const billId = String(record.billId || record.billID || record.invoiceId || "").trim();
-      const identity = billId ? `bill:${billId}` : `record:${String(record.id || "")}`;
+      const identity = billId
+        ? `bill:${billId}`
+        : String(record.id || "").trim()
+          ? `record:${String(record.id).trim()}`
+          : `legacy:${[
+              normalizeLocalDateKey(record.date || record.timestamp),
+              String(record.staffName || record.staff || "").trim().toLowerCase(),
+              String(record.customerName || "").trim().toLowerCase(),
+              Number(record.totalAmount || 0),
+              Number(record.departmentFee || 0),
+              Number(record.serviceCharge || 0),
+            ].join("|")}`;
       if (seenPerformanceBills.has(identity)) return false;
       seenPerformanceBills.add(identity);
       return true;
