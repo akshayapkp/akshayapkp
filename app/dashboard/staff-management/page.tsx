@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { hashPassword, supabase } from "@/lib/supabase";
+import { hashPassword } from "@/lib/supabase";
 import { 
   Users, Search, Plus, Edit2, Trash2, Mail, Phone, RefreshCw, Eye, Shield, Key, Settings2 
 } from "lucide-react";
@@ -18,13 +18,7 @@ interface Staff {
   password?: string;
 }
 
-const INITIAL_STAFF: Staff[] = [
-  { id: '1', staffId: '#1', name: 'Admin User', email: 'admin@gmail.com', phone: '8589868773', role: 'Admin', salary: 10000 },
-  { id: '2', staffId: '#2', name: 'FASNIL', email: 'fasnil@gmail.com', phone: '9544739520', role: 'Accountant', salary: 10000 },
-  { id: '3', staffId: '#3', name: 'SUMAYYA', email: 'sumayya@gmail.com', phone: '7025400130', role: 'Staff', salary: 10000 },
-  { id: '4', staffId: '#4', name: 'SHEEJA', email: 'sheeja@gmail.com', phone: '8907428080', role: 'Staff', salary: 10000 },
-  { id: '5', staffId: '#5', name: 'SAHLA', email: 'sahla@gmail.com', phone: '9037977659', role: 'Staff', salary: 10000 },
-];
+
 
 export default function StaffManagementPage() {
   const [staffList, setStaffList] = useState<Staff[]>([]);
@@ -54,115 +48,77 @@ export default function StaffManagementPage() {
 const [editPassword, setEditPassword] = useState("");
 
   useEffect(() => {
+    const mapRow = (row: any): Staff => ({
+      id: String(row.id),
+      staffId: String(row.staff_id ?? ""),
+      name: String(row.name ?? ""),
+      email: String(row.email ?? ""),
+      phone: String(row.phone ?? ""),
+      role: String(row.role ?? "Staff"),
+      salary: Number(row.salary ?? 0),
+      upiId: String(row.upi_id ?? ""),
+      // Password hashes are never returned to the browser.
+      password: "",
+    });
+
     const loadStaff = async () => {
-      const { data, error } = await supabase
-        .from("staff")
-        .select("*")
-        .order("created_at", { ascending: true });
-
-      if (error) {
-        console.error("Failed to load staff:", error);
-        alert(`Unable to load staff from database: ${error.message}`);
-        return;
-      }
-
-      const mapRow = (row: any): Staff => ({
-        id: String(row.id),
-        staffId: String(row.staff_id ?? ""),
-        name: String(row.name ?? ""),
-        email: String(row.email ?? ""),
-        phone: String(row.phone ?? ""),
-        role: String(row.role ?? "Staff"),
-        salary: Number(row.salary ?? 0),
-        upiId: String(row.upi_id ?? ""),
-        password: String(row.password ?? ""),
-      });
-
-      // One-time migration of the existing browser-only staff data.
-      if (!data || data.length === 0) {
-        const saved = localStorage.getItem("smart_akshaya_staff");
-
-        if (saved) {
-          try {
-            const localStaff = JSON.parse(saved);
-
-            if (Array.isArray(localStaff) && localStaff.length > 0) {
-              const rows = await Promise.all(
-                localStaff.map(async (s: any, index: number) => {
-                  const plainPassword = String(
-                    s.password ??
-                      `${String(s.name ?? "staff")
-                        .trim()
-                        .split(" ")[0]
-                        .toLowerCase()}akshaya`
-                  );
-
-                  return {
-                    id: String(s.id ?? Date.now() + index),
-                    staff_id: String(s.staffId ?? `#${index + 1}`),
-                    name: String(s.name ?? ""),
-                    email: String(s.email ?? "N/A"),
-                    phone: String(s.phone ?? "N/A"),
-                    role: String(s.role ?? "Staff"),
-                    salary: Number(s.salary ?? 0),
-                    upi_id: String(s.upiId ?? s.upi_id ?? ""),
-                    password: await hashPassword(plainPassword),
-                  };
-                })
-              );
-
-              const { data: migrated, error: migrationError } = await supabase
-                .from("staff")
-                .insert(rows)
-                .select("*");
-
-              if (migrationError) {
-                console.error("Staff migration failed:", migrationError);
-                alert(`Unable to migrate staff: ${migrationError.message}`);
-                return;
-              }
-
-              setStaffList((migrated ?? []).map(mapRow));
-              return;
-            }
-          } catch (error) {
-            console.error("Invalid local staff data:", error);
-          }
+      try {
+        const response = await fetch("/api/staff", { cache: "no-store" });
+        const result = await response.json();
+        if (!response.ok) {
+          alert(result.error || "Unable to load staff records.");
+          return;
         }
-
-        // If the database is completely new, seed the existing staff list.
-        const seedRows = await Promise.all(
-          INITIAL_STAFF.map(async (s) => ({
-            id: s.id,
-            staff_id: s.staffId,
-            name: s.name,
-            email: s.email,
-            phone: s.phone,
-            role: s.role,
-            salary: s.salary,
-            upi_id: s.upiId ?? "",
-            password: await hashPassword(
-              `${s.name.trim().split(" ")[0].toLowerCase()}akshaya`
-            ),
-          }))
-        );
-
-        const { data: seeded, error: seedError } = await supabase
-          .from("staff")
-          .insert(seedRows)
-          .select("*");
-
-        if (seedError) {
-          console.error("Staff seed failed:", seedError);
-          alert(`Unable to initialize staff database: ${seedError.message}`);
+        const existing = Array.isArray(result.staff) ? result.staff : [];
+        if (existing.length > 0) {
+          setStaffList(existing.map(mapRow));
           return;
         }
 
-        setStaffList((seeded ?? []).map(mapRow));
-        return;
+        // Migrate browser-only staff data only when the database is empty.
+        // Never create demo/default accounts automatically.
+        const saved = localStorage.getItem("smart_akshaya_staff");
+        if (!saved) {
+          setStaffList([]);
+          return;
+        }
+        try {
+          const localStaff = JSON.parse(saved);
+          if (!Array.isArray(localStaff) || localStaff.length === 0) {
+            setStaffList([]);
+            return;
+          }
+          const rows = await Promise.all(localStaff.map(async (item: any, index: number) => {
+            const plainPassword = String(item.password ?? `${String(item.name ?? "staff").trim().split(" ")[0].toLowerCase()}akshaya`);
+            return {
+              id: String(item.id ?? Date.now() + index),
+              staff_id: String(item.staffId ?? `#${index + 1}`),
+              name: String(item.name ?? "").trim(),
+              email: String(item.email ?? ""),
+              phone: String(item.phone ?? ""),
+              role: String(item.role ?? "Staff"),
+              salary: Number(item.salary ?? 0),
+              upi_id: String(item.upiId ?? item.upi_id ?? ""),
+              password: await hashPassword(plainPassword),
+            };
+          }));
+          const migration = await fetch("/api/staff", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "migrate", staff: rows }),
+          });
+          const migrated = await migration.json();
+          if (!migration.ok) {
+            alert(migrated.error || "Unable to migrate old staff records.");
+            return;
+          }
+          setStaffList((migrated.staff ?? []).map(mapRow));
+        } catch {
+          alert("Old browser staff data could not be read. No staff records were deleted.");
+        }
+      } catch {
+        alert("Unable to connect to Staff Management. Please try again.");
       }
-
-      setStaffList(data.map(mapRow));
     };
 
     loadStaff();
@@ -183,55 +139,54 @@ const [editPassword, setEditPassword] = useState("");
     e.preventDefault();
     if (!newName.trim()) return;
 
-    const firstName = newName.trim().split(' ')[0].toLowerCase();
+    const firstName = newName.trim().split(" ")[0].toLowerCase();
     const finalPassword = newPassword.trim() || `${firstName}akshaya`;
-
     const row = {
       id: Date.now().toString(),
       staff_id: `#${staffList.length + 1}`,
       name: newName.trim(),
-      email: newEmail || 'N/A',
-      phone: newPhone || 'N/A',
+      email: newEmail || "",
+      phone: newPhone || "",
       role: newRole,
       salary: Number(newSalary) || 0,
       upi_id: newUpiId.trim(),
       password: await hashPassword(finalPassword),
     };
 
-    const { data: insertedStaff, error } = await supabase
-      .from("staff")
-      .insert(row)
-      .select("*")
-      .single();
-
-    if (error) {
-      console.error("Failed to add staff:", error);
-      alert(`Unable to add staff: ${error.message}`);
+    const response = await fetch("/api/staff", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ staff: row }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      alert(result.error || "Unable to add staff.");
       return;
     }
+    const inserted = result.staff?.[0];
+    if (!inserted) {
+      alert("Staff was not returned by the server.");
+      return;
+    }
+    setStaffList((current) => [{
+      id: String(inserted.id),
+      staffId: String(inserted.staff_id),
+      name: String(inserted.name),
+      email: String(inserted.email ?? ""),
+      phone: String(inserted.phone ?? ""),
+      role: String(inserted.role ?? "Staff"),
+      salary: Number(inserted.salary ?? 0),
+      upiId: String(inserted.upi_id ?? ""),
+      password: "",
+    }, ...current]);
 
-    setStaffList((current) => [
-      {
-        id: String(insertedStaff.id),
-        staffId: String(insertedStaff.staff_id),
-        name: String(insertedStaff.name),
-        email: String(insertedStaff.email ?? ""),
-        phone: String(insertedStaff.phone ?? ""),
-        role: String(insertedStaff.role ?? "Staff"),
-        salary: Number(insertedStaff.salary ?? 0),
-        upiId: String(insertedStaff.upi_id ?? ""),
-        password: String(insertedStaff.password ?? ""),
-      },
-      ...current,
-    ]);
-
-    setNewName('');
-    setNewEmail('');
-    setNewPhone('');
-    setNewRole('Staff');
+    setNewName("");
+    setNewEmail("");
+    setNewPhone("");
+    setNewRole("Staff");
     setNewSalary(10000);
-    setNewUpiId('');
-    setNewPassword('');
+    setNewUpiId("");
+    setNewPassword("");
     setShowAddModal(false);
   };
 
@@ -243,7 +198,7 @@ const [editPassword, setEditPassword] = useState("");
     setEditRole(staff.role);
 setEditSalary(staff.salary);
 setEditUpiId(staff.upiId || "");
-setEditPassword((staff as any).password || "");
+setEditPassword("");
 setShowEditModal(true);
   };
 
@@ -260,64 +215,50 @@ setShowEditModal(true);
       salary: Number(editSalary) || 0,
       upi_id: editUpiId.trim(),
     };
+    if (editPassword.trim()) updateData.password = await hashPassword(editPassword.trim());
 
-    if (editPassword.trim()) {
-      updateData.password = await hashPassword(editPassword.trim());
-    }
-
-    const { data: updatedStaff, error } = await supabase
-      .from("staff")
-      .update(updateData)
-      .eq("id", selectedStaff.id)
-      .select("*")
-      .single();
-
-    if (error) {
-      console.error("Failed to update staff:", error);
-      alert(`Unable to update staff: ${error.message}`);
+    const response = await fetch("/api/staff", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: selectedStaff.id, staff: updateData }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      alert(result.error || "Unable to update staff.");
       return;
     }
+    const updated = result.staff;
+    setStaffList((current) => current.map((staff) => staff.id === selectedStaff.id ? {
+      id: String(updated.id),
+      staffId: String(updated.staff_id),
+      name: String(updated.name),
+      email: String(updated.email ?? ""),
+      phone: String(updated.phone ?? ""),
+      role: String(updated.role ?? "Staff"),
+      salary: Number(updated.salary ?? 0),
+      upiId: String(updated.upi_id ?? ""),
+      password: "",
+    } : staff));
 
-    setStaffList((current) =>
-      current.map((s) =>
-        s.id === selectedStaff.id
-          ? {
-              id: String(updatedStaff.id),
-              staffId: String(updatedStaff.staff_id),
-              name: String(updatedStaff.name),
-              email: String(updatedStaff.email ?? ""),
-              phone: String(updatedStaff.phone ?? ""),
-              role: String(updatedStaff.role ?? "Staff"),
-              salary: Number(updatedStaff.salary ?? 0),
-              upiId: String(updatedStaff.upi_id ?? ""),
-              password: String(updatedStaff.password ?? ""),
-            }
-          : s
-      )
-    );
-
-    alert("Staff details and password updated successfully.");
+    alert(editPassword.trim() ? "Staff details and password updated successfully." : "Staff details updated successfully.");
     setShowEditModal(false);
     setSelectedStaff(null);
+    setEditPassword("");
   };
 
   const handleDeleteStaff = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this staff member?")) {
+    if (!confirm("Are you sure you want to delete this staff member?")) return;
+    const response = await fetch("/api/staff", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      alert(result.error || "Unable to delete staff.");
       return;
     }
-
-    const { error } = await supabase
-      .from("staff")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("Failed to delete staff:", error);
-      alert(`Unable to delete staff: ${error.message}`);
-      return;
-    }
-
-    setStaffList((current) => current.filter((s) => s.id !== id));
+    setStaffList((current) => current.filter((staff) => staff.id !== id));
   };
 
   const filteredStaff = staffList.filter(s => 
