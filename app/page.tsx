@@ -150,7 +150,7 @@ export default function HomePage() {
       return;
     }
     setReceiptBusy(true);
-    setReceiptMessage("");
+    setReceiptMessage("ഫോട്ടോ പ്രോസസ് ചെയ്യുന്നു...");
     try {
       const result = await Tesseract.recognize(file, "eng+mal");
       const text = String(result.data.text || "").trim();
