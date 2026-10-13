@@ -877,6 +877,16 @@ function ServiceEntryForm() {
       date: new Date().toLocaleString(),
     };
 
+    const printedItems = Array.isArray(targetBill.items) ? targetBill.items : [];
+    const printedDepartmentFee = printedItems.reduce(
+      (sum: number, item: any) => sum + Number(item.walletChg ?? item.deptChg ?? 0) * Number(item.qty || 1),
+      0
+    );
+    const printedServiceCharge = printedItems.reduce(
+      (sum: number, item: any) => sum + Number(item.srvChg ?? item.srvCharge ?? 0) * Number(item.qty || 1),
+      0
+    );
+
     const printWindow = window.open("", "_blank", "width=800,height=900");
     if (!printWindow) return;
 
@@ -964,26 +974,26 @@ function ServiceEntryForm() {
           <table>
             <tr>
               <td><b>Total Dept Fee</b></td>
-              <td style="text-align:right">₹${totalWalletCharge.toFixed(2)}</td>
+              <td style="text-align:right">₹${printedDepartmentFee.toFixed(2)}</td>
               <td><b>GPay</b></td>
-              <td style="text-align:right">₹${Number(targetBill.gpay || gpay).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.gpay ?? gpay).toFixed(2)}</td>
             </tr>
             <tr>
               <td><b>Total Service Charge</b></td>
-              <td style="text-align:right">₹${totalServiceCharge.toFixed(2)}</td>
+              <td style="text-align:right">₹${printedServiceCharge.toFixed(2)}</td>
               <td><b>Cash</b></td>
-              <td style="text-align:right">₹${Number(targetBill.cash || cash).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.cash ?? cash).toFixed(2)}</td>
             </tr>
             <tr>
               <td><b>Gross Total</b></td>
-              <td style="text-align:right">₹${Number(targetBill.totalAmount || totalAmount).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.totalAmount ?? totalAmount).toFixed(2)}</td>
               <td><b>Total Paid</b></td>
-              <td style="text-align:right">₹${Number(targetBill.totalPaid || totalPaid).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.totalPaid ?? totalPaid).toFixed(2)}</td>
             </tr>
             <tr>
               <td colspan="2"></td>
               <td><b>Balance</b></td>
-              <td style="text-align:right">₹${Number(targetBill.balance || balance).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.balance ?? balance).toFixed(2)}</td>
             </tr>
           </table>
           <div class="footer">
