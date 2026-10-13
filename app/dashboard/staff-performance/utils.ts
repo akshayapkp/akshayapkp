@@ -22,11 +22,23 @@ export interface DailyBilledTotals {
 export function normalizeLocalDateKey(value: unknown): string {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
-  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const indian = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
+  const makeValidatedDateKey = (year: number, month: number, day: number) => {
+    const date = new Date(year, month - 1, day);
+    if (
+      !Number.isInteger(year) ||
+      !Number.isInteger(month) ||
+      !Number.isInteger(day) ||
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) return "";
+    return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  };
+  const iso = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})(?:$|[T\\s])/);
+  if (iso) return makeValidatedDateKey(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+  const indian = raw.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})(?:$|[,\\s])/);
   if (indian) {
-    return `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
+    return makeValidatedDateKey(Number(indian[3]), Number(indian[2]), Number(indian[1]));
   }
   const parsed = new Date(raw);
   if (Number.isNaN(parsed.getTime())) return "";
@@ -136,12 +148,9 @@ export function getDailyBilledTotals(
       );
       if (key !== date) return;
 
-      const staffName = String(item.staffName || item.staff || "").trim();
-      if (
-        selectedStaff !== "All" &&
-        staffName &&
-        staffName.toLowerCase() !== selectedStaff.trim().toLowerCase()
-      ) {
+      const staffName = String(item.staffName || item.staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
+      const normalizedFilterStaff = selectedStaff.trim().replace(/\\s+/g, " ").toLowerCase();
+      if (normalizedFilterStaff !== "all" && staffName !== normalizedFilterStaff) {
         return;
       }
 
@@ -174,7 +183,8 @@ export function getDailyBilledTotals(
           0
       ) || 0;
       totals.totalAmount += total;
-      totals.count += 1;
+      // A detailed row can represent multiple service units.
+      totals.count += Math.max(1, Number(item.qty ?? item.quantity ?? 1) || 1);
     });
 
     return totals;
