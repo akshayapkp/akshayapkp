@@ -37,7 +37,18 @@ export async function GET() {
   const auth = await adminDb();
   if ("response" in auth) return auth.response;
   const { data, error } = await auth.db.from("staff").select(publicFields).order("created_at", { ascending: true });
-  if (error) return NextResponse.json({ error: "Unable to load staff records." }, { status: 500 });
+  if (error) {
+    console.error("[staff-api] GET query failed", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    return NextResponse.json(
+      { error: "Unable to load staff records.", diagnostic: { code: error.code ?? null, message: error.message ?? "Unknown database error" } },
+      { status: 500 }
+    );
+  }
   return NextResponse.json({ staff: data ?? [] });
 }
 
