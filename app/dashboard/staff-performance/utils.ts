@@ -308,19 +308,23 @@ export function getMonthlyRecords(
   staff?: string
 ) {
   return records.filter((record) => {
-    const recordDate = new Date(record.date);
+    // Billing writes dates in Indian DD/MM/YYYY format in some paths.
+    // Normalize first so native Date parsing cannot swap day/month or reject
+    // valid dates such as 13/10/2026.
+    const dateKey = normalizeLocalDateKey(record.date);
+    const match = dateKey.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    if (!match) return false;
+    const recordYear = Number(match[1]);
+    const recordMonth = Number(match[2]) - 1;
 
+    const normalizedStaff = String(record.staffName || "").trim().replace(/\\s+/g, " ").toLowerCase();
+    const normalizedFilter = String(staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
     const matchesStaff =
       !staff ||
-      staff === "All" ||
-      record.staffName?.toLowerCase() ===
-        staff.toLowerCase();
+      normalizedFilter === "all" ||
+      normalizedStaff === normalizedFilter;
 
-    return (
-      matchesStaff &&
-      recordDate.getMonth() === month &&
-      recordDate.getFullYear() === year
-    );
+    return matchesStaff && recordMonth === month && recordYear === year;
   });
 }
 
@@ -330,18 +334,19 @@ export function getYearlyRecords(
   staff?: string
 ) {
   return records.filter((record) => {
-    const recordDate = new Date(record.date);
+    const dateKey = normalizeLocalDateKey(record.date);
+    const match = dateKey.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    if (!match) return false;
+    const recordYear = Number(match[1]);
 
+    const normalizedStaff = String(record.staffName || "").trim().replace(/\\s+/g, " ").toLowerCase();
+    const normalizedFilter = String(staff || "").trim().replace(/\\s+/g, " ").toLowerCase();
     const matchesStaff =
       !staff ||
-      staff === "All" ||
-      record.staffName?.toLowerCase() ===
-        staff.toLowerCase();
+      normalizedFilter === "all" ||
+      normalizedStaff === normalizedFilter;
 
-    return (
-      matchesStaff &&
-      recordDate.getFullYear() === year
-    );
+    return matchesStaff && recordYear === year;
   });
 }
 
