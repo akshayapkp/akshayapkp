@@ -10,6 +10,7 @@ import AttendanceModal from "./components/AttendanceModal";
 import SalarySection from "./components/SalarySection";
 import SalaryHistoryModal from "./components/SalaryHistoryModal";
 import StaffPerformanceReport from "./components/Report";
+import MonthlyDriveExport from "./components/MonthlyDriveExport";
 
 import {
   PerformanceRecord,
@@ -517,6 +518,20 @@ export default function StaffPerformancePage() {
         yearlyYear={summaryYear}
         setYearlyYear={setSummaryYear}
       />
+
+      {currentUser?.role?.toLowerCase() === "admin" ? (
+        <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-extrabold text-slate-800">Monthly Backup Report</h2>
+          <MonthlyDriveExport
+            records={records}
+            pendingBills={pendingBills}
+            salaryHistory={salaryHistory}
+            attendanceLogs={attendanceLogs}
+            month={summaryMonth}
+            year={summaryYear}
+          />
+        </div>
+      ) : null}
 
       <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_12px_35px_rgba(15,23,42,0.06)] backdrop-blur-xl">
         <div className="flex flex-wrap border-b border-slate-200 bg-slate-50/60">
