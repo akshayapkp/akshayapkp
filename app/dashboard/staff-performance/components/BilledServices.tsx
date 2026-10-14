@@ -400,8 +400,10 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
     });
   }, [rows, selectedStaff, searchQuery, serviceSearch, appliedFromDate, appliedToDate]);
 
-  const totalDepartmentFee = filteredRows.reduce((sum, row) => sum + row.departmentFee, 0);
-  const totalServiceCharge = filteredRows.reduce((sum, row) => sum + row.serviceCharge, 0);
+  // The fee columns display per-unit charges beside Quantity. Summary totals
+  // must multiply each unit charge by quantity so they reconcile with line totals.
+  const totalDepartmentFee = filteredRows.reduce((sum, row) => sum + row.departmentFee * row.quantity, 0);
+  const totalServiceCharge = filteredRows.reduce((sum, row) => sum + row.serviceCharge * row.quantity, 0);
   const grandTotal = filteredRows.reduce((sum, row) => sum + row.totalAmount, 0);
 
   return (
