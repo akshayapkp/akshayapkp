@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, FileText, MapPin, MessageCircle, Phone, Search, ShieldCheck, X, Sparkles } from "lucide-react";
+import { ArrowRight, Camera, CheckCircle2, FileText, MapPin, MessageCircle, Phone, Search, ShieldCheck, X, Sparkles } from "lucide-react";
+import Tesseract from "tesseract.js";
 import { supabase } from "@/lib/supabase";
 import { SERVICE_CATALOG } from "@/app/dashboard/tools/serviceDocumentCatalog";
 import styles from "./home.module.css";
@@ -129,12 +130,45 @@ export default function HomePage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredPaused, setFeaturedPaused] = useState(false);
+  const [receiptBusy, setReceiptBusy] = useState(false);
+  const [receiptMessage, setReceiptMessage] = useState("");
   const [homepageSettings, setHomepageSettings] = useState<HomepageSettings>({
     contact: { email: "", mobile: "", mobile2: "", whatsapp: "", address: "" },
     theme: { primary: "#155eef", accent: "#06b6d4", background: "#f7fbff" },
     posters: [],
     serviceConfigs: {},
   });
+
+  async function handleReceiptCamera(file?: File) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setReceiptMessage("ദയവായി ക്യാമറയിൽ നിന്ന് ഒരു ഫോട്ടോ എടുക്കുക.");
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      setReceiptMessage("ഫോട്ടോ 12 MB-ൽ താഴെയായിരിക്കണം.");
+      return;
+    }
+    setReceiptBusy(true);
+    setReceiptMessage("ഫോട്ടോ പ്രോസസ് ചെയ്യുന്നു...");
+    try {
+      const result = await Tesseract.recognize(file, "eng+mal");
+      const text = String(result.data.text || "").trim();
+      if (text.length < 2) throw new Error("ഫോട്ടോയിൽ നിന്ന് വായിക്കാവുന്ന ടെക്സ്റ്റ് കണ്ടെത്താനായില്ല.");
+      const response = await fetch("/api/receipt-ocr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const saved = await response.json();
+      if (!response.ok || !saved.success) throw new Error(saved.message || "ഫോട്ടോ സൂക്ഷിക്കാൻ കഴിഞ്ഞില്ല.");
+      setReceiptMessage("ഫോട്ടോ ലഭിച്ചു. ടെക്സ്റ്റ് സ്റ്റാഫ് History-യിൽ സൂക്ഷിച്ചു.");
+    } catch (error) {
+      setReceiptMessage(error instanceof Error ? error.message : "പ്രോസസ് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.");
+    } finally {
+      setReceiptBusy(false);
+    }
+  }
 
   const whatsappNumber = homepageSettings.contact.whatsapp.replace(/\D/g, "") || homepageSettings.contact.mobile.replace(/\D/g, "") || process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
   const featuredServices = homepageSettings.posters.length ? homepageSettings.posters : defaultFeaturedServices;
@@ -396,7 +430,7 @@ export default function HomePage() {
     <header className={styles.header}>
       <div className={styles.container + " " + styles.headerInner}>
         <Link href="/" className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></Link>
-        <nav className={styles.nav}><a href="#services">സേവനങ്ങൾ</a><a href="#status">അപേക്ഷാ സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a><Link href="/login" className={styles.loginButton}>Official Login</Link></nav>
+        <nav className={styles.nav}><a href="#services">സേവനങ്ങൾ</a><a href="#status">അപേക്ഷാ സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a><label title="Receipt photo to text" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:34,height:34,borderRadius:10,border:"1px solid #dce7f5",color:"#155eef",cursor:receiptBusy?"wait":"pointer",opacity:receiptBusy?0.55:1}}><Camera size={17}/><input type="file" accept="image/*" capture="environment" disabled={receiptBusy} onChange={e=>{const file=e.target.files?.[0];void handleReceiptCamera(file);e.currentTarget.value="";}} style={{display:"none"}} aria-label="Receipt camera"/></label><Link href="/login" className={styles.loginButton}>Official Login</Link></nav>
       </div>
     </header>
 
@@ -626,6 +660,7 @@ export default function HomePage() {
 
 
 
+    {receiptMessage && <div role="status" aria-live="polite" style={{position:"fixed",right:14,bottom:14,zIndex:100,background:"#10213f",color:"#fff",padding:"11px 14px",borderRadius:12,maxWidth:320,fontSize:13,boxShadow:"0 10px 30px #10213f33"}}>{receiptBusy ? "ഫോട്ടോ പ്രോസസ് ചെയ്യുന്നു..." : receiptMessage}<button type="button" onClick={()=>setReceiptMessage("")} aria-label="Close" style={{marginLeft:10,color:"#fff",fontWeight:800}}>×</button></div>}
     {selected && flow && <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) closeService(); }}>
       <div className={styles.serviceModal}>
         <div className={styles.modalHeader}><div><span>Service Request</span><h2>{serviceName(selected)}</h2></div><button onClick={closeService}><X/></button></div>
