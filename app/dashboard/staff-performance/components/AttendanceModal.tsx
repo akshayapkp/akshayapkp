@@ -44,14 +44,14 @@ export default function AttendanceModal({
     useState(false);
 
   useEffect(() => {
-
-    const saved =
-      localStorage.getItem("holidays");
-
-    if (saved) {
-      setHolidayList(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem("holidays");
+      const parsed = saved ? JSON.parse(saved) : [];
+      setHolidayList(Array.isArray(parsed) ? parsed : []);
+    } catch (error) {
+      console.error("Error loading holidays:", error);
+      setHolidayList([]);
     }
-
   }, []);
 
   useEffect(() => {

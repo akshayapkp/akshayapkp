@@ -45,9 +45,12 @@ export default function AttendanceCalendar({
   const dateKey = (date: Date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
+  const normalizeStaff = (staffName?: string) =>
+    String(staffName || "").trim().replace(/\s+/g, " ").toLowerCase();
+
   const staffMatches = (staffName?: string) =>
     selectedStaff === "All" ||
-    String(staffName || "").trim().toLowerCase() === selectedStaff.trim().toLowerCase();
+    normalizeStaff(staffName) === normalizeStaff(selectedStaff);
 
   const billedTotals = useMemo(() => {
     const totals: Record<string, ReturnType<typeof getDailyBilledTotals>> = {};

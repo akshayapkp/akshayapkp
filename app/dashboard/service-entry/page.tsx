@@ -57,6 +57,14 @@ const CENTRAL_STORAGE_ROW_ID = 999999;
 const CENTRAL_STORAGE_VERSION = 1;
 const CENTRAL_STORAGE_KEY = "__smart_akshaya_shared_storage__";
 
+const createUniqueBillId = (prefix: string): string => {
+  const randomPart =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID().replace(/-/g, "").slice(0, 12)
+      : Math.random().toString(36).slice(2, 14);
+  return `${prefix}-${Date.now()}-${randomPart}`;
+};
+
 const SHARED_STORAGE_KEYS = [
   "managedServices",
   "managedWallets",
@@ -857,6 +865,7 @@ function ServiceEntryForm() {
   
   const handlePrint = () => {
     const targetBill = lastCompletedBill || {
+      billId: "",
       customerName: customerName || "Walk-in",
       mobile: mobile || "-",
       items: items.length > 0 ? items : [{ name: "Current Session", walletChg, srvChg, qty, status: "Completed" }],
@@ -867,6 +876,16 @@ function ServiceEntryForm() {
       balance,
       date: new Date().toLocaleString(),
     };
+
+    const printedItems = Array.isArray(targetBill.items) ? targetBill.items : [];
+    const printedDepartmentFee = printedItems.reduce(
+      (sum: number, item: any) => sum + Number(item.walletChg ?? item.deptChg ?? 0) * Number(item.qty || 1),
+      0
+    );
+    const printedServiceCharge = printedItems.reduce(
+      (sum: number, item: any) => sum + Number(item.srvChg ?? item.srvCharge ?? 0) * Number(item.qty || 1),
+      0
+    );
 
     const printWindow = window.open("", "_blank", "width=800,height=900");
     if (!printWindow) return;
@@ -922,7 +941,7 @@ function ServiceEntryForm() {
             <div class="center">
               <div class="title">INVOICE</div>
               <div style="text-align:left">
-                <b>Bill # :</b> MPM${Date.now()}<br>
+                <b>Bill # :</b> ${targetBill.billId || "Not saved"}<br>
                 <b>Date :</b> ${targetBill.date}<br>
                 <b>Created By :</b> ${currentStaff}
               </div>
@@ -955,26 +974,26 @@ function ServiceEntryForm() {
           <table>
             <tr>
               <td><b>Total Dept Fee</b></td>
-              <td style="text-align:right">₹${totalWalletCharge.toFixed(2)}</td>
+              <td style="text-align:right">₹${printedDepartmentFee.toFixed(2)}</td>
               <td><b>GPay</b></td>
-              <td style="text-align:right">₹${Number(targetBill.gpay || gpay).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.gpay ?? gpay).toFixed(2)}</td>
             </tr>
             <tr>
               <td><b>Total Service Charge</b></td>
-              <td style="text-align:right">₹${totalServiceCharge.toFixed(2)}</td>
+              <td style="text-align:right">₹${printedServiceCharge.toFixed(2)}</td>
               <td><b>Cash</b></td>
-              <td style="text-align:right">₹${Number(targetBill.cash || cash).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.cash ?? cash).toFixed(2)}</td>
             </tr>
             <tr>
               <td><b>Gross Total</b></td>
-              <td style="text-align:right">₹${Number(targetBill.totalAmount || totalAmount).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.totalAmount ?? totalAmount).toFixed(2)}</td>
               <td><b>Total Paid</b></td>
-              <td style="text-align:right">₹${Number(targetBill.totalPaid || totalPaid).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.totalPaid ?? totalPaid).toFixed(2)}</td>
             </tr>
             <tr>
               <td colspan="2"></td>
               <td><b>Balance</b></td>
-              <td style="text-align:right">₹${Number(targetBill.balance || balance).toFixed(2)}</td>
+              <td style="text-align:right">₹${Number(targetBill.balance ?? balance).toFixed(2)}</td>
             </tr>
           </table>
           <div class="footer">
@@ -1252,7 +1271,7 @@ function ServiceEntryForm() {
     registerNewServicesIfNeeded();
 
     // Save is only a draft. Do not create a billed-service transaction yet.
-    const billId = resumeId || ("SB-" + Date.now());
+    const billId = resumeId || createUniqueBillId("SB");
     const billTimestamp = new Date().toLocaleString();
     const savedBillsList = JSON.parse(localStorage.getItem('savedBillsList') || '[]');
 
@@ -1327,7 +1346,7 @@ function ServiceEntryForm() {
       saveCustomerToDirectory();
     }
 
-    const billId = editId || resumeId || ("BILL-" + Date.now());
+    const billId = editId || resumeId || createUniqueBillId("BILL");
     const existingEditData = editDataRef.current;
     const billDate = editId
       ? String(existingEditData?.dateTime || new Date().toLocaleDateString('en-GB'))
@@ -1384,18 +1403,21 @@ function ServiceEntryForm() {
 
     localStorage.setItem('serviceEntries', JSON.stringify(entriesWithoutThisBill));
 
-    if (isCredit || editId) {
-      const creditBills = JSON.parse(localStorage.getItem("smart_akshaya_bills") || "[]");
-      const creditWithoutThisBill = Array.isArray(creditBills)
-        ? creditBills.filter(
-            (bill: any) => String(bill.id || bill.billId || '') !== String(billId)
-          )
-        : [];
+    // Keep the credit ledger aligned with the latest bill state. Editing a
+    // credit bill into a fully-paid bill must remove its stale credit entry.
+    const creditBillsRaw = JSON.parse(localStorage.getItem("smart_akshaya_bills") || "[]");
+    const creditWithoutThisBill = Array.isArray(creditBillsRaw)
+      ? creditBillsRaw.filter(
+          (bill: any) => String(bill.id || bill.billId || bill.billNumber || '') !== String(billId)
+        )
+      : [];
 
+    if (balance > 0) {
       creditWithoutThisBill.unshift({
         id: billId,
+        billId,
         billNumber: billId,
-        customerName,
+        customerName: customerName || 'Walk-in',
         mobileNumber: mobile,
         date: billDate,
         dateTime: billTimestamp,
@@ -1406,12 +1428,12 @@ function ServiceEntryForm() {
         owedAmount: balance,
         items: [...items],
       });
-
-      localStorage.setItem(
-        "smart_akshaya_bills",
-        JSON.stringify(creditWithoutThisBill)
-      );
     }
+
+    localStorage.setItem(
+      "smart_akshaya_bills",
+      JSON.stringify(creditWithoutThisBill)
+    );
 
     const existingRecordsRaw = JSON.parse(
       localStorage.getItem("performanceRecords") || "[]"
@@ -1430,7 +1452,7 @@ function ServiceEntryForm() {
     );
 
     existingRecords.unshift({
-      id: "PERF-" + Date.now(),
+      id: "PERF-" + billId,
       billId,
       date: billDate,
       timestamp: new Date().toISOString(),
@@ -1473,6 +1495,7 @@ function ServiceEntryForm() {
     await pushCurrentLocalStorageToCentral();
 
     setLastCompletedBill({
+      billId,
       customerName,
       mobile,
       items: [...items],

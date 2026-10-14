@@ -26,6 +26,7 @@ import {
   loadSalaryHistory,
   getAttendanceRecord,
   getHoliday,
+  normalizeLocalDateKey,
 } from "./utils";
 
 export default function StaffPerformancePage() {
@@ -207,17 +208,29 @@ export default function StaffPerformancePage() {
       }
     }
 
-    /* fallback from performance records */
+    /* Read persisted sources directly because the initial effect runs before
+       React applies setRecords(). Also include attendance-only staff names. */
+    for (const key of ["performanceRecords", "staff_attendance_logs"]) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+        if (!Array.isArray(parsed)) continue;
+        parsed.forEach((record: any) => {
+          const name = String(record?.staffName || record?.staff || "").trim().replace(/\s+/g, " ");
+          if (name) loadedNames.push(name);
+        });
+      } catch (error) {
+        console.error("Error loading staff names from", key, error);
+      }
+    }
 
     records.forEach((record) => {
-      if (record.staffName) {
-        loadedNames.push(record.staffName);
-      }
+      const name = String(record.staffName || "").trim().replace(/\s+/g, " ");
+      if (name) loadedNames.push(name);
     });
 
     const uniqueStaff = Array.from(
-      new Set(loadedNames)
-    ).sort();
+      new Set(loadedNames.map((name) => String(name).trim().replace(/\s+/g, " ")).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
     if (uniqueStaff.length > 0) {
       setStaffList([
@@ -383,14 +396,8 @@ export default function StaffPerformancePage() {
           const timestamp = log?.timestamp || log?.date;
           if (!timestamp || !log?.staffName) return null;
 
-          const parsedDate = new Date(timestamp);
-          if (Number.isNaN(parsedDate.getTime())) return null;
-
-          const date = `${parsedDate.getFullYear()}-${String(
-            parsedDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(
-            parsedDate.getDate()
-          ).padStart(2, "0")}`;
+          const date = normalizeLocalDateKey(timestamp);
+          if (!date) return null;
 
           return {
             id: log.id || `${log.staffName}-${date}`,

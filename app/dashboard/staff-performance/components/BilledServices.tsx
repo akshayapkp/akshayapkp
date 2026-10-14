@@ -110,6 +110,14 @@ const money = (value: number) => `₹${value.toFixed(2)}`;
 export default function BilledServices({ records, selectedStaff, searchQuery }: BilledServicesProps) {
   const today = todayKey();
   const [rows, setRows] = useState<BilledRow[]>([]);
+  const [integrityReport, setIntegrityReport] = useState<{
+    detailedBills: number;
+    performanceBills: number;
+    duplicatePerformanceBills: number;
+    detailedWithoutPerformance: number;
+    performanceWithoutDetails: number;
+    staffNameConflicts: number;
+  } | null>(null);
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(today);
   const [appliedFromDate, setAppliedFromDate] = useState(today);
@@ -174,6 +182,45 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         if (id && isPerformanceRecord && (["completed","complete","paid","credit","pending"].includes(status) || total > 0 || fee > 0 || charge > 0)) {
           completedPerformanceBillIds.add(id);
         }
+      });
+
+      // Read-only integrity checks: report source gaps without changing stored records.
+      const detailedBillIdsForAudit = new Set<string>();
+      [...serviceEntries, ...billedData].forEach((item: any) => {
+        const id = String(item?.billId || item?.billID || item?.invoiceId || "").trim();
+        if (id) detailedBillIdsForAudit.add(id);
+      });
+      const performanceBillIdList = (Array.isArray(performanceData) ? performanceData : [])
+        .map((item: any) => String(item?.billId || item?.billID || item?.invoiceId || "").trim())
+        .filter(Boolean);
+      const performanceBillIdsForAudit = new Set(performanceBillIdList);
+      const seenPerformanceIds = new Set<string>();
+      let duplicatePerformanceBills = 0;
+      performanceBillIdList.forEach((id) => {
+        if (seenPerformanceIds.has(id)) duplicatePerformanceBills += 1;
+        seenPerformanceIds.add(id);
+      });
+      const staffNamesByDetailedBill = new Map<string, Set<string>>();
+      [...serviceEntries, ...billedData].forEach((item: any) => {
+        const id = String(item?.billId || item?.billID || item?.invoiceId || "").trim();
+        const staff = String(item?.staffName || item?.staff || "").trim().replace(/\s+/g, " ").toLowerCase();
+        if (!id || !staff) return;
+        const names = staffNamesByDetailedBill.get(id) || new Set<string>();
+        names.add(staff);
+        staffNamesByDetailedBill.set(id, names);
+      });
+      let staffNameConflicts = 0;
+      staffNamesByDetailedBill.forEach((names, id) => {
+        const canonical = String(staffByBillId.get(id) || "").trim().replace(/\s+/g, " ").toLowerCase();
+        if (canonical && Array.from(names).some((name) => name !== canonical)) staffNameConflicts += 1;
+      });
+      setIntegrityReport({
+        detailedBills: detailedBillIdsForAudit.size,
+        performanceBills: performanceBillIdsForAudit.size,
+        duplicatePerformanceBills,
+        detailedWithoutPerformance: Array.from(detailedBillIdsForAudit).filter((id) => !performanceBillIdsForAudit.has(id)).length,
+        performanceWithoutDetails: Array.from(performanceBillIdsForAudit).filter((id) => !detailedBillIdsForAudit.has(id)).length,
+        staffNameConflicts,
       });
 
       const seen = new Set<string>();
@@ -353,8 +400,10 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
     });
   }, [rows, selectedStaff, searchQuery, serviceSearch, appliedFromDate, appliedToDate]);
 
-  const totalDepartmentFee = filteredRows.reduce((sum, row) => sum + row.departmentFee, 0);
-  const totalServiceCharge = filteredRows.reduce((sum, row) => sum + row.serviceCharge, 0);
+  // The fee columns display per-unit charges beside Quantity. Summary totals
+  // must multiply each unit charge by quantity so they reconcile with line totals.
+  const totalDepartmentFee = filteredRows.reduce((sum, row) => sum + row.departmentFee * row.quantity, 0);
+  const totalServiceCharge = filteredRows.reduce((sum, row) => sum + row.serviceCharge * row.quantity, 0);
   const grandTotal = filteredRows.reduce((sum, row) => sum + row.totalAmount, 0);
 
   return (
@@ -389,6 +438,27 @@ export default function BilledServices({ records, selectedStaff, searchQuery }: 
         {dateError && <p className="mt-2 text-xs font-semibold text-red-500">{dateError}</p>}
         <p className="mt-2 text-[11px] text-slate-400">Default view: Today. Change the dates only when you need older records.</p>
       </div>
+
+      {integrityReport && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Billing data integrity report">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-black text-slate-800">Billing Data Health</h3>
+              <p className="mt-1 text-xs text-slate-500">Read-only source comparison. No records are changed or deleted.</p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Diagnostic only</span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">
+            <div className="rounded-xl bg-slate-50 p-3"><p className="text-[11px] text-slate-500">Detailed bills</p><p className="text-lg font-black text-slate-800">{integrityReport.detailedBills}</p></div>
+            <div className="rounded-xl bg-slate-50 p-3"><p className="text-[11px] text-slate-500">Performance summaries</p><p className="text-lg font-black text-slate-800">{integrityReport.performanceBills}</p></div>
+            <div className="rounded-xl bg-amber-50 p-3"><p className="text-[11px] text-amber-700">Duplicate summary IDs</p><p className="text-lg font-black text-amber-800">{integrityReport.duplicatePerformanceBills}</p></div>
+            <div className="rounded-xl bg-amber-50 p-3"><p className="text-[11px] text-amber-700">Detailed bills without summary</p><p className="text-lg font-black text-amber-800">{integrityReport.detailedWithoutPerformance}</p></div>
+            <div className="rounded-xl bg-amber-50 p-3"><p className="text-[11px] text-amber-700">Summary without detail rows</p><p className="text-lg font-black text-amber-800">{integrityReport.performanceWithoutDetails}</p></div>
+            <div className="rounded-xl bg-amber-50 p-3"><p className="text-[11px] text-amber-700">Staff name conflicts</p><p className="text-lg font-black text-amber-800">{integrityReport.staffNameConflicts}</p></div>
+          </div>
+          <p className="mt-3 text-[11px] leading-5 text-slate-500">A non-zero gap can be a legacy record or a real mismatch. Review it before making any correction; this report never auto-edits existing data.</p>
+        </section>
+      )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

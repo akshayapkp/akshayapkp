@@ -20,10 +20,11 @@ export default function PendingBills({
   const filteredPendingBills = bills.filter(
     (bill) => {
 
+      const normalizeStaff = (name?: string) =>
+        String(name || "").trim().replace(/\s+/g, " ").toLowerCase();
       const matchesStaff =
         selectedStaff === "All" ||
-        bill.staffName?.toLowerCase() ===
-          selectedStaff.toLowerCase();
+        normalizeStaff(bill.staffName) === normalizeStaff(selectedStaff);
 
       const matchesSearch =
         bill.customerName

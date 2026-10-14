@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalendarDays, Download, FileText, Search, Users } from "lucide-react";
 import { PerformanceRecord } from "../types";
+import { normalizeLocalDateKey } from "../utils";
 import jsPDF from "jspdf";
 
 interface ReportProps {
@@ -11,16 +12,7 @@ interface ReportProps {
   selectedStaff: string;
 }
 
-const dateKey = (value: string) => {
-  const raw = String(value || "").trim();
-  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const indian = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
-  if (indian) return `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return "";
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+const dateKey = (value: string) => normalizeLocalDateKey(value);
 
 const money = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 

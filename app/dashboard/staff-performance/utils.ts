@@ -22,11 +22,23 @@ export interface DailyBilledTotals {
 export function normalizeLocalDateKey(value: unknown): string {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
-  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const indian = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
+  const makeValidatedDateKey = (year: number, month: number, day: number) => {
+    const date = new Date(year, month - 1, day);
+    if (
+      !Number.isInteger(year) ||
+      !Number.isInteger(month) ||
+      !Number.isInteger(day) ||
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) return "";
+    return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  };
+  const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[T\s])/);
+  if (iso) return makeValidatedDateKey(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+  const indian = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:$|[,\s])/);
   if (indian) {
-    return `${indian[3]}-${String(Number(indian[2])).padStart(2, "0")}-${String(Number(indian[1])).padStart(2, "0")}`;
+    return makeValidatedDateKey(Number(indian[3]), Number(indian[2]), Number(indian[1]));
   }
   const parsed = new Date(raw);
   if (Number.isNaN(parsed.getTime())) return "";
@@ -51,18 +63,38 @@ export function getDailyBilledTotals(
       localStorage.getItem("performanceRecords") || "[]"
     );
 
-    const matching = (Array.isArray(performance) ? performance : []).filter(
+    const normalizedSelectedStaff = selectedStaff.trim().replace(/\s+/g, " ").toLowerCase();
+    const matchingCandidates = (Array.isArray(performance) ? performance : []).filter(
       (record: any) => {
         const key = normalizeLocalDateKey(record.date || record.timestamp);
-        const staffName = String(record.staffName || record.staff || "").trim();
+        const staffName = String(record.staffName || record.staff || "").trim().replace(/\s+/g, " ").toLowerCase();
 
         return (
           key === date &&
-          (selectedStaff === "All" ||
-            staffName.toLowerCase() === selectedStaff.trim().toLowerCase())
+          (normalizedSelectedStaff === "all" ||
+            staffName === normalizedSelectedStaff)
         );
       }
     );
+
+    // performanceRecords is a bill-summary store: one bill must contribute
+    // once even if a legacy sync left duplicate rows with different record IDs.
+    // Keep the first/newest occurrence in the stored newest-first order.
+    const seenPerformanceBills = new Set<string>();
+    const matching = matchingCandidates.filter((record: any, index: number) => {
+      const billId = String(record.billId || record.billID || record.invoiceId || "").trim();
+      const recordId = String(record.id || "").trim();
+      // Do not guess that two legacy records are duplicates from matching
+      // amounts/names alone; that could hide two genuine same-day bills.
+      const identity = billId
+        ? `bill:${billId}`
+        : recordId
+          ? `record:${recordId}`
+          : `legacy-index:${index}`;
+      if (seenPerformanceBills.has(identity)) return false;
+      seenPerformanceBills.add(identity);
+      return true;
+    });
 
     if (matching.length > 0) {
       return matching.reduce(
@@ -116,12 +148,9 @@ export function getDailyBilledTotals(
       );
       if (key !== date) return;
 
-      const staffName = String(item.staffName || item.staff || "").trim();
-      if (
-        selectedStaff !== "All" &&
-        staffName &&
-        staffName.toLowerCase() !== selectedStaff.trim().toLowerCase()
-      ) {
+      const staffName = String(item.staffName || item.staff || "").trim().replace(/\s+/g, " ").toLowerCase();
+      const normalizedFilterStaff = selectedStaff.trim().replace(/\s+/g, " ").toLowerCase();
+      if (normalizedFilterStaff !== "all" && staffName !== normalizedFilterStaff) {
         return;
       }
 
@@ -154,7 +183,8 @@ export function getDailyBilledTotals(
           0
       ) || 0;
       totals.totalAmount += total;
-      totals.count += 1;
+      // A detailed row can represent multiple service units.
+      totals.count += Math.max(1, Number(item.qty ?? item.quantity ?? 1) || 1);
     });
 
     return totals;
@@ -278,19 +308,23 @@ export function getMonthlyRecords(
   staff?: string
 ) {
   return records.filter((record) => {
-    const recordDate = new Date(record.date);
+    // Billing writes dates in Indian DD/MM/YYYY format in some paths.
+    // Normalize first so native Date parsing cannot swap day/month or reject
+    // valid dates such as 13/10/2026.
+    const dateKey = normalizeLocalDateKey(record.date);
+    const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return false;
+    const recordYear = Number(match[1]);
+    const recordMonth = Number(match[2]) - 1;
 
+    const normalizedStaff = String(record.staffName || "").trim().replace(/\s+/g, " ").toLowerCase();
+    const normalizedFilter = String(staff || "").trim().replace(/\s+/g, " ").toLowerCase();
     const matchesStaff =
       !staff ||
-      staff === "All" ||
-      record.staffName?.toLowerCase() ===
-        staff.toLowerCase();
+      normalizedFilter === "all" ||
+      normalizedStaff === normalizedFilter;
 
-    return (
-      matchesStaff &&
-      recordDate.getMonth() === month &&
-      recordDate.getFullYear() === year
-    );
+    return matchesStaff && recordMonth === month && recordYear === year;
   });
 }
 
@@ -300,18 +334,19 @@ export function getYearlyRecords(
   staff?: string
 ) {
   return records.filter((record) => {
-    const recordDate = new Date(record.date);
+    const dateKey = normalizeLocalDateKey(record.date);
+    const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return false;
+    const recordYear = Number(match[1]);
 
+    const normalizedStaff = String(record.staffName || "").trim().replace(/\s+/g, " ").toLowerCase();
+    const normalizedFilter = String(staff || "").trim().replace(/\s+/g, " ").toLowerCase();
     const matchesStaff =
       !staff ||
-      staff === "All" ||
-      record.staffName?.toLowerCase() ===
-        staff.toLowerCase();
+      normalizedFilter === "all" ||
+      normalizedStaff === normalizedFilter;
 
-    return (
-      matchesStaff &&
-      recordDate.getFullYear() === year
-    );
+    return matchesStaff && recordYear === year;
   });
 }
 
