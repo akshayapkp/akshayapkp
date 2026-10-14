@@ -1157,7 +1157,19 @@ export default function BilledServicesPage() {
   const totalReceived = filteredServices.reduce((sum, s) => sum + Math.abs(s.receivedAmount), 0);
   const totalPending = filteredServices.reduce((sum, s) => sum + s.pendingAmount, 0);
   const completedCount = filteredServices.filter(s => s.status === 'completed' || s.status === 'paid').length;
-
+  // Reconcile each displayed bill total against its saved detailed service lines.
+  // This is a read-only warning: legacy bills may include a previous balance or
+  // have incomplete item details, so never silently rewrite financial records.
+  const componentTotalFromDetails = filteredServices.reduce((sum, bill) => {
+    const details = Array.isArray(bill.originalData) ? bill.originalData : [];
+    return sum + details.reduce((lineSum: number, entry: any) => {
+      const departmentFee = Number(entry?.walletChg ?? entry?.deptChg ?? entry?.deptFee ?? entry?.departmentFee ?? 0) || 0;
+      const serviceCharge = Number(entry?.srvChg ?? entry?.srvCharge ?? entry?.serviceCharge ?? 0) || 0;
+      return lineSum + departmentFee + serviceCharge;
+    }, 0);
+  }, 0);
+  const totalReconciliationDifference = Number((totalRevenue - componentTotalFromDetails).toFixed(2));
+  const hasTotalReconciliationWarning = filteredServices.some(bill => Array.isArray(bill.originalData) && bill.originalData.length > 0) && Math.abs(totalReconciliationDifference) >= 0.01;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 bg-slate-50 min-h-screen">
@@ -1169,6 +1181,13 @@ export default function BilledServicesPage() {
           <RefreshCw size={14} /> Sync Data
         </button>
       </div>
+
+      {hasTotalReconciliationWarning && (
+        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-bold">Bill total reconciliation needs review</p>
+          <p className="mt-1">Displayed bill totals and the saved department/service-charge details differ by ₹{totalReconciliationDifference.toFixed(2)} for the selected filters. No records were changed. Review the original bill details before editing or deleting anything.</p>
+        </div>
+      )}
 
       {/* TOP BLUE BANNER */}
       <div className="bg-blue-600 rounded-2xl p-6 text-white shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
