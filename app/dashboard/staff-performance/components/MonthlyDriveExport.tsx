@@ -114,22 +114,16 @@ export default function MonthlyDriveExport({
       const result = await response.json();
       if (!response.ok) {
         if (response.status === 401 && result.authorizeUrl) {
-          setMessage("Connect Google Drive, then try the export again.");
+          setMessage("Google Drive connect ചെയ്യുന്നു; connect പൂർത്തിയാക്കിയ ശേഷം വീണ്ടും ശ്രമിക്കുക.");
           window.location.href = result.authorizeUrl;
           return;
         }
-        throw new Error(result.error || "Upload failed");
+        throw new Error(result.details || result.error || "Upload failed");
       }
 
-      const localUrl = URL.createObjectURL(file);
-      const link = document.createElement("a");
-      link.href = localUrl;
-      link.download = file.name;
-      link.click();
-      URL.revokeObjectURL(localUrl);
-      setMessage(`Excel downloaded and uploaded to Drive: ${result.file?.name || file.name}`);
+      setMessage(`Google Drive-ലേക്ക് upload വിജയിച്ചു: ${result.file?.name || file.name}`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not export the monthly report.");
+      setMessage(error instanceof Error ? error.message : "Could not upload the monthly report.");
     } finally {
       setBusy(false);
     }
