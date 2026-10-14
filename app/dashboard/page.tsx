@@ -2579,6 +2579,8 @@ setServiceDirectory(filteredWithUrls);
                           ? "Gazette Notification"
                           : statusCenterView === "aadhaar"
                           ? "Aadhaar Status"
+                          : statusCenterView === "aadhaar-name"
+                          ? "Aadhaar Name Check"
                           : statusCenterView === "pan"
                           ? "PAN Card Status"
                           : "Status Service"}
@@ -2595,7 +2597,7 @@ setServiceDirectory(filteredWithUrls);
                     {statusCenterView !== "center" && (
                       <button
                         type="button"
-                        onClick={() => setStatusCenterView("center")}
+                        onClick={() => setStatusCenterView(statusCenterView === "aadhaar-name" ? null : "center")}
                         className="flex h-8 items-center gap-1.5 rounded-lg bg-white/10 px-2.5 text-[11px] font-bold text-white ring-1 ring-white/10 transition hover:bg-white/20"
                       >
                         <ArrowLeft size={13} />
