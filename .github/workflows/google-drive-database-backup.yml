@@ -1,0 +1,61 @@
+name: Google Drive database backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 02:00 IST daily (20:30 UTC on the previous day).
+    - cron: "30 20 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: google-drive-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client and GPG
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client gnupg
+
+      - name: Install Google Drive API client
+        run: python -m pip install --disable-pip-version-check google-api-python-client google-auth
+
+      - name: Create and encrypt database dump
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SUPABASE_DB_URL" || { echo "Missing SUPABASE_DB_URL secret"; exit 1; }
+          test -n "$BACKUP_ENCRYPTION_PASSPHRASE" || { echo "Missing BACKUP_ENCRYPTION_PASSPHRASE secret"; exit 1; }
+          mkdir -p backup-output
+          stamp="$(date -u +'%Y%m%dT%H%M%SZ')"
+          dump="backup-output/akshaya-db-${stamp}.dump"
+          encrypted="${dump}.gpg"
+          pg_dump --dbname="$SUPABASE_DB_URL" --format=custom --no-owner --no-acl --file="$dump"
+          test -s "$dump"
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_ENCRYPTION_PASSPHRASE" --symmetric --cipher-algo AES256 --output "$encrypted" "$dump"
+          test -s "$encrypted"
+          rm -f "$dump"
+          echo "BACKUP_FILE=$encrypted" >> "$GITHUB_ENV"
+
+      - name: Upload encrypted dump to the dedicated Google Drive backup folder
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_DRIVE_BACKUP_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_BACKUP_FOLDER_ID }}
+          BACKUP_FILE: ${{ env.BACKUP_FILE }}
+        run: python scripts/upload_google_drive_backup.py
+
+      - name: Remove temporary local backup
+        if: always()
+        run: rm -rf backup-output
