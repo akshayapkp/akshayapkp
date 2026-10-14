@@ -215,6 +215,16 @@ export default function DashboardLayout({
     localStorage.setItem(pinKey, String(nextOpen));
   };
 
+  // Use a single navigation handler for every sidebar entry. Closing the mobile
+  // drawer must not prevent the selected route from loading.
+  const navigateFromSidebar = (path: string) => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    setSidebarOpen(false);
+    if (pathname !== path) {
+      router.push(path);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -566,7 +576,7 @@ export default function DashboardLayout({
                   type="button"
                   title={item.name}
                   aria-label={item.name}
-                  onClick={() => router.push(item.path)}
+                  onClick={() => navigateFromSidebar(item.path)}
                   className={`group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/55 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/50 ${
                     isActive(item.path)
                       ? "ring-2 ring-blue-400/70 ring-offset-2 ring-offset-white dark:ring-offset-slate-950"
@@ -589,7 +599,7 @@ export default function DashboardLayout({
               type="button"
               title="Settings"
               aria-label="Settings"
-              onClick={() => router.push(settingsMenu.path)}
+              onClick={() => navigateFromSidebar(settingsMenu.path)}
               className={`group absolute bottom-[96px] z-30 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/70 bg-white/55 shadow-[0_8px_20px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-xl active:scale-95 dark:border-white/10 dark:bg-slate-900/50 ${
                 isActive(settingsMenu.path) ? "ring-2 ring-blue-400/70 ring-offset-2 ring-offset-white dark:ring-offset-slate-950" : ""
               }`}
@@ -731,9 +741,14 @@ export default function DashboardLayout({
                         return (
                           <li
                             key={item.path}
-                            onClick={() => {
-                              router.push(item.path);
-                              setSidebarOpen(false);
+                            onClick={() => navigateFromSidebar(item.path)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                navigateFromSidebar(item.path);
+                              }
                             }}
                             className={`dashboard-nav-item group flex cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
                               isActive(item.path)
@@ -756,10 +771,7 @@ export default function DashboardLayout({
           {settingsMenu && (
             <button
               type="button"
-              onClick={() => {
-                router.push(settingsMenu.path);
-                setSidebarOpen(false);
-              }}
+              onClick={() => navigateFromSidebar(settingsMenu.path)}
               className={`mb-2 flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
                 isActive(settingsMenu.path)
                   ? "bg-gradient-to-r from-slate-700 to-slate-500 text-white shadow-lg"
