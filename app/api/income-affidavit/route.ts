@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const {data: saved,error} = await database.from("income_affidavit_submissions").insert({
       id: randomUUID(), data, applicant_name:String(data.applicant||"").slice(0,160),
       mobile:String(data.mobile||"").slice(0,30), house_name:String(data.house||"").slice(0,160),
-      ration_card:String(data.ration||"").slice(0,80), source:"customer-qr"
+      ration_card:String(data.ration||"").slice(0,80), source:body?.source==="staff"?"staff":"customer-qr"
     }).select("id,created_at").single();
     if(error) throw error;
     return NextResponse.json({success:true,id:saved.id,createdAt:saved.created_at},{status:201});
