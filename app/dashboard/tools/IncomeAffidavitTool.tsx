@@ -127,7 +127,7 @@ export default function IncomeAffidavitTool({onClose}:Props){
   setCurrentId(id);setDirty(false);setToast("Affidavit saved successfully");
  };
  const load=(r:RecordItem)=>{setForm({...initial,...r.data});setCurrentId(r.id);setDirty(false);setHistoryOpen(false);setToast("Affidavit loaded")};
- const remove=(id:string)=>{if(!confirm("Are you sure you want to permanently delete this saved affidavit?"))return;setRecords(o=>{const n=o.filter(x=>x.id!==id);try{localStorage.setItem("income_affidavit_history_v2",JSON.stringify(n))}catch{}return n});setToast("Affidavit deleted")};
+ const remove=(id:string)=>{const target=records.find(x=>x.id===id);if(!target)return;if(!confirm(`Delete saved affidavit for "${target.name||"this applicant"}" from this browser's history? This cannot be undone.`))return;setRecords(old=>{const next=old.filter(item=>item.id!==id);try{localStorage.setItem("income_affidavit_history_v2",JSON.stringify(next));}catch{setToast("Could not update browser storage. Please check available storage.");return old;}return next;});if(currentId===id){setCurrentId(null);setDirty(false);}setToast("Affidavit removed from History")};
  const clear=()=>{if(!confirm("Clear all Income Affidavit fields?"))return;setForm({...initial,sign_date:new Date().toISOString().slice(0,10)});setCurrentId(null);setDirty(false);setToast("Form cleared")};
 
  const docPage=(page:1|2)=>{const land=(form.land_agri||form.land_res)?`കൃഷിഭൂമി: ${form.land_agri||"—"} / വാസഗൃഹം: ${form.land_res||"—"}`:"";
