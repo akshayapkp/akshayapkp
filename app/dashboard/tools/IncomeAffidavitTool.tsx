@@ -94,7 +94,7 @@ export default function IncomeAffidavitTool({onClose,publicMode=false}:Props){
  },[]);
  useEffect(()=>{
   const updateInset=()=>{
-   if(window.innerWidth<768){setSidebarInset(0);return;}
+   if(publicMode || window.innerWidth<768){setSidebarInset(0);return;}
    const shell=document.querySelector(".dashboard-sidebar-shell") as HTMLElement|null;
    const rail=document.querySelector('[aria-label="Collapsed navigation"]') as HTMLElement|null;
    const shellRect=shell?.getBoundingClientRect();
