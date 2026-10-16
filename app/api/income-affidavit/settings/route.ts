@@ -35,7 +35,7 @@ export async function PATCH(request: Request) {
   if (!session) return NextResponse.json({ error: "Staff login required." }, { status: 401 });
   try {
     const body = await request.json();
-    if (!body || typeof body.preview !== "boolean" || typeof body.print !== "boolean" || typeof body.download !== "boolean') {
+    if (!body || typeof body.preview !== "boolean" || typeof body.print !== "boolean" || typeof body.download !== "boolean" {
       return NextResponse.json({ error: "All access settings must be ON or OFF." }, { status: 400 });
     }
     const { data, error } = await db().from("income_affidavit_settings").upsert({
