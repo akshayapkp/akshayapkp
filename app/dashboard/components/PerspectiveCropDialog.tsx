@@ -153,8 +153,14 @@ export default function PerspectiveCropDialog({ open, image, onCancel, onDone }:
     const src = sourceRef.current; if (!src) return;
     try {
       setError("");
-      const width = Math.round(Math.min(6000, Math.max(2, Math.max(Math.hypot(quad.tr.x - quad.tl.x, quad.tr.y - quad.tl.y), Math.hypot(quad.br.x - quad.bl.x, quad.br.y - quad.bl.y)))));
-      const height = Math.round(Math.min(6000, Math.max(2, Math.max(Math.hypot(quad.bl.x - quad.tl.x, quad.bl.y - quad.tl.y), Math.hypot(quad.br.x - quad.tr.x, quad.br.y - quad.tr.y)))));
+      const width = Math.round(Math.min(6000, Math.max(2, Math.max(
+        Math.hypot(quad.tr.x - quad.tl.x, quad.tr.y - quad.tl.y),
+        Math.hypot(quad.br.x - quad.bl.x, quad.br.y - quad.bl.y)
+      ))));
+      const height = Math.round(Math.min(6000, Math.max(2, Math.max(
+        Math.hypot(quad.bl.x - quad.tl.x, quad.bl.y - quad.tl.y),
+        Math.hypot(quad.br.x - quad.tr.x, quad.br.y - quad.tr.y)
+      ))));
       onDone(warpPerspective(src, quad, width, height).toDataURL("image/jpeg", 0.96));
     } catch (err) { setError(err instanceof Error ? err.message : "Could not correct this image."); }
   };
