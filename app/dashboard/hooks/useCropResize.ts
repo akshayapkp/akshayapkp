@@ -16,6 +16,7 @@ const PX_PER_MM = DPI / 25.4;
 
 export function useCropResize() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [pendingUpload, setPendingUpload] = useState<{ dataUrl: string; name: string } | null>(null);
   const [imageName, setImageName] = useState("");
 
   const [targetWidth, setTargetWidth] = useState("150");
@@ -71,22 +72,31 @@ export function useCropResize() {
 
   const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImageName(file.name);
+    if (!file || !file.type.startsWith("image/")) return;
 
     const reader = new FileReader();
-
     reader.onload = () => {
-      setSelectedImage(String(reader.result));
-      setProcessedImage(null);
-      setZoomLevel(100);
-      setFineRotation(0);
-      setImagePosition({ x: 0, y: 0 });
+      const dataUrl = String(reader.result || "");
+      if (dataUrl.startsWith("data:image/")) setPendingUpload({ dataUrl, name: file.name });
     };
-
+    reader.onerror = () => setPendingUpload(null);
     reader.readAsDataURL(file);
+    // Permit reselecting the same file to open the crop dialog again.
+    e.target.value = "";
   };
+
+  const acceptUploadedImage = (dataUrl: string, name?: string) => {
+    if (!dataUrl.startsWith("data:image/")) return;
+    setSelectedImage(dataUrl);
+    setImageName(name || pendingUpload?.name || "photo.jpg");
+    setPendingUpload(null);
+    setProcessedImage(null);
+    setZoomLevel(100);
+    setFineRotation(0);
+    setImagePosition({ x: 0, y: 0 });
+  };
+
+  const cancelUploadedImage = () => setPendingUpload(null);
 
   const startDrag = (x: number, y: number) => {
     isDraggingImageRef.current = true;
@@ -506,6 +516,9 @@ export function useCropResize() {
   return {
     selectedImage,
     imageName,
+    pendingUpload,
+    acceptUploadedImage,
+    cancelUploadedImage,
 
     targetWidth,
     setTargetWidth,
