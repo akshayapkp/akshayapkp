@@ -851,8 +851,11 @@
             nameInput.addEventListener('input', syncResumeNameBox);
             nameInput.addEventListener('change', syncResumeNameBox);
             syncResumeNameBox();
-            const observer = new MutationObserver(syncResumeNameBox);
-            observer.observe(nameInput, { attributes: true, attributeFilter: ['value'] });
+            const previewName = document.getElementById('prev-name');
+            if (previewName) {
+                const observer = new MutationObserver(syncResumeNameBox);
+                observer.observe(previewName, { childList: true, characterData: true, subtree: true });
+            }
             document.addEventListener('resume-builder-data-loaded', syncResumeNameBox);
         })();
     </script>
