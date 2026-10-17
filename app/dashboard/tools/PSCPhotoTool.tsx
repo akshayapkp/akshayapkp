@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { AlertCircle, Save, Upload, ZoomIn, ZoomOut, Calendar } from "lucide-react";
 import SignatureTool from "./SignatureTool";
 import { usePSCPhoto } from "../hooks/usePSCPhoto";
+import PerspectiveCropDialog from "../components/PerspectiveCropDialog";
 
 interface PSCPhotoToolProps {
   onClose: () => void;
@@ -19,6 +20,22 @@ export default function PSCPhotoTool({
   const psc = usePSCPhoto();
 
   const [activeTab, setActiveTab] = useState<"photo" | "signature">("photo");
+  const [pendingCropImage, setPendingCropImage] = useState<string | null>(null);
+  const [pendingCropFileName, setPendingCropFileName] = useState("");
+
+  const handlePerspectiveUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setPendingCropFileName(file.name);
+        setPendingCropImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Inline preview editing
   const [editingField, setEditingField] = useState<"name" | "date" | null>(null);
@@ -220,7 +237,7 @@ export default function PSCPhotoTool({
                             type="file"
                             accept="image/png,image/jpeg,image/jpg"
                             className="hidden"
-                            onChange={psc.uploadPhoto}
+                            onChange={handlePerspectiveUpload}
                           />
 
                         </label>
