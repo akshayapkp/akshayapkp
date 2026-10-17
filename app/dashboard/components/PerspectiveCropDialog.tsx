@@ -34,8 +34,12 @@ function solveLinearSystem(matrix: number[][], vector: number[]) {
 }
 
 function homographyFromQuad(q: Quad, width: number, height: number) {
-  const src = [q.tl, q.tr, q.br, q.bl];
-  const dst = [{ x: 0, y: 0 }, { x: width, y: 0 }, { x: width, y: height }, { x: 0, y: height }];
+  // Build the inverse homography: each output pixel must map back to a
+  // source-image coordinate. Mapping the selected quad to the rectangle and
+  // then sampling it directly would reverse the transform and produce a
+  // result that does not match the crop preview.
+  const src = [{ x: 0, y: 0 }, { x: width, y: 0 }, { x: width, y: height }, { x: 0, y: height }];
+  const dst = [q.tl, q.tr, q.br, q.bl];
   const matrix: number[][] = [], values: number[] = [];
   for (let i = 0; i < 4; i++) {
     const { x, y } = src[i]; const { x: u, y: v } = dst[i];
