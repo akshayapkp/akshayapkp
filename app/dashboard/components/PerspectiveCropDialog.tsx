@@ -137,8 +137,12 @@ export default function PerspectiveCropDialog({ open, image, onCancel, onDone }:
   };
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const p = pointFromPointer(e); if (!p) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = canvas.width / Math.max(1, rect.width);
     const handle = (Object.keys(quad) as (keyof Quad)[]).map(key => ({ key, distance: Math.hypot((p.x - quad[key].x) * viewRef.current.scale, (p.y - quad[key].y) * viewRef.current.scale) })).sort((a, b) => a.distance - b.distance)[0];
-    if (handle && handle.distance <= 36) { dragRef.current = handle.key; e.currentTarget.setPointerCapture(e.pointerId); }
+    if (handle && handle.distance <= 36) { dragRef.current = handle.key; canvas.setPointerCapture(e.pointerId); }
   };
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!dragRef.current) return; const p = pointFromPointer(e); if (!p) return;
