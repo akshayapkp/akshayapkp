@@ -637,6 +637,19 @@ export default function PSCPhotoTool({
         </div>
 
       </div>
+      <PerspectiveCropDialog
+        open={Boolean(pendingCropImage)}
+        image={pendingCropImage}
+        onCancel={() => {
+          setPendingCropImage(null);
+          setPendingCropFileName("");
+        }}
+        onDone={(correctedImage) => {
+          psc.setPhotoFromPerspective(correctedImage, pendingCropFileName);
+          setPendingCropImage(null);
+          setPendingCropFileName("");
+        }}
+      />
     </div>
   );
 }
