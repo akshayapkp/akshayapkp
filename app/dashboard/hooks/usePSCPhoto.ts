@@ -28,6 +28,13 @@ export function usePSCPhoto() {
     setPosition({ x: 0, y: 0 });
   };
 
+  const setPhotoFromPerspective = (image: string, name = fileName) => {
+    setPhoto(image);
+    setFileName(name);
+    setZoom(120);
+    setPosition({ x: 0, y: 0 });
+  };
+
   const uploadPhoto = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -218,6 +225,7 @@ export function usePSCPhoto() {
     position,
 
     uploadPhoto,
+    setPhotoFromPerspective,
     startDrag,
     moveDrag,
     stopDrag,
