@@ -558,7 +558,7 @@
                                 </div>
                             </div>
                             <div id="resume-name-box" style="display:none; margin-top:16px; text-align:right;">
-                                <span id="resume-name-box-text" style="display:inline-block; min-width:120px; max-width:100%; padding:7px 16px; border:2px solid currentColor; border-radius:2px; text-align:center; font-weight:800; font-size:14px; line-height:1.35; overflow-wrap:anywhere;"></span>
+                                <span id="resume-name-box-text" style="display:inline-block; max-width:100%; text-align:right; font-weight:800; font-size:14px; line-height:1.35; overflow-wrap:anywhere;"></span>
                             </div>
                         </div>
                     </div>
@@ -837,26 +837,31 @@
     <script src="assets/resume_script_0gtt.js"></script>
     <script src="assets/resume-enhancements.js"></script>
     <script>
-        // Keep the bold bottom-right name box synchronized with the resume's Full Name.
+        // Keep Declaration Name input and printed name synchronized with Full Name.
         (() => {
-            const nameInput = document.querySelector('input[data-preview="prev-name"]');
+            const fullNameInput = document.querySelector('input[data-preview="prev-name"]');
+            const declarationNameInput = document.getElementById('declarationNameInput');
             const nameBox = document.getElementById('resume-name-box');
             const nameText = document.getElementById('resume-name-box-text');
-            if (!nameInput || !nameBox || !nameText) return;
-            const syncResumeNameBox = () => {
-                const name = nameInput.value.trim();
+            if (!declarationNameInput || !nameBox || !nameText) return;
+
+            const renderName = () => {
+                const name = declarationNameInput.value.trim();
                 nameText.textContent = name;
                 nameBox.style.display = name ? 'block' : 'none';
             };
-            nameInput.addEventListener('input', syncResumeNameBox);
-            nameInput.addEventListener('change', syncResumeNameBox);
-            syncResumeNameBox();
-            const previewName = document.getElementById('prev-name');
-            if (previewName) {
-                const observer = new MutationObserver(syncResumeNameBox);
-                observer.observe(previewName, { childList: true, characterData: true, subtree: true });
-            }
-            document.addEventListener('resume-builder-data-loaded', syncResumeNameBox);
+            const syncFromFullName = () => {
+                if (!fullNameInput) return;
+                declarationNameInput.value = fullNameInput.value.trim();
+                renderName();
+            };
+
+            declarationNameInput.addEventListener('input', renderName);
+            declarationNameInput.addEventListener('change', renderName);
+            fullNameInput?.addEventListener('input', syncFromFullName);
+            fullNameInput?.addEventListener('change', syncFromFullName);
+            syncFromFullName();
+            document.addEventListener('resume-builder-data-loaded', syncFromFullName);
         })();
     </script>
 
