@@ -10,7 +10,7 @@ import {
 
 import { usePassportSize } from "../hooks/usePassportSize";
 import { drawPassportSheet } from "../lib/passportCanvas";
-import PassportCropDialog from "../components/PassportCropDialog";
+import PerspectiveCropDialog from "../components/PerspectiveCropDialog";
 
 interface PassportSizeProps {
   onClose?: () => void;
@@ -385,11 +385,14 @@ export default function PassportSize({
       </div>
 
       {/* Crop Dialog Component */}
-      <PassportCropDialog
+      <PerspectiveCropDialog
         open={cropOpen}
         image={cropImage}
-        onCancel={() => setCropOpen(false)}
-        onSave={handleCropSave}
+        onCancel={() => {
+          setCropOpen(false);
+          setCropImage(null);
+        }}
+        onDone={handleCropSave}
       />
     </>
   );
