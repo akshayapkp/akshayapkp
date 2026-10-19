@@ -189,3 +189,48 @@
   },true);
   window.addEventListener('resize',()=>{if(overlay&&source)draw();});
 })();
+
+
+// Profile photo shape and position controls for Resume Builder preview.
+(() => {
+  const setupProfilePhotoControls = () => {
+    const shape = document.getElementById('profilePhotoShape');
+    const photo = document.getElementById('prev-photo');
+    const wrap = document.getElementById('wrap-photo');
+    if (!shape || !photo || !wrap || shape.dataset.ready) return;
+    shape.dataset.ready = 'true';
+    let dragging = false, startX = 0, startY = 0, startPosX = 50, startPosY = 50;
+    const clamp = (v) => Math.max(0, Math.min(100, v));
+    const applyShape = () => {
+      photo.style.borderRadius = shape.value === 'circle' ? '50%' : '8px';
+      photo.style.objectFit = 'cover';
+      photo.style.objectPosition = photo.dataset.position || '50% 50%';
+      photo.style.cursor = photo.src && photo.getAttribute('src') ? 'move' : 'default';
+      photo.title = 'Drag to reposition photo';
+    };
+    const readPosition = () => {
+      const parts = (photo.dataset.position || '50% 50%').split(/\\s+/);
+      return [parseFloat(parts[0]) || 50, parseFloat(parts[1]) || 50];
+    };
+    shape.addEventListener('change', applyShape);
+    photo.addEventListener('pointerdown', e => {
+      if (!photo.getAttribute('src')) return;
+      dragging = true; startX = e.clientX; startY = e.clientY;
+      [startPosX, startPosY] = readPosition();
+      photo.setPointerCapture?.(e.pointerId); e.preventDefault();
+    });
+    photo.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const rect = photo.getBoundingClientRect();
+      const x = clamp(startPosX - ((e.clientX - startX) / Math.max(1, rect.width)) * 100);
+      const y = clamp(startPosY - ((e.clientY - startY) / Math.max(1, rect.height)) * 100);
+      photo.dataset.position = x + '% ' + y + '%';
+      photo.style.objectPosition = photo.dataset.position;
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(name => photo.addEventListener(name, () => { dragging = false; }));
+    new MutationObserver(applyShape).observe(photo, { attributes: true, attributeFilter: ['src'] });
+    applyShape();
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupProfilePhotoControls);
+  else setupProfilePhotoControls();
+})();
