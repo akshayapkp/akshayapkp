@@ -182,7 +182,14 @@
                     <div class="photo-upload-group">
                         <label>Profile Photo</label>
                         <input type="file" id="photoInput" accept="image/*">
-                        <small>Upload to adjust and crop your photo</small>
+                        <div class="form-group" style="margin-top:10px;margin-bottom:4px;">
+                            <label for="profilePhotoShape">Photo Shape</label>
+                            <select id="profilePhotoShape" aria-label="Profile photo shape">
+                                <option value="circle" selected>Round</option>
+                                <option value="square">Box / Square</option>
+                            </select>
+                        </div>
+                        <small>Upload, crop, choose Round or Box, then drag the photo in the preview to adjust its position.</small>
                     </div>
 
                     <div class="form-grid">
