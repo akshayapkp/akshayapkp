@@ -202,11 +202,24 @@
     let dragging = false, startX = 0, startY = 0, startPosX = 50, startPosY = 50;
     const clamp = (v) => Math.max(0, Math.min(100, v));
     const applyShape = () => {
-      photo.style.borderRadius = shape.value === 'circle' ? '50%' : '8px';
+      const isCircle = shape.value === 'circle';
+      photo.style.width = isCircle ? '150px' : '113px';
+      photo.style.height = isCircle ? '150px' : '151px';
+      photo.style.aspectRatio = isCircle ? '1 / 1' : '3 / 4';
+      photo.style.borderRadius = isCircle ? '50%' : '4px';
       photo.style.objectFit = 'cover';
       photo.style.objectPosition = photo.dataset.position || '50% 50%';
-      photo.style.cursor = photo.src && photo.getAttribute('src') ? 'move' : 'default';
+      photo.style.display = 'block';
+      photo.style.marginLeft = 'auto';
+      photo.style.marginRight = 'auto';
+      photo.style.cursor = photo.getAttribute('src') ? 'move' : 'default';
       photo.title = 'Drag to reposition photo';
+      wrap.style.display = photo.getAttribute('src') ? 'flex' : 'none';
+      wrap.style.flexDirection = 'column';
+      wrap.style.alignItems = 'center';
+      wrap.style.justifyContent = 'center';
+      wrap.style.width = '100%';
+      wrap.style.boxSizing = 'border-box';
     };
     const readPosition = () => {
       const parts = (photo.dataset.position || '50% 50%').split(/\\s+/);
