@@ -20,8 +20,9 @@ const LEGACY_MM_TO_PX = 3.7795275591;
 const PRINT_DPI = 300;
 const PRINT_MM_TO_PX = PRINT_DPI / 25.4;
 
-export const PASSPORT_WIDTH = 31 * PRINT_MM_TO_PX;
-export const PASSPORT_HEIGHT = 41 * PRINT_MM_TO_PX;
+// Target photo size is exactly 30 mm × 40 mm at 300 DPI for both paper formats.
+export const PASSPORT_WIDTH = 30 * PRINT_MM_TO_PX;
+export const PASSPORT_HEIGHT = 40 * PRINT_MM_TO_PX;
 
 export const A4_WIDTH = Math.round(210 * PRINT_MM_TO_PX);
 export const A4_HEIGHT = Math.round(297 * PRINT_MM_TO_PX);
@@ -45,11 +46,11 @@ const A4_PAGE_MARGIN = 70;
 const PHOTO_GAP = 60;
 
 /*
- * A4 passport photo:
- * 35mm × 45mm @ 300 DPI
+ * A4 passport photo: exactly 30 mm × 40 mm @ 300 DPI.
+ * Keep the same physical dimensions as the 6×4 sheet.
  */
-const A4_PHOTO_WIDTH = 31 * PRINT_MM_TO_PX;
-const A4_PHOTO_HEIGHT = 41 * PRINT_MM_TO_PX;
+const A4_PHOTO_WIDTH = 30 * PRINT_MM_TO_PX;
+const A4_PHOTO_HEIGHT = 40 * PRINT_MM_TO_PX;
 
 /*
  * A4 photos തമ്മിലുള്ള gap.
