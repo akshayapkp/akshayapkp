@@ -36,6 +36,7 @@ interface BillItem {
   srvChg: number;
   qty: number;
   status: string;
+  applicationNumber?: string;
 }
 
 interface StaffUser {
@@ -353,6 +354,7 @@ function ServiceEntryForm() {
   const [walletChg, setWalletChg] = useState<number>(0);
   const [srvChg, setSrvChg] = useState<number>(0);
   const [qty, setQty] = useState<number>(1);
+  const [applicationNumber, setApplicationNumber] = useState<string>("");
 
   const [items, setItems] = useState<BillItem[]>([]);
   const [gpay, setGpay] = useState<number>(0);
@@ -545,6 +547,7 @@ function ServiceEntryForm() {
       wallet: String(item.wallet || item.defaultWallet || 'Select Wallet'),
       walletChg: Number(item.walletChg ?? item.deptChg ?? item.deptFee ?? 0),
       srvChg: Number(item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0),
+      applicationNumber: String(item.applicationNumber || ''),
       qty: Number(item.qty ?? item.quantity ?? 1) > 0
         ? Number(item.qty ?? item.quantity ?? 1)
         : 1,
@@ -622,6 +625,7 @@ function ServiceEntryForm() {
                 walletChg: entry.walletChg ?? entry.deptChg ?? entry.deptFee ?? 0,
                 srvChg: entry.srvChg ?? entry.srvCharge ?? entry.serviceCharge ?? 0,
                 qty: entry.quantity ?? entry.qty ?? 1,
+                applicationNumber: entry.applicationNumber || '',
                 status: 'Completed',
               }));
             }
@@ -806,7 +810,10 @@ function ServiceEntryForm() {
       walletChg: Number(walletChg) || 0,
       srvChg: Number(srvChg) || 0,
       qty: Number(qty) > 0 ? Number(qty) : 1,
-      status: 'Completed'
+      status: 'Completed',
+      ...(/(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(selectedService ? selectedService.name : searchService.trim()) && applicationNumber.trim()
+        ? { applicationNumber: applicationNumber.trim() }
+        : {})
     };
 
     setItems([...items, newItem]);
@@ -816,6 +823,7 @@ function ServiceEntryForm() {
     setWalletChg(0);
     setSrvChg(0);
     setQty(1);
+    setApplicationNumber("");
     setShowDropdown(false);
   };
 
@@ -1383,6 +1391,10 @@ function ServiceEntryForm() {
         customerName: customerName || 'Walk-in',
         customerPhone: mobile || '',
         serviceName: item.name,
+        applicationNumber: item.applicationNumber || '',
+        applicationStatus: item.applicationNumber ? 'Not checked yet' : '',
+        applicationStatusCheckedAt: '',
+        applicationStatusError: '',
         quantity: itemQty,
         wallet: item.wallet,
         walletChg: Number(item.walletChg) || 0,
@@ -2159,6 +2171,19 @@ function ServiceEntryForm() {
               />
             </div>
 
+            {/(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(selectedService ? selectedService.name : searchService.trim()) && (
+              <div className="sm:col-span-2 md:col-span-3 lg:col-span-4">
+                <label className="mb-0.5 block text-[10px] font-bold text-slate-600">eDistrict Application Number</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={applicationNumber}
+                  onChange={(e) => setApplicationNumber(e.target.value.replace(/\D/g, ""))}
+                  placeholder="Enter application number"
+                  className="h-8 w-full rounded-lg border border-cyan-200 bg-cyan-50/50 px-2 text-xs text-slate-800 outline-none focus:border-cyan-400"
+                />
+              </div>
+            )}
             <div className="md:col-span-1 lg:col-span-2">
               <label className="mb-0.5 block text-[10px] font-bold text-slate-600">Add</label>
               <button

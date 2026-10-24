@@ -35,6 +35,8 @@ export default function WorkStatusPage() {
   const [customerApplications, setCustomerApplications] = useState<CustomerApplication[]>([]);
   const [applicationSearch, setApplicationSearch] = useState("");
   const [applicationsLoading, setApplicationsLoading] = useState(true);
+  const [trackedEntries, setTrackedEntries] = useState<any[]>([]);
+  const [statusCheckRunning, setStatusCheckRunning] = useState(false);
 
 const [previewReceipt, setPreviewReceipt] = useState<{
   url: string;
@@ -58,6 +60,136 @@ const [previewReceipt, setPreviewReceipt] = useState<{
     }
     loadCustomerApplications();
     return () => { cancelled = true; };
+  }, []);
+
+  // Check a small batch periodically while the Status Center is open.
+  useEffect(() => {
+    let cancelled = false;
+    let checking = false;
+
+    const readEntries = async () => {
+      const { data, error } = await supabase.from("feature_permissions")
+        .select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+      if (error) throw error;
+      return {
+        permissions: data?.permissions || {},
+        entries: Array.isArray(data?.permissions?.data?.serviceEntries) ? data.permissions.data.serviceEntries : [],
+      };
+    };
+
+    const getServiceCode = (serviceName: string) => {
+      const name = serviceName.toLowerCase();
+      // Match supported certificate types even when the catalog label omits "eDistrict".
+      if (name.includes("income")) return "4";
+      if (name.includes("caste")) return "2";
+      if (name.includes("community")) return "1";
+      if (name.includes("domicile")) return "11";
+      if (name.includes("family membership")) return "22";
+      if (name.includes("legal heir")) return "10";
+      if (name.includes("minority")) return "93";
+      if (name.includes("nativity")) return "6";
+      if (name.includes("non-creamy")) return "36";
+      if (name.includes("non-remarriage")) return "25";
+      if (name.includes("one and the same")) return "26";
+      if (name.includes("possession and non-attachment")) return "27";
+      if (name.includes("possession")) return "13";
+      if (name.includes("relationship")) return "8";
+      return "";
+    };
+
+    const checkStatuses = async () => {
+      if (checking || cancelled) return;
+      checking = true;
+      setStatusCheckRunning(true);
+      try {
+        const { entries } = await readEntries();
+        const now = Date.now();
+        const candidates = entries.filter((entry: any) => {
+          if (!entry?.applicationNumber || !entry?.serviceName || !getServiceCode(String(entry.serviceName))) return false;
+          const lastChecked = entry.applicationStatusCheckedAt ? new Date(entry.applicationStatusCheckedAt).getTime() : 0;
+          return !lastChecked || now - lastChecked >= 30 * 60 * 1000;
+        }).sort((a: any, b: any) => {
+          const aChecked = a.applicationStatusCheckedAt ? new Date(a.applicationStatusCheckedAt).getTime() : 0;
+          const bChecked = b.applicationStatusCheckedAt ? new Date(b.applicationStatusCheckedAt).getTime() : 0;
+          return aChecked - bChecked;
+        }).slice(0, 3);
+
+        let updatedEntries = entries;
+        for (const entry of candidates) {
+          if (cancelled) return;
+          let status = entry.applicationStatus || "Not checked yet";
+          let errorMessage = "";
+          const checkedAt = new Date().toISOString();
+          try {
+            const response = await fetch("/api/edistrict-certificate/status", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                applicationNumber: String(entry.applicationNumber),
+                serviceCode: getServiceCode(String(entry.serviceName)),
+              }),
+            });
+            const result = await response.json();
+            if (!response.ok || !result?.success) {
+              errorMessage = result?.error || "Status check failed.";
+            } else if (result?.data?.status) {
+              status = String(result.data.status);
+            } else {
+              errorMessage = result?.error || "The portal did not return a matching application.";
+            }
+          } catch {
+            errorMessage = "Could not connect to the eDistrict status service.";
+          }
+
+          updatedEntries = updatedEntries.map((item: any) =>
+            String(item.id) === String(entry.id)
+              ? { ...item, applicationStatus: status, applicationStatusCheckedAt: checkedAt, applicationStatusError: errorMessage }
+              : item
+          );
+          if (!cancelled) setTrackedEntries(updatedEntries.filter((item: any) => item?.applicationNumber));
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+
+        if (candidates.length > 0 && !cancelled) {
+          // Re-read immediately before writing so unrelated central data is preserved.
+          const latest = await readEntries();
+          const mergedEntries = latest.entries.map((item: any) => {
+            const updated = updatedEntries.find((candidate: any) => String(candidate.id) === String(item.id));
+            return updated ? {
+              ...item,
+              applicationStatus: updated.applicationStatus,
+              applicationStatusCheckedAt: updated.applicationStatusCheckedAt,
+              applicationStatusError: updated.applicationStatusError,
+            } : item;
+          });
+          const permissions = {
+            ...latest.permissions,
+            storageKey: latest.permissions.storageKey || CENTRAL_STORAGE_KEY,
+            data: { ...(latest.permissions.data || {}), serviceEntries: mergedEntries },
+          };
+          const { error } = await supabase.from("feature_permissions").upsert(
+            { id: CENTRAL_STORAGE_ROW_ID, permissions, updated_at: new Date().toISOString() },
+            { onConflict: "id" }
+          );
+          if (error) throw error;
+          setTrackedEntries(mergedEntries.filter((item: any) => item?.applicationNumber));
+        } else if (!cancelled) {
+          setTrackedEntries(entries.filter((item: any) => item?.applicationNumber));
+        }
+      } catch (error) {
+        console.error("Unable to load eDistrict tracking entries:", error);
+      } finally {
+        checking = false;
+        if (!cancelled) setStatusCheckRunning(false);
+      }
+    };
+
+    void checkStatuses();
+    const interval = window.setInterval(() => void checkStatuses(), 15 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, []);
 
   const categories = useMemo(() => {
@@ -409,6 +541,57 @@ const [previewReceipt, setPreviewReceipt] = useState<{
                   </select>
                 </div>
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-3xl border border-cyan-200/80 bg-white/95 p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-black tracking-tight text-slate-800">eDistrict Application Status</h2>
+            <p className="mt-1 text-xs font-medium text-slate-500">Service Entry-ൽ നൽകിയ application number-ുകൾ; status സ്വയമേവ പരിശോധിക്കുന്നു.</p>
+          </div>
+          <span className="rounded-full bg-cyan-50 px-3 py-2 text-xs font-bold text-cyan-700">
+            {statusCheckRunning ? "Checking status…" : "Auto-check: every 15 minutes while open"}
+          </span>
+        </div>
+        <div className="mt-4 space-y-3">
+          {trackedEntries.filter((entry: any) =>
+            /(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(String(entry.serviceName || "")) &&
+            (String(entry.applicationNumber || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()) ||
+             String(entry.customerName || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()))
+          ).length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 p-7 text-center text-xs text-slate-400">
+              No eDistrict application numbers found yet. Enter the number while adding an eDistrict service in Service Entry and complete the bill.
+            </div>
+          ) : trackedEntries.filter((entry: any) =>
+            /(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(String(entry.serviceName || "")) &&
+            (String(entry.applicationNumber || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()) ||
+             String(entry.customerName || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()))
+          ).map((entry: any) => (
+            <div key={String(entry.id)} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-slate-800">{entry.customerName || "Customer"}</p>
+                  <p className="mt-1 text-xs text-slate-500">{entry.serviceName} · Staff: {entry.staffName || "—"}</p>
+                  <p className="mt-2 inline-flex rounded-lg bg-cyan-700 px-3 py-1.5 font-mono text-sm font-bold tracking-wide text-white">
+                    {entry.applicationNumber}
+                  </p>
+                </div>
+                <div className="sm:text-right">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Latest portal status</p>
+                  <p className="mt-1 text-sm font-black text-cyan-800">{entry.applicationStatus || "Not checked yet"}</p>
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    Last checked: {entry.applicationStatusCheckedAt ? new Date(entry.applicationStatusCheckedAt).toLocaleString() : "Not checked"}
+                  </p>
+                </div>
+              </div>
+              {entry.applicationStatusError && (
+                <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                  {entry.applicationStatusError} Previous status is kept; this is not a new status.
+                </p>
+              )}
             </div>
           ))}
         </div>
