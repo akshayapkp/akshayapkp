@@ -811,7 +811,7 @@ function ServiceEntryForm() {
       srvChg: Number(srvChg) || 0,
       qty: Number(qty) > 0 ? Number(qty) : 1,
       status: 'Completed',
-      ...(/edistrict/i.test(selectedService ? selectedService.name : searchService.trim()) && applicationNumber.trim()
+      ...(/(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(selectedService ? selectedService.name : searchService.trim()) && applicationNumber.trim()
         ? { applicationNumber: applicationNumber.trim() }
         : {})
     };
@@ -2171,7 +2171,7 @@ function ServiceEntryForm() {
               />
             </div>
 
-            {/edistrict/i.test(selectedService ? selectedService.name : searchService.trim()) && (
+            {/(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(selectedService ? selectedService.name : searchService.trim()) && (
               <div className="sm:col-span-2 md:col-span-3 lg:col-span-4">
                 <label className="mb-0.5 block text-[10px] font-bold text-slate-600">eDistrict Application Number</label>
                 <input
