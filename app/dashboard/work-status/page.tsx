@@ -79,7 +79,7 @@ const [previewReceipt, setPreviewReceipt] = useState<{
 
     const getServiceCode = (serviceName: string) => {
       const name = serviceName.toLowerCase();
-      if (!name.includes("edistrict")) return "";
+      // Match supported certificate types even when the catalog label omits "eDistrict".
       if (name.includes("income")) return "4";
       if (name.includes("caste")) return "2";
       if (name.includes("community")) return "1";
@@ -558,7 +558,7 @@ const [previewReceipt, setPreviewReceipt] = useState<{
         </div>
         <div className="mt-4 space-y-3">
           {trackedEntries.filter((entry: any) =>
-            String(entry.serviceName || "").toLowerCase().includes("edistrict") &&
+            /(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(String(entry.serviceName || "")) &&
             (String(entry.applicationNumber || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()) ||
              String(entry.customerName || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()))
           ).length === 0 ? (
@@ -566,7 +566,7 @@ const [previewReceipt, setPreviewReceipt] = useState<{
               No eDistrict application numbers found yet. Enter the number while adding an eDistrict service in Service Entry and complete the bill.
             </div>
           ) : trackedEntries.filter((entry: any) =>
-            String(entry.serviceName || "").toLowerCase().includes("edistrict") &&
+            /(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(String(entry.serviceName || "")) &&
             (String(entry.applicationNumber || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()) ||
              String(entry.customerName || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()))
           ).map((entry: any) => (
