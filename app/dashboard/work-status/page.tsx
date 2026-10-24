@@ -108,6 +108,10 @@ const [previewReceipt, setPreviewReceipt] = useState<{
           if (!entry?.applicationNumber || !entry?.serviceName || !getServiceCode(String(entry.serviceName))) return false;
           const lastChecked = entry.applicationStatusCheckedAt ? new Date(entry.applicationStatusCheckedAt).getTime() : 0;
           return !lastChecked || now - lastChecked >= 30 * 60 * 1000;
+        }).sort((a: any, b: any) => {
+          const aChecked = a.applicationStatusCheckedAt ? new Date(a.applicationStatusCheckedAt).getTime() : 0;
+          const bChecked = b.applicationStatusCheckedAt ? new Date(b.applicationStatusCheckedAt).getTime() : 0;
+          return aChecked - bChecked;
         }).slice(0, 3);
 
         let updatedEntries = entries;
