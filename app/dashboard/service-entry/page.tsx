@@ -547,6 +547,7 @@ function ServiceEntryForm() {
       wallet: String(item.wallet || item.defaultWallet || 'Select Wallet'),
       walletChg: Number(item.walletChg ?? item.deptChg ?? item.deptFee ?? 0),
       srvChg: Number(item.srvChg ?? item.srvCharge ?? item.serviceCharge ?? 0),
+      applicationNumber: String(item.applicationNumber || ''),
       qty: Number(item.qty ?? item.quantity ?? 1) > 0
         ? Number(item.qty ?? item.quantity ?? 1)
         : 1,
