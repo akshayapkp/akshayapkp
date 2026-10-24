@@ -74,8 +74,30 @@ const [previewReceipt, setPreviewReceipt] = useState<{
       return {
         permissions: data?.permissions || {},
         entries: Array.isArray(data?.permissions?.data?.serviceEntries) ? data.permissions.data.serviceEntries : [],
+        savedBills: Array.isArray(data?.permissions?.data?.savedBillsList) ? data.permissions.data.savedBillsList : [],
       };
     };
+
+    // Draft bills are also trackable: users should not have to Complete Bill
+    // just to see an application number in Status Center.
+    const getDraftEntries = (savedBills: any[]) => savedBills.flatMap((bill: any) => {
+      const billId = String(bill?.id || bill?.billId || "");
+      if (!billId || !Array.isArray(bill?.items)) return [];
+      return bill.items.map((item: any, index: number) => ({
+        id: `draft:${billId}:${index}`,
+        draftSource: true,
+        draftBillId: billId,
+        draftItemIndex: index,
+        billId,
+        customerName: bill.customerName || "Customer",
+        staffName: bill.staffName || "",
+        serviceName: String(item?.name || ""),
+        applicationNumber: String(item?.applicationNumber || "").trim(),
+        applicationStatus: item?.applicationStatus || "Not checked yet",
+        applicationStatusCheckedAt: item?.applicationStatusCheckedAt || "",
+        applicationStatusError: item?.applicationStatusError || "",
+      }));
+    });
 
     const getServiceCode = (serviceName: string) => {
       const name = serviceName.toLowerCase();
@@ -102,9 +124,16 @@ const [previewReceipt, setPreviewReceipt] = useState<{
       checking = true;
       setStatusCheckRunning(true);
       try {
-        const { entries } = await readEntries();
+        const { entries, savedBills } = await readEntries();
+        const draftEntries = getDraftEntries(savedBills).filter((draft: any) =>
+          !entries.some((entry: any) =>
+            String(entry.applicationNumber || "").trim() === draft.applicationNumber &&
+            String(entry.serviceName || "").trim().toLowerCase() === draft.serviceName.trim().toLowerCase()
+          )
+        );
+        const allEntries = [...entries, ...draftEntries];
         const now = Date.now();
-        const candidates = entries.filter((entry: any) => {
+        const candidates = allEntries.filter((entry: any) => {
           if (!entry?.applicationNumber || !entry?.serviceName || !getServiceCode(String(entry.serviceName))) return false;
           const lastChecked = entry.applicationStatusCheckedAt ? new Date(entry.applicationStatusCheckedAt).getTime() : 0;
           return !lastChecked || now - lastChecked >= 30 * 60 * 1000;
@@ -114,7 +143,7 @@ const [previewReceipt, setPreviewReceipt] = useState<{
           return aChecked - bChecked;
         }).slice(0, 3);
 
-        let updatedEntries = entries;
+        let updatedEntries = allEntries;
         for (const entry of candidates) {
           if (cancelled) return;
           let status = entry.applicationStatus || "Not checked yet";
@@ -154,7 +183,7 @@ const [previewReceipt, setPreviewReceipt] = useState<{
           // Re-read immediately before writing so unrelated central data is preserved.
           const latest = await readEntries();
           const mergedEntries = latest.entries.map((item: any) => {
-            const updated = updatedEntries.find((candidate: any) => String(candidate.id) === String(item.id));
+            const updated = updatedEntries.find((candidate: any) => !candidate.draftSource && String(candidate.id) === String(item.id));
             return updated ? {
               ...item,
               applicationStatus: updated.applicationStatus,
@@ -162,19 +191,44 @@ const [previewReceipt, setPreviewReceipt] = useState<{
               applicationStatusError: updated.applicationStatusError,
             } : item;
           });
+          const updatedDrafts = new Map(
+            updatedEntries.filter((item: any) => item.draftSource).map((item: any) => [String(item.id), item])
+          );
+          const mergedSavedBills = latest.savedBills.map((bill: any) => {
+            const billId = String(bill?.id || bill?.billId || "");
+            if (!billId || !Array.isArray(bill?.items)) return bill;
+            return {
+              ...bill,
+              items: bill.items.map((item: any, index: number) => {
+                const updated = updatedDrafts.get(`draft:${billId}:${index}`) as any;
+                return updated ? {
+                  ...item,
+                  applicationStatus: updated.applicationStatus,
+                  applicationStatusCheckedAt: updated.applicationStatusCheckedAt,
+                  applicationStatusError: updated.applicationStatusError,
+                } : item;
+              }),
+            };
+          });
+          const visibleDrafts = getDraftEntries(mergedSavedBills).filter((draft: any) =>
+            !mergedEntries.some((entry: any) =>
+              String(entry.applicationNumber || "").trim() === draft.applicationNumber &&
+              String(entry.serviceName || "").trim().toLowerCase() === draft.serviceName.trim().toLowerCase()
+            )
+          );
           const permissions = {
             ...latest.permissions,
             storageKey: latest.permissions.storageKey || CENTRAL_STORAGE_KEY,
-            data: { ...(latest.permissions.data || {}), serviceEntries: mergedEntries },
+            data: { ...(latest.permissions.data || {}), serviceEntries: mergedEntries, savedBillsList: mergedSavedBills },
           };
           const { error } = await supabase.from("feature_permissions").upsert(
             { id: CENTRAL_STORAGE_ROW_ID, permissions, updated_at: new Date().toISOString() },
             { onConflict: "id" }
           );
           if (error) throw error;
-          setTrackedEntries(mergedEntries.filter((item: any) => item?.applicationNumber));
+          setTrackedEntries([...mergedEntries, ...visibleDrafts].filter((item: any) => item?.applicationNumber));
         } else if (!cancelled) {
-          setTrackedEntries(entries.filter((item: any) => item?.applicationNumber));
+          setTrackedEntries([...entries, ...draftEntries].filter((item: any) => item?.applicationNumber));
         }
       } catch (error) {
         console.error("Unable to load eDistrict tracking entries:", error);
@@ -563,7 +617,7 @@ const [previewReceipt, setPreviewReceipt] = useState<{
              String(entry.customerName || "").toLowerCase().includes(applicationSearch.trim().toLowerCase()))
           ).length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 p-7 text-center text-xs text-slate-400">
-              No eDistrict application numbers found yet. Enter the number while adding an eDistrict service in Service Entry and complete the bill.
+              No eDistrict application numbers found yet. Add an application number in Service Entry and Save the draft or Complete Bill.
             </div>
           ) : trackedEntries.filter((entry: any) =>
             /(edistrict|income|caste|community|domicile|family membership|legal heir|minority|nativity|non-creamy|non-remarriage|one and the same|possession|relationship)/i.test(String(entry.serviceName || "")) &&
