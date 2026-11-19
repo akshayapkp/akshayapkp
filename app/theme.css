@@ -1,0 +1,144 @@
+/* Akshaya design system - glass + 3 colours (indigo, teal, amber).
+   Everything is prefixed ak- so it cannot clash with existing styles. */
+
+:root {
+  --ak-bg: #eef4ff;
+  --ak-bg-2: #dbe7ff;
+  --ak-ink: #0f172a;
+  --ak-muted: #475569;
+  --ak-primary: #4f46e5;   /* indigo  - main brand colour */
+  --ak-secondary: #0d9488; /* teal    - secondary accent  */
+  --ak-accent: #f59e0b;    /* amber   - highlights/offers */
+  --ak-glass: rgba(255, 255, 255, 0.55);
+  --ak-glass-strong: rgba(255, 255, 255, 0.78);
+  --ak-glass-border: rgba(255, 255, 255, 0.75);
+  --ak-shadow: 0 12px 32px rgba(79, 70, 229, 0.16);
+}
+
+:root.dark {
+  --ak-bg: #0b1020;
+  --ak-bg-2: #131a35;
+  --ak-ink: #e8ecff;
+  --ak-muted: #9aa6cf;
+  --ak-primary: #818cf8;
+  --ak-secondary: #2dd4bf;
+  --ak-accent: #fbbf24;
+  --ak-glass: rgba(255, 255, 255, 0.07);
+  --ak-glass-strong: rgba(255, 255, 255, 0.12);
+  --ak-glass-border: rgba(255, 255, 255, 0.16);
+  --ak-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    --ak-bg: #0b1020;
+    --ak-bg-2: #131a35;
+    --ak-ink: #e8ecff;
+    --ak-muted: #9aa6cf;
+    --ak-primary: #818cf8;
+    --ak-secondary: #2dd4bf;
+    --ak-accent: #fbbf24;
+    --ak-glass: rgba(255, 255, 255, 0.07);
+    --ak-glass-strong: rgba(255, 255, 255, 0.12);
+    --ak-glass-border: rgba(255, 255, 255, 0.16);
+    --ak-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* Page background with soft colour blobs */
+.ak-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--ak-ink);
+  background:
+    radial-gradient(60rem 40rem at 10% -10%, color-mix(in srgb, var(--ak-primary) 28%, transparent), transparent 60%),
+    radial-gradient(50rem 36rem at 100% 10%, color-mix(in srgb, var(--ak-secondary) 24%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--ak-bg), var(--ak-bg-2));
+}
+
+/* Glass surfaces - use for navbar, cards and popups (not for big data tables) */
+.ak-glass {
+  background: var(--ak-glass);
+  border: 1px solid var(--ak-glass-border);
+  box-shadow: var(--ak-shadow);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-radius: 1.25rem;
+}
+.ak-glass-strong {
+  background: var(--ak-glass-strong);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ak-glass { background: var(--ak-glass-strong); }
+}
+
+/* Buttons */
+.ak-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.25rem;
+  border-radius: 0.9rem;
+  font-weight: 600;
+  border: 1px solid var(--ak-glass-border);
+  color: var(--ak-ink);
+  background: var(--ak-glass);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.ak-btn:hover { transform: translateY(-2px); box-shadow: var(--ak-shadow); }
+.ak-btn-primary {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--ak-primary), var(--ak-secondary));
+}
+.ak-btn-accent {
+  color: #1f1300;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--ak-accent), #fcd34d);
+}
+
+/* 3D tilt on hover (cards) */
+.ak-tilt {
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  transform-style: preserve-3d;
+}
+.ak-tilt:hover {
+  transform: perspective(900px) rotateX(5deg) rotateY(-7deg) translateY(-6px);
+}
+
+/* Hero 3D stack of floating glass cards */
+.ak-stage { perspective: 1100px; }
+.ak-stack {
+  position: relative;
+  width: 100%;
+  height: 20rem;
+  transform-style: preserve-3d;
+  animation: ak-spin 14s ease-in-out infinite alternate;
+}
+.ak-stack > .ak-layer {
+  position: absolute;
+  inset: 2rem 3rem;
+  border-radius: 1.5rem;
+}
+.ak-stack > .ak-layer:nth-child(1) { transform: translateZ(-70px) translateY(24px); opacity: 0.55; }
+.ak-stack > .ak-layer:nth-child(2) { transform: translateZ(0); opacity: 0.8; }
+.ak-stack > .ak-layer:nth-child(3) { transform: translateZ(70px) translateY(-24px); }
+
+@keyframes ak-spin {
+  from { transform: rotateX(14deg) rotateY(-24deg); }
+  to   { transform: rotateX(6deg)  rotateY(22deg); }
+}
+@keyframes ak-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+.ak-float { animation: ak-float 6s ease-in-out infinite; }
+
+/* Respect people who turn animations off, and keep slow phones comfortable */
+@media (prefers-reduced-motion: reduce) {
+  .ak-stack, .ak-float { animation: none; }
+  .ak-tilt, .ak-btn { transition: none; }
+  .ak-tilt:hover { transform: none; }
+}
