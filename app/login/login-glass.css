@@ -1,0 +1,39 @@
+/* Glass login page. Scoped under .lgRoot. */
+.lgRoot{--ink:#0f172a;--muted:#475569;--p:#4f46e5;--s:#0d9488;--a:#f59e0b;--glass:rgba(255,255,255,.62);--line:rgba(79,70,229,.16);--sh:0 22px 54px rgba(79,70,229,.20);min-height:100vh;display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center;padding:32px clamp(18px,5vw,64px);position:relative;overflow:hidden;color:var(--ink);color-scheme:light;background:linear-gradient(180deg,#eef2ff,#dfe6ff)}
+.lgRoot *{box-sizing:border-box}
+.lgAurora{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lgAurora i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;animation:lgDrift 18s ease-in-out infinite alternate}
+.lgAurora i:nth-child(1){width:42vw;height:42vw;background:var(--p);left:-8vw;top:-10vw}
+.lgAurora i:nth-child(2){width:36vw;height:36vw;background:var(--s);right:-8vw;top:8vw;animation-delay:-6s}
+.lgAurora i:nth-child(3){width:28vw;height:28vw;background:var(--a);left:35vw;bottom:-12vw;opacity:.28;animation-delay:-11s}
+@keyframes lgDrift{to{transform:translate(6vw,5vw) scale(1.15)}}
+.lgGlass{background:var(--glass);border:1px solid var(--line);box-shadow:var(--sh);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);border-radius:24px}
+.lgLeft,.lgRight{position:relative;z-index:1}
+.lgBrand{display:flex;align-items:center;gap:16px}
+.lgBrand img{width:84px;height:84px;object-fit:contain;background:#fff;border-radius:22px;padding:6px;box-shadow:var(--sh)}
+.lgBrand h1{font-size:30px;font-weight:800;line-height:1.1}.lgBrand h2{font-size:26px;font-weight:800;line-height:1.1;background:linear-gradient(120deg,var(--p),var(--s));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lgBrand p{color:var(--muted);margin-top:4px}
+.lgScript{font-size:clamp(28px,4vw,46px);font-weight:800;line-height:1.15;margin:34px 0 24px;letter-spacing:-.01em}
+.lgFeatures{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:560px}
+.lgFeature{padding:16px;text-align:center;transition:transform .3s ease}
+.lgFeature:hover{transform:perspective(800px) rotateX(4deg) rotateY(-5deg) translateY(-4px)}
+.lgIc{display:grid;place-items:center;width:46px;height:46px;margin:0 auto 10px;border-radius:14px;color:#fff;background:linear-gradient(135deg,var(--p),var(--s))}
+.lgFeature strong{font-size:13px;line-height:1.3;display:block}
+.lgRight{display:flex;justify-content:center}
+.lgCard{width:100%;max-width:440px;padding:34px 30px}
+.lgBadge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:99px;font-size:13px;font-weight:700;background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.45)}
+.lgBadge svg{width:16px;height:16px}
+.lgCard h3{font-size:34px;font-weight:800;margin:16px 0 8px}.lgCard h3 span{background:linear-gradient(120deg,var(--p),var(--s));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lgSub{color:var(--ink);margin-bottom:6px}.lgHelper{color:var(--muted);font-size:14px;margin-bottom:20px}
+.lgInput{display:flex;align-items:center;gap:10px;padding:0 14px;margin-bottom:14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.75);color:var(--p)}
+.lgInput svg{width:20px;height:20px;flex:none}
+.lgInput input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;color:var(--ink);padding:15px 0}
+.lgInput:focus-within{border-color:var(--p);box-shadow:0 0 0 4px rgba(79,70,229,.15)}
+.lgEye{border:0;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center;padding:4px}
+.lgRemember{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px;margin:4px 0 18px}
+.lgLogin{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:15px;border:0;border-radius:16px;color:#fff;font:inherit;font-weight:800;font-size:16px;cursor:pointer;background:linear-gradient(135deg,var(--p),var(--s));box-shadow:0 12px 30px rgba(79,70,229,.4);transition:transform .2s}
+.lgLogin:hover{transform:translateY(-2px)}.lgLogin:disabled{opacity:.7;cursor:wait}
+.lgLogin svg{width:20px;height:20px}
+.lgFoot{display:flex;flex-direction:column;gap:2px;margin-top:20px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:900px){.lgRoot{grid-template-columns:1fr;padding-top:24px}.lgFeatures{grid-template-columns:repeat(2,1fr)}.lgLeft{order:2}.lgBrand img{width:64px;height:64px}.lgBrand h1{font-size:24px}.lgBrand h2{font-size:21px}.lgScript{margin:22px 0 16px}}
+@media(prefers-reduced-motion:reduce){.lgAurora i{animation:none}.lgFeature,.lgLogin{transition:none}.lgFeature:hover{transform:none}}
