@@ -20,7 +20,7 @@ export default function AffidavitWriterPage() {
   }, []);
 
   return (
-    <div className="-m-3 h-[calc(100vh-64px)] min-h-[680px] overflow-hidden bg-slate-100 sm:-m-4 lg:-m-5 xl:-m-6">
+    <div className="h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-slate-100">
       {src ? (
         <iframe
           title="Akshaya PKP Affidavit and Form Writer"
