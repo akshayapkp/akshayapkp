@@ -3,17 +3,16 @@ window.addContact = function() {
     const container = document.getElementById('contactList');
     if (!container) return;
     const html = `
-        <div class="dynamic-item" style="flex-direction: row; gap: 0.5rem; align-items: center; padding: 0.8rem; flex-wrap: wrap;">
-            <button class="remove-btn" type="button" style="top: 0.8rem;" onclick="this.parentElement.remove(); updateDynamicPreview('contact')"><i class="fas fa-trash"></i></button>
-            <select class="contact-type" onchange="updateDynamicPreview('contact')" style="padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px;">
-                <option value="fas fa-phone">Mobile</option>
+        <div class="dynamic-item rb-contact-row">
+            <select class="contact-type" onchange="updateDynamicPreview('contact')" aria-label="Contact type">
+                <option value="fas fa-phone" selected>Mobile</option>
                 <option value="fab fa-whatsapp">WhatsApp</option>
             </select>
-            <div class="phone-input-group" style="flex-grow: 1;">
-                <span class="phone-prefix">+91</span>
-                <input type="tel" class="contact-num" maxlength="10" inputmode="numeric" placeholder="98765 43210" oninput="validateIndianMobile(this); updateDynamicPreview('contact')" style="flex-grow: 1; padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px;">
+            <div class="phone-input-group">
+                <select class="contact-country" aria-label="Country calling code" onchange="updateDynamicPreview('contact')"><option value="+91" selected>IN +91</option><option value="+971">AE +971</option><option value="+966">SA +966</option><option value="+974">QA +974</option><option value="+968">OM +968</option><option value="+965">KW +965</option><option value="+973">BH +973</option><option value="+1">US/CA +1</option><option value="+44">UK +44</option><option value="+61">AU +61</option><option value="+64">NZ +64</option><option value="+65">SG +65</option><option value="+60">MY +60</option><option value="+94">LK +94</option><option value="+977">NP +977</option><option value="+880">BD +880</option><option value="+92">PK +92</option></select>
+                <input type="tel" class="contact-num" maxlength="15" inputmode="tel" placeholder="Mobile number" oninput="updateDynamicPreview('contact')">
             </div>
-            <span class="field-error contact-error" style="display:none; width:100%;"></span>
+            <span class="field-error contact-error" style="display:none;width:100%;"></span>
         </div>`;
     container.insertAdjacentHTML('beforeend', html);
     updateDynamicPreview('contact');
@@ -57,8 +56,8 @@ window.addEducation = function() {
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('edu')"><i class="fas fa-trash"></i></button>
             <div class="form-grid">
-                <input type="text" class="edu-degree" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
-                <input type="text" class="edu-school" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-degree" list="educationDegreeOptions" placeholder="Degree / Qualification" oninput="saveEducationSuggestion(this,'degrees'); updateDynamicPreview('edu')">
+                <input type="text" class="edu-school" list="educationBoardOptions" placeholder="University / Board" oninput="saveEducationSuggestion(this,'schools'); updateDynamicPreview('edu')">
                 <input type="text" class="edu-date" placeholder="e.g. 2016 - 2020" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
             </div>
         </div>`;
@@ -865,9 +864,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const contacts = Array.from(document.querySelectorAll('#contactList .dynamic-item')).map(item => {
             const digits = item.querySelector('.contact-num')?.value.trim() || '';
+            const countryCode = item.querySelector('.contact-country')?.value || '+91';
             return {
                 icon: item.querySelector('.contact-type')?.value || 'fas fa-phone',
-                number: digits ? `+91 ${digits}` : ''
+                countryCode,
+                number: digits ? `${countryCode} ${digits}` : ''
             };
         }).filter(c => c.number);
 
@@ -1057,39 +1058,32 @@ document.addEventListener('DOMContentLoaded', () => {
             wrapPhoto.style.display = 'none';
         }
 
-        if (Array.isArray(data.contacts) && data.contacts.length > 0) {
-            data.contacts.forEach(c => {
-                addContact();
-                const items = document.querySelectorAll('#contactList .dynamic-item');
-                const last = items[items.length - 1];
-                if (last) {
-                    const iconEl = last.querySelector('.contact-type');
-                    const numEl = last.querySelector('.contact-num');
-                    if (iconEl) iconEl.value = c.icon || 'fas fa-phone';
-                    if (numEl) numEl.value = (c.number || '').replace('+91', '').trim();
-                }
-            });
-            updateDynamicPreview('contact');
-        } else {
-            addContact();
-        }
+        const contactItems = document.querySelectorAll('#contactList .dynamic-item');
+        const savedContacts = Array.isArray(data.contacts) ? data.contacts : [];
+        savedContacts.forEach((c, index) => {
+            if (index > 0) addContact();
+            const item = document.querySelectorAll('#contactList .dynamic-item')[index];
+            if (!item) return;
+            const iconEl = item.querySelector('.contact-type');
+            const countryEl = item.querySelector('.contact-country');
+            const numEl = item.querySelector('.contact-num');
+            const raw = (c.number || '').trim();
+            const match = raw.match(/^(\+\d{1,4})\s*(.*)$/);
+            if (iconEl) iconEl.value = c.icon || 'fas fa-phone';
+            if (countryEl) countryEl.value = c.countryCode || match?.[1] || '+91';
+            if (numEl) numEl.value = match ? match[2].trim() : raw.replace(/^\+91\s*/, '');
+        });
+        updateDynamicPreview('contact');
 
-        if (Array.isArray(data.guardians) && data.guardians.length > 0) {
-            data.guardians.forEach(g => {
-                addGuardian();
-                const items = document.querySelectorAll('#guardianList .dynamic-item');
-                const last = items[items.length - 1];
-                if (last) {
-                    const relEl = last.querySelector('.g-rel');
-                    const nameEl = last.querySelector('.g-name');
-                    if (relEl) relEl.value = g.rel || '';
-                    if (nameEl) nameEl.value = g.name || '';
-                }
-            });
-            updateDynamicPreview('guardian');
-        } else {
-            addGuardian();
+        const firstGuardian = Array.isArray(data.guardians) ? data.guardians.find(g => g.rel || g.name) : null;
+        const guardianItem = document.querySelector('#guardianList .dynamic-item');
+        if (guardianItem && firstGuardian) {
+            const relEl = guardianItem.querySelector('.g-rel');
+            const nameEl = guardianItem.querySelector('.g-name');
+            if (relEl) relEl.value = firstGuardian.rel || '';
+            if (nameEl) nameEl.value = firstGuardian.name || '';
         }
+        updateDynamicPreview('guardian');
 
         if (Array.isArray(data.idCards) && data.idCards.length > 0) {
             data.idCards.forEach(c => {
@@ -1494,3 +1488,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+/* Education dropdown suggestions: saved locally, shown only when the field is focused. */
+const RB_EDU_KEY = 'resume-builder-education-suggestions';
+const RB_DEFAULT_DEGREES = ['SSLC','Plus Two','VHSE','ITI','Diploma','BA','BSc','BCom','BBA','BCA','BTech','BE','MA','MSc','MCom','MBA','MCA','MTech','PhD'];
+const RB_DEFAULT_BOARDS = ['Kerala Board of Public Examinations','Kerala Board of Higher Secondary Education','CBSE','CISCE','University of Kerala','University of Calicut','Mahatma Gandhi University','Kannur University','Cochin University of Science and Technology','APJ Abdul Kalam Technological University','IGNOU'];
+function rbReadEducationSuggestions() {
+    try { return JSON.parse(localStorage.getItem(RB_EDU_KEY) || '{"degrees":[],"schools":[]}'); }
+    catch { return { degrees: [], schools: [] }; }
+}
+function rbRenderEducationDatalists() {
+    const saved = rbReadEducationSuggestions();
+    const degreeList = document.getElementById('educationDegreeOptions');
+    const boardList = document.getElementById('educationBoardOptions');
+    if (degreeList) degreeList.innerHTML = [...new Set([...RB_DEFAULT_DEGREES, ...(saved.degrees || [])])].map(v => '<option value="' + String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '"></option>').join('');
+    if (boardList) boardList.innerHTML = [...new Set([...RB_DEFAULT_BOARDS, ...(saved.schools || [])])].map(v => '<option value="' + String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '"></option>').join('');
+}
+window.saveEducationSuggestion = function(field, kind) {
+    const value = field.value.trim();
+    if (!value) return;
+    const saved = rbReadEducationSuggestions();
+    const key = kind === 'degrees' ? 'degrees' : 'schools';
+    if (!saved[key].includes(value)) {
+        saved[key].push(value);
+        localStorage.setItem(RB_EDU_KEY, JSON.stringify(saved));
+        rbRenderEducationDatalists();
+    }
+};
+document.addEventListener('DOMContentLoaded', rbRenderEducationDatalists);
