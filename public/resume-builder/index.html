@@ -294,7 +294,7 @@
                         <div class="form-group" style="grid-column: span 2;">
                             <label>Guardian Details</label>
                             <div id="guardianList">
-                                <div class="dynamic-item">
+                                <div class="dynamic-item rb-guardian-row">
                                     <div class="form-grid">
                                         <select class="g-rel" onchange="updateDynamicPreview('guardian')" aria-label="Guardian relationship">
                                             <option value="">Relationship</option>
@@ -346,7 +346,9 @@
                             <span class="slider"></span>
                             <span class="toggle-text">Disabled</span>
                         </label>
+                        <button type="button" class="section-collapse-btn" aria-expanded="false" aria-controls="idDetailsFields" onclick="toggleResumeSection('idDetailsFields', this)" title="Show ID details"><i class="fas fa-chevron-down"></i></button>
                     </div>
+                    <div id="idDetailsFields" class="resume-collapsible-fields" hidden>
                     <div id="idCardsList">
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('idcard')"><i class="fas fa-trash"></i></button>
@@ -357,6 +359,7 @@
             </div>
         </div></div>
                     <button type="button" class="add-btn" onclick="addIDCard()"><i class="fas fa-plus"></i> Add ID Card</button>
+                    </div>
                 </div>
 
                 <!-- Professional Summary -->
@@ -506,7 +509,9 @@
                             <span class="slider"></span>
                             <span class="toggle-text">Disabled</span>
                         </label>
+                        <button type="button" class="section-collapse-btn" aria-expanded="false" aria-controls="projectFields" onclick="toggleResumeSection('projectFields', this)" title="Show project details"><i class="fas fa-chevron-down"></i></button>
                     </div>
+                    <div id="projectFields" class="resume-collapsible-fields" hidden>
                     <div id="projectsList">
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('proj')"><i class="fas fa-trash"></i></button>
@@ -517,6 +522,7 @@
             </div>
         </div></div>
                     <button type="button" class="add-btn" onclick="addProject()"><i class="fas fa-plus"></i> Add Project</button>
+                    </div>
                 </div>
 
                 <!-- References Section -->
@@ -528,7 +534,9 @@
                             <span class="slider"></span>
                             <span class="toggle-text">Disabled</span>
                         </label>
+                        <button type="button" class="section-collapse-btn" aria-expanded="false" aria-controls="referenceFields" onclick="toggleResumeSection('referenceFields', this)" title="Show reference details"><i class="fas fa-chevron-down"></i></button>
                     </div>
+                    <div id="referenceFields" class="resume-collapsible-fields" hidden>
                     <div id="referencesList">
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('ref')"><i class="fas fa-trash"></i></button>
@@ -541,6 +549,7 @@
             </div>
         </div></div>
                     <button type="button" class="add-btn" onclick="addReference()"><i class="fas fa-plus"></i> Add Reference</button>
+                    </div>
                 </div>
 
                 <!-- Declaration -->
