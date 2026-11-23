@@ -945,4 +945,71 @@
     </script>
 
 
+<script>
+(() => {
+  const KEY='resume-builder-design-settings-v2';
+  const defaults={allFont:100,allMargin:16,allowSplit:true,headingColour:'#1e293b',lineColour:'#1e293b',sections:{}};
+  const map={name:'.header-section',contact:'.contact-info',id:'#prev-idcards-container',summary:'#prev-summary-container',education:'#prev-education-container',experience:'#prev-experience-container',projects:'#prev-projects-container',skills:'#prev-skills-container',languages:'#prev-languages-container',hobbies:'#prev-hobbies-container',references:'#prev-references-container',declaration:'#prev-declaration-container'};
+  const $=id=>document.getElementById(id), p=()=>$('resumePreview');
+  let state=JSON.parse(JSON.stringify(defaults)), selected='';
+  const sectionDefaults=()=>({font:100,top:0,bottom:0});
+  const nodeFor=key=>p()?.querySelector(map[key]);
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{}}
+  function apply(){
+    const preview=p();if(!preview)return;
+    preview.style.setProperty('--rb-all-scale',state.allFont/100);
+    preview.style.setProperty('--rb-heading-colour',state.headingColour);
+    preview.style.setProperty('--rb-line-colour',state.lineColour);
+    preview.classList.toggle('rb-no-split',!state.allowSplit);
+    preview.querySelectorAll('.content-section,.sidebar-section').forEach(n=>{n.style.marginBottom=state.allMargin+'px';});
+    Object.keys(map).forEach(key=>{
+      const n=nodeFor(key);if(!n)return;
+      const v=state.sections[key]||sectionDefaults();
+      n.style.marginTop=v.top+'px';
+      n.style.marginBottom=(state.allMargin+v.bottom)+'px';
+      n.style.zoom=String(v.font/100);
+    });
+    preview.querySelectorAll('[data-rb-design-selected]').forEach(n=>n.removeAttribute('data-rb-design-selected'));
+    const chosen=selected?nodeFor(selected):null;if(chosen)chosen.setAttribute('data-rb-design-selected','');
+    $('rbAllFont').value=state.allFont;$('rbAllFontOut').textContent=state.allFont+'%';
+    $('rbAllMargin').value=state.allMargin;$('rbAllMarginOut').textContent=state.allMargin+' px';
+    $('rbAllowSplit').checked=state.allowSplit;
+    $('rbHeadingColour').value=state.headingColour;$('rbHeadingColourValue').textContent=state.headingColour.toUpperCase();
+    $('rbLineColour').value=state.lineColour;$('rbLineColourValue').textContent=state.lineColour.toUpperCase();
+    document.querySelectorAll('#rbThemeSwatches .rg-sw').forEach(b=>b.classList.toggle('active',b.dataset.colour===state.headingColour));
+    const v=state.sections[selected]||sectionDefaults();
+    ['rbSectionFont','rbSectionTop','rbSectionBottom'].forEach(id=>$(id).disabled=!selected);
+    $('rbSectionFont').value=v.font;$('rbSectionFontOut').textContent=v.font+'%';
+    $('rbSectionTop').value=v.top;$('rbSectionTopOut').textContent=v.top+' px';
+    $('rbSectionBottom').value=v.bottom;$('rbSectionBottomOut').textContent=v.bottom+' px';
+  }
+  function choose(key){selected=key||'';$('rbSelectedSection').value=selected;if(selected&&!state.sections[selected])state.sections[selected]=sectionDefaults();apply();}
+  function init(){
+    if(!$('rbDesignSettings')||!p())return;
+    try{const saved=JSON.parse(localStorage.getItem(KEY)||'{}');state={...state,...saved};state.sections=saved.sections||{};}catch{}
+    $('rbAllFont').addEventListener('input',e=>{state.allFont=Number(e.target.value);apply();save();});
+    $('rbAllMargin').addEventListener('input',e=>{state.allMargin=Number(e.target.value);apply();save();});
+    $('rbAllowSplit').addEventListener('change',e=>{state.allowSplit=e.target.checked;apply();save();});
+    $('rbHeadingColour').addEventListener('input',e=>{state.headingColour=e.target.value;apply();save();});
+    $('rbLineColour').addEventListener('input',e=>{state.lineColour=e.target.value;apply();save();});
+    document.querySelectorAll('#rbThemeSwatches .rg-sw').forEach(b=>b.addEventListener('click',()=>{state.headingColour=b.dataset.colour;state.lineColour=b.dataset.colour;apply();save();}));
+    $('rbSelectedSection').addEventListener('change',e=>choose(e.target.value));
+    [['rbSectionFont','font'],['rbSectionTop','top'],['rbSectionBottom','bottom']].forEach(([id,key])=>$(id).addEventListener('input',e=>{
+      if(!selected)return;state.sections[selected]=state.sections[selected]||sectionDefaults();state.sections[selected][key]=Number(e.target.value);apply();save();
+    }));
+    $('rbResetColours').addEventListener('click',()=>{state.headingColour=defaults.headingColour;state.lineColour=defaults.lineColour;apply();save();});
+    $('rbResetAll').addEventListener('click',()=>{state.allFont=defaults.allFont;state.allMargin=defaults.allMargin;state.allowSplit=defaults.allowSplit;state.sections={};apply();save();});
+    $('rbResetSelected').addEventListener('click',()=>{if(!selected)return;delete state.sections[selected];apply();save();});
+    p().addEventListener('click',e=>{
+      const selectors=Object.entries(map);
+      const target=e.target.closest(selectors.map(x=>x[1]).join(','));
+      if(!target)return;
+      const match=selectors.find(([,selector])=>target.matches(selector));
+      if(match)choose(match[0]);
+    });
+    apply();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
 </body></html>
