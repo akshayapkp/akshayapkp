@@ -292,7 +292,7 @@
                             <div id="contactList"><div class="dynamic-item rb-contact-row">
 <select class="contact-type" aria-label="Contact type" onchange="updateDynamicPreview('contact')"><option value="fas fa-phone" selected>Mobile</option><option value="fab fa-whatsapp">WhatsApp</option></select>
 <div class="phone-input-group"><select class="contact-country" aria-label="Country calling code" onchange="updateDynamicPreview('contact')"><option value="+91" selected>IN +91</option><option value="+971">AE +971</option><option value="+966">SA +966</option><option value="+974">QA +974</option><option value="+968">OM +968</option><option value="+965">KW +965</option><option value="+973">BH +973</option><option value="+1">US/CA +1</option><option value="+44">UK +44</option><option value="+61">AU +61</option><option value="+64">NZ +64</option><option value="+65">SG +65</option><option value="+60">MY +60</option><option value="+94">LK +94</option><option value="+977">NP +977</option><option value="+880">BD +880</option><option value="+92">PK +92</option><option value="+63">PH +63</option><option value="+27">ZA +27</option><option value="+49">DE +49</option><option value="+33">FR +33</option><option value="+39">IT +39</option><option value="+34">ES +34</option><option value="+353">IE +353</option><option value="+81">JP +81</option></select><input type="tel" class="contact-num" maxlength="15" inputmode="tel" placeholder="Mobile number" oninput="validateInternationalMobile(this); updateDynamicPreview('contact')"></div>
-<span class="field-error contact-error" style="display:none;width:100%;"></span></div></div>>
+<span class="field-error contact-error" style="display:none;width:100%;"></span></div></div>
                             <button type="button" class="add-btn" onclick="addContact()"><i class="fas fa-plus"></i> Add Contact</button>
                         </div>
                     </div>
@@ -302,7 +302,7 @@
                 <details class="form-section rb-accordion" id="rbIdDetailsAccordion">
                     <summary class="section-header-flex">
                         <h3><i class="fas fa-id-badge"></i> ID Details</h3>
-                        <label class="toggle-switch">
+                        <label class="toggle-switch" onclick="event.stopPropagation()">
                             <input type="checkbox" data-toggle="prev-idcards-container">
                             <span class="slider"></span>
                             <span class="toggle-text">Disabled</span>
@@ -461,7 +461,7 @@
                 <details class="form-section rb-accordion" id="rbProjectsAccordion">
                     <summary class="section-header-flex">
                         <h3><i class="fas fa-project-diagram"></i> Projects</h3>
-                        <label class="toggle-switch">
+                        <label class="toggle-switch" onclick="event.stopPropagation()">
                             <input type="checkbox" data-toggle="prev-projects-container">
                             <span class="slider"></span>
                             <span class="toggle-text">Disabled</span>
@@ -482,7 +482,7 @@
                 <details class="form-section rb-accordion" id="rbReferencesAccordion">
                     <summary class="section-header-flex">
                         <h3><i class="fas fa-users"></i> References</h3>
-                        <label class="toggle-switch">
+                        <label class="toggle-switch" onclick="event.stopPropagation()">
                             <input type="checkbox" data-toggle="prev-references-container">
                             <span class="slider"></span>
                             <span class="toggle-text">Disabled</span>
