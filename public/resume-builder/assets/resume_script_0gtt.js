@@ -721,34 +721,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (photoInput && modal && imageToCrop) {
         photoInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    imageToCrop.src = event.target.result;
-                    modal.style.display = 'flex';
-                    if (cropper) cropper.destroy();
-                    cropper = new Cropper(imageToCrop, { aspectRatio: 1, viewMode: 1 });
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        document.getElementById('cancelCrop')?.addEventListener('click', () => {
-            modal.style.display = 'none';
-            photoInput.value = '';
-        });
-
-        document.getElementById('applyCrop')?.addEventListener('click', () => {
-            if (cropper) {
-                const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
-                const prevPhoto = document.getElementById('prev-photo');
-                const wrapPhoto = document.getElementById('wrap-photo');
-                if (prevPhoto && wrapPhoto) {
-                    prevPhoto.src = canvas.toDataURL('image/jpeg', 0.92);
-                    wrapPhoto.style.display = 'block';
-                }
-            }
-            modal.style.display = 'none';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                window.openRbCropDialog(
+                    event.target.result,
+                    function(croppedDataUrl) {
+                        const prevPhoto = document.getElementById('prev-photo');
+                        const wrapPhoto = document.getElementById('wrap-photo');
+                        if (prevPhoto && wrapPhoto) {
+                            prevPhoto.src = croppedDataUrl;
+                            wrapPhoto.style.display = 'block';
+                        }
+                        const profileShape = document.getElementById('profilePhotoShape');
+                        if (profileShape) profileShape.dispatchEvent(new Event('change'));
+                    },
+                    function() {
+                        photoInput.value = '';
+                    }
+                );
+            };
+            reader.readAsDataURL(file);
         });
     }
 

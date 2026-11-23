@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCropResize } from "../hooks/useCropResize";
-import PerspectiveCropDialog from "../components/PerspectiveCropDialog";
+import RectCropDialog from "../components/RectCropDialog";
 
 interface CropResizeToolProps {
   onClose: () => void;
@@ -510,9 +510,10 @@ export default function CropResizeTool({
         </div>
       </div>
     </div>
-    <PerspectiveCropDialog
+    <RectCropDialog
       open={isActive && Boolean(crop.pendingUpload)}
       image={crop.pendingUpload?.dataUrl ?? null}
+      targetAspect={previewAspect}
       onCancel={crop.cancelUploadedImage}
       onDone={(croppedImage) => crop.acceptUploadedImage(croppedImage, crop.pendingUpload?.name)}
     />

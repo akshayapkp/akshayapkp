@@ -4,8 +4,7 @@ import React, { useState } from "react";
 import { AlertCircle, Save, Upload, ZoomIn, ZoomOut, Calendar } from "lucide-react";
 import SignatureTool from "./SignatureTool";
 import { usePSCPhoto } from "../hooks/usePSCPhoto";
-import PerspectiveCropDialog from "../components/PerspectiveCropDialog";
-
+import RectCropDialog from "../components/RectCropDialog";
 interface PSCPhotoToolProps {
   onClose: () => void;
   isActive?: boolean;
@@ -637,9 +636,10 @@ export default function PSCPhotoTool({
         </div>
 
       </div>
-      <PerspectiveCropDialog
+      <RectCropDialog
         open={Boolean(pendingCropImage)}
         image={pendingCropImage}
+        targetAspect={3 / 4}
         onCancel={() => {
           setPendingCropImage(null);
           setPendingCropFileName("");

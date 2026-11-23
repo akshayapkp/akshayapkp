@@ -575,19 +575,31 @@
         </div>
     </div>
 
-    <!-- Image Cropper Modal -->
-    <div id="cropperModal" class="modal">
-        <div class="modal-content">
-            <h3>Adjust Photo</h3>
-            <div class="img-container">
-                <img id="imageToCrop" src="">
-            </div>
-            <div class="modal-actions">
-                <button type="button" id="cancelCrop" class="secondary-btn">Cancel</button>
-                <button type="button" id="applyCrop" class="primary-btn">Apply Photo</button>
-            </div>
-        </div>
+<!-- Rect Crop Dialog -->
+<div id="cropperModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:12px;">
+  <div style="width:min(900px,100%);max-height:96vh;display:flex;flex-direction:column;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 30px 80px rgba(15,23,42,.3);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#0369a1,#0891b2);color:#fff;">
+      <div><h3 style="margin:0;font-size:18px;font-weight:900;">Crop Photo</h3><p style="margin:4px 0 0;font-size:12px;opacity:.85;">Drag box to move · Drag corners to resize</p></div>
+      <button type="button" id="cancelCrop" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:14px;">✕ Cancel</button>
     </div>
+    <div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 200px;gap:0;overflow:hidden;">
+      <div style="background:#e2e8f0;display:flex;align-items:center;justify-content:center;padding:12px;">
+        <canvas id="rbCropCanvas" style="max-width:100%;max-height:60vh;border-radius:14px;touch-action:none;cursor:crosshair;"></canvas>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:10px;border-left:1px solid #e2e8f0;overflow-y:auto;">
+        <p style="font-size:11px;font-weight:800;text-transform:uppercase;color:#64748b;margin:0;">Shape</p>
+        <div id="rbRatioButtons" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <button type="button" id="rbRotate" style="padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;cursor:pointer;font-size:13px;font-weight:700;">↻ Rotate 90°</button>
+        <button type="button" id="rbReset" style="padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;cursor:pointer;font-size:13px;font-weight:700;">Reset Box</button>
+        <button type="button" id="rbSkip" style="padding:10px;border:1px dashed #e2e8f0;border-radius:10px;background:#fff;cursor:pointer;font-size:12px;color:#64748b;">Skip: use full photo</button>
+      </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+      <span id="rbCropSize" style="font-size:12px;color:#64748b;"></span>
+      <button type="button" id="applyCrop" style="padding:12px 24px;background:linear-gradient(135deg,#0369a1,#0891b2);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:900;cursor:pointer;">✓ Apply Photo</button>
+    </div>
+  </div>
+</div>
 
     <!-- AI Summary modal: reference-matched layout -->
     <div id="aiSummaryModal" role="dialog" aria-modal="true" aria-labelledby="aiSummaryTitle"
@@ -887,5 +899,92 @@
             window.print();
         }, true);
     </script>
+<script>
+(function(){
+  var canvas=document.getElementById('rbCropCanvas'),ctx,src=null,rect={x:0,y:0,w:1,h:1},view={ox:0,oy:0,scale:1},drag=null,ratio=null,MIN=24;
+  var RATIOS=[{k:'free',l:'Free',v:null},{k:'1:1',l:'1:1',v:1},{k:'3:4',l:'3:4',v:3/4},{k:'4:3',l:'4:3',v:4/3}];
+  var clamp=function(n,a,b){return Math.min(b,Math.max(a,n));};
+  function fitRect(ar,W,H){if(!ar)return{x:W*.05,y:H*.05,w:W*.9,h:H*.9};var w=Math.min(W*.9,H*.9*ar),h=w/ar;return{x:(W-w)/2,y:(H-h)/2,w:w,h:h};}
+  function draw(){
+    if(!src||!canvas)return;
+    var dpr=Math.min(window.devicePixelRatio||1,2),box=canvas.getBoundingClientRect();
+    var cw=Math.round(box.width*dpr),ch=Math.round(box.height*dpr);
+    if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch;}
+    ctx=canvas.getContext('2d');
+    ctx.fillStyle='#cbd5e1';ctx.fillRect(0,0,cw,ch);
+    var sc=Math.min(cw/src.width,ch/src.height),dw=src.width*sc,dh=src.height*sc,ox=(cw-dw)/2,oy=(ch-dh)/2;
+    view={ox:ox,oy:oy,scale:sc,dpr:dpr};
+    ctx.drawImage(src,ox,oy,dw,dh);
+    var rx=ox+rect.x*sc,ry=oy+rect.y*sc,rw=rect.w*sc,rh=rect.h*sc;
+    ctx.fillStyle='rgba(15,23,42,.52)';
+    ctx.fillRect(ox,oy,dw,ry-oy);ctx.fillRect(ox,ry+rh,dw,oy+dh-ry-rh);
+    ctx.fillRect(ox,ry,rx-ox,rh);ctx.fillRect(rx+rw,ry,ox+dw-rx-rw,rh);
+    ctx.strokeStyle='#fff';ctx.lineWidth=2*dpr;ctx.strokeRect(rx,ry,rw,rh);
+    ctx.fillStyle='#fff';ctx.strokeStyle='#0369a1';ctx.lineWidth=2.5*dpr;
+    [[rx,ry],[rx+rw,ry],[rx+rw,ry+rh],[rx,ry+rh]].forEach(function(p){ctx.beginPath();ctx.arc(p[0],p[1],8*dpr,0,Math.PI*2);ctx.fill();ctx.stroke();});
+    if(!ratio)[[rx+rw/2,ry],[rx+rw,ry+rh/2],[rx+rw/2,ry+rh],[rx,ry+rh/2]].forEach(function(p){ctx.beginPath();ctx.arc(p[0],p[1],6*dpr,0,Math.PI*2);ctx.fill();ctx.stroke();});
+    document.getElementById('rbCropSize').textContent=Math.round(rect.w)+' × '+Math.round(rect.h)+' px';
+  }
+  function toImg(e){
+    var box=canvas.getBoundingClientRect(),touch=e.touches?e.touches[0]:e,sc=canvas.width/box.width;
+    return{x:((touch.clientX-box.left)*sc-view.ox)/view.scale,y:((touch.clientY-box.top)*sc-view.oy)/view.scale};
+  }
+  function hit(p){
+    var reach=22/view.scale,r=rect;
+    function near(a){return Math.hypot(p.x-a.x,p.y-a.y)<=reach;}
+    if(near({x:r.x,y:r.y}))return'tl';if(near({x:r.x+r.w,y:r.y}))return'tr';
+    if(near({x:r.x+r.w,y:r.y+r.h}))return'br';if(near({x:r.x,y:r.y+r.h}))return'bl';
+    if(!ratio){if(near({x:r.x+r.w/2,y:r.y}))return't';if(near({x:r.x+r.w,y:r.y+r.h/2}))return'r';if(near({x:r.x+r.w/2,y:r.y+r.h}))return'b';if(near({x:r.x,y:r.y+r.h/2}))return'l';}
+    if(p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h)return'move';return null;
+  }
+  function down(e){var p=toImg(e),h=hit(p);if(!h)return;drag={h:h,sx:p.x,sy:p.y,r0:Object.assign({},rect)};e.preventDefault();}
+  function move(e){
+    if(!drag)return;e.preventDefault();
+    var p=toImg(e),r0=drag.r0,W=src.width,H=src.height,dx=p.x-drag.sx,dy=p.y-drag.sy;
+    if(drag.h==='move'){rect.x=clamp(r0.x+dx,0,W-r0.w);rect.y=clamp(r0.y+dy,0,H-r0.h);draw();return;}
+    if(drag.h.length===2){
+      var right=drag.h.includes('r'),bottom=drag.h.includes('b');
+      var ax=right?r0.x:r0.x+r0.w,ay=bottom?r0.y:r0.y+r0.h;
+      var w=Math.max(MIN,(right?1:-1)*(p.x-ax)),h=Math.max(MIN,(bottom?1:-1)*(p.y-ay));
+      if(ratio){w=Math.min(Math.max(w,h*ratio),right?W-ax:ax,((bottom?H-ay:ay))*ratio);h=w/ratio;}
+      else{w=Math.min(w,right?W-ax:ax);h=Math.min(h,bottom?H-ay:ay);}
+      rect={x:right?ax:ax-w,y:bottom?ay:ay-h,w:w,h:h};draw();return;
+    }
+    var n=Object.assign({},rect);
+    if(drag.h==='l'){var x=clamp(p.x,0,rect.x+rect.w-MIN);n.w=rect.x+rect.w-x;n.x=x;}
+    if(drag.h==='r')n.w=clamp(p.x,rect.x+MIN,W)-rect.x;
+    if(drag.h==='t'){var y=clamp(p.y,0,rect.y+rect.h-MIN);n.h=rect.y+rect.h-y;n.y=y;}
+    if(drag.h==='b')n.h=clamp(p.y,rect.y+MIN,H)-rect.y;
+    rect=n;draw();
+  }
+  function up(){drag=null;}
+  canvas.addEventListener('mousedown',down);canvas.addEventListener('mousemove',move);canvas.addEventListener('mouseup',up);canvas.addEventListener('mouseleave',up);
+  canvas.addEventListener('touchstart',down,{passive:false});canvas.addEventListener('touchmove',move,{passive:false});canvas.addEventListener('touchend',up);
+  window.addEventListener('resize',draw);
 
+  var btns=document.getElementById('rbRatioButtons');
+  RATIOS.forEach(function(r){
+    var b=document.createElement('button');b.type='button';b.textContent=r.l;b.dataset.k=r.k;
+    b.style.cssText='padding:7px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:12px;font-weight:700;';
+    b.addEventListener('click',function(){ratio=r.v;RATIOS.forEach(function(x){btns.querySelector('[data-k="'+x.k+'"]').style.background='#f8fafc';btns.querySelector('[data-k="'+x.k+'"]').style.color='#334155'});b.style.background='#0369a1';b.style.color='#fff';rect=fitRect(ratio,src.width,src.height);draw();});
+    btns.appendChild(b);
+  });
+  document.getElementById('rbRotate').addEventListener('click',function(){
+    var out=document.createElement('canvas');out.width=src.height;out.height=src.width;var c=out.getContext('2d');c.translate(out.width,0);c.rotate(Math.PI/2);c.drawImage(src,0,0);src=out;rect=fitRect(ratio,src.width,src.height);draw();
+  });
+  document.getElementById('rbReset').addEventListener('click',function(){rect=fitRect(ratio,src.width,src.height);draw();});
+
+  window.openRbCropDialog=function(dataUrl,onDone,onCancel){
+    var modal=document.getElementById('cropperModal');
+    modal.style.display='flex';
+    var img=new Image();img.onload=function(){src=document.createElement('canvas');src.width=img.naturalWidth;src.height=img.naturalHeight;src.getContext('2d').drawImage(img,0,0);ratio=null;rect=fitRect(null,src.width,src.height);var fb=btns.querySelector('[data-k="free"]');if(fb){fb.style.background='#0369a1';fb.style.color='#fff';}setTimeout(draw,60);};img.src=dataUrl;
+    document.getElementById('cancelCrop').onclick=function(){modal.style.display='none';if(onCancel)onCancel();};
+    document.getElementById('rbSkip').onclick=function(){modal.style.display='none';if(onDone)onDone(dataUrl);};
+    document.getElementById('applyCrop').onclick=function(){
+      var out=document.createElement('canvas');out.width=Math.round(rect.w);out.height=Math.round(rect.h);out.getContext('2d').drawImage(src,rect.x,rect.y,rect.w,rect.h,0,0,out.width,out.height);modal.style.display='none';if(onDone)onDone(out.toDataURL('image/jpeg',0.96));
+    };
+  };
+  window.closeRbCropDialog=function(){document.getElementById('cropperModal').style.display='none';};
+})();
+</script>
 </body></html>

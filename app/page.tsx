@@ -7,6 +7,7 @@ import Tesseract from "tesseract.js";
 import { supabase } from "@/lib/supabase";
 import { SERVICE_CATALOG } from "@/app/dashboard/tools/serviceDocumentCatalog";
 import styles from "./home.module.css";
+import "./home-new.css";
 
 type ServiceItem = {
   id?: string;
@@ -426,158 +427,149 @@ export default function HomePage() {
     setShowApplicationPopup(false);
   }
 
-  return <main className={styles.page} style={{ "--home-primary": homepageSettings.theme.primary, "--home-accent": homepageSettings.theme.accent, "--home-background": homepageSettings.theme.background } as any}>
-    <header className={styles.header}>
-      <div className={styles.container + " " + styles.headerInner}>
-        <Link href="/" className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></Link>
-        <nav className={styles.nav}><a href="#services">സേവനങ്ങൾ</a><a href="#status">അപേക്ഷാ സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a><label title="Receipt photo to text" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:34,height:34,borderRadius:10,border:"1px solid #dce7f5",color:"#155eef",cursor:receiptBusy?"wait":"pointer",opacity:receiptBusy?0.55:1}}><Camera size={17}/><input type="file" accept="image/*" capture="environment" disabled={receiptBusy} onChange={e=>{const file=e.target.files?.[0];void handleReceiptCamera(file);e.currentTarget.value="";}} style={{display:"none"}} aria-label="Receipt camera"/></label><Link href="/login" className={styles.loginButton}>Official Login</Link></nav>
-      </div>
+    return <main className="nhRoot">
+    <header className="nhHeader">
+      <div className="nhWrap"><nav className="nhNav nhGlass">
+        <Link href="/" className="nhBrand"><img src="/akshaya-logo.png" alt="Akshaya"/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><small>ഡിജിറ്റൽ സേവന കേന്ദ്രം</small></div></Link>
+        <div className="nhLinks">
+          <a href="#services">സേവനങ്ങൾ</a><a href="#status">അപേക്ഷാ സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a>
+          <label className="nhCam" title="Receipt photo to text" style={{ cursor: receiptBusy ? "wait" : "pointer", opacity: receiptBusy ? 0.55 : 1 }}><Camera size={17}/><input type="file" accept="image/*" capture="environment" disabled={receiptBusy} onChange={e => { const file = e.target.files?.[0]; void handleReceiptCamera(file); e.currentTarget.value = ""; }} style={{ display: "none" }} aria-label="Receipt camera"/></label>
+          <Link href="/login" className="nhBtn nhB1">Official Login</Link>
+        </div>
+      </nav></div>
     </header>
 
-    <section className={styles.updatesSection}>
-      <div className={styles.container}>
-        <div className={styles.updatesHeading}>
-          <div>
-            <span><Sparkles size={13}/> സർക്കാർ സേവനങ്ങൾ</span>
-            <h2>പുതിയ സേവനങ്ങളും അറിയിപ്പുകളും</h2>
-            <p>പുതിയതായി ലഭിക്കുന്ന സേവനങ്ങൾ ഇവിടെ കാണാം.</p>
-          </div>
-          <div className={styles.sliderDots}>
-            {featuredServices.map((item, i) => <button key={item.id} aria-label={item.title} className={i === featuredIndex ? styles.sliderDotActive : styles.sliderDot} onClick={() => setFeaturedIndex(i)} />)}
+    <div className="nhWrap">
+      <section className="nhHero">
+        <div>
+          <span className="nhTag"><Sparkles size={14}/> ഡിജിറ്റൽ സേവന കേന്ദ്രം</span>
+          <h1>സർക്കാർ സേവനങ്ങൾ <em className="nhGrad">എളുപ്പത്തിൽ, വേഗത്തിൽ</em></h1>
+          <p>സേവനം തിരഞ്ഞെടുത്ത് അപേക്ഷിക്കാം, അപേക്ഷ നമ്പർ ഉപയോഗിച്ച് status അറിയാം, ആവശ്യമായ രേഖകൾ WhatsApp വഴി അയയ്ക്കാം.</p>
+          <div className="nhCta">
+            <a href="#services" className="nhBtn nhB1">സേവനം തിരഞ്ഞെടുക്കൂ</a>
+            <a href="#status" className="nhBtn nhB2">അപേക്ഷാ സ്റ്റാറ്റസ്</a>
+            <a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className="nhBtn"><MessageCircle size={18}/> WhatsApp</a>
           </div>
         </div>
-        <div className={styles.posterViewport} onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
-          <div className={styles.posterTrack} style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>
-            {featuredServices.map((item) => (
-              <article className={styles.servicePoster} key={item.id} style={{ "--poster-image": `url("${item.image}")` } as React.CSSProperties}>
-                <img src={item.image} alt={item.title} />
-                <div className={styles.posterOverlay}>
+        <div className="nhScene" aria-hidden="true">
+          <div className="nhChip nhGlass nhChip1">✅ അപേക്ഷ ലഭിച്ചു</div>
+          <div className="nhChip nhGlass nhChip2">🎟️ അപേക്ഷ നമ്പർ ലഭിക്കും</div>
+          <div className="nhDeck">
+            <div className="nhCard nhC1"><b>ആധാർ</b><i/><i/><i/></div>
+            <div className="nhCard nhC2"><b>PAN</b><i/><i/><i/></div>
+            <div className="nhCard nhC3"><b>Passport</b><i/><i/><i/></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="nhSec" id="updates">
+        <span className="nhTag"><Sparkles size={14}/> സർക്കാർ സേവനങ്ങൾ</span>
+        <h2>പുതിയ സേവനങ്ങളും അറിയിപ്പുകളും</h2>
+        <p className="nhSub">പുതിയതായി ലഭിക്കുന്ന സേവനങ്ങൾ ഇവിടെ കാണാം.</p>
+        <div className="nhViewport nhGlass" onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
+          <div className="nhTrack" style={{ transform: `translateX(-${featuredIndex * 100}%)` }}>
+            {featuredServices.map(item => (
+              <article className="nhPoster" key={item.id}>
+                <img src={item.image} alt={item.title}/>
+                <div className="nhOverlay">
                   <div><span>New Service</span><h3>{item.title}</h3><p>{item.subtitle}</p></div>
-                  {item.apply !== false && <button type="button" onClick={() => applyFeatured(item)}>Apply Now <ArrowRight size={16}/></button>}
+                  {item.apply !== false && <button type="button" className="nhBtn nhB2" onClick={() => applyFeatured(item)}>Apply Now <ArrowRight size={16}/></button>}
                 </div>
               </article>
             ))}
           </div>
         </div>
-      </div>
-    </section>
+        <div className="nhDots">{featuredServices.map((item, i) => <button key={item.id} type="button" aria-label={item.title} className={i === featuredIndex ? "on" : ""} onClick={() => setFeaturedIndex(i)}/>)}</div>
+      </section>
 
-    <section id="services" className={styles.serviceSection}>
-      <div className={styles.container}>
-        <div className={styles.sectionHeading}><span>Services · സേവനങ്ങൾ</span><h2>ഒരു സേവനം തിരഞ്ഞെടുക്കൂ</h2><p>നിങ്ങളുടെ ആവശ്യമായ സേവനം Search ചെയ്ത് തിരഞ്ഞെടുക്കാം.</p></div>
-        <div className={styles.serviceControls}>
-          <div className={styles.categoryPickerWrap}>
-            <button
-              type="button"
-              className={styles.categoryPicker}
-              onClick={() => setShowCategoryMenu(v => !v)}
-            >
-              <span className={styles.controlIcon}>☰</span>
-              <span>
-                <small>Category</small>
-                <strong>{selectedCategory || "Select Category"}</strong>
-              </span>
-              <span className={styles.controlChevron}>⌄</span>
+      <section className="nhSec" id="services">
+        <span className="nhTag">Services · സേവനങ്ങൾ</span>
+        <h2>ഒരു സേവനം തിരഞ്ഞെടുക്കൂ</h2>
+        <p className="nhSub">നിങ്ങളുടെ ആവശ്യമായ സേവനം Search ചെയ്ത് തിരഞ്ഞെടുക്കാം.</p>
+        <div className="nhTools">
+          <div className="nhPick">
+            <button type="button" onClick={() => setShowCategoryMenu(v => !v)}><span>☰</span><span><small>Category</small><strong>{selectedCategory || "Select Category"}</strong></span></button>
+            {showCategoryMenu && <div className="nhMenu nhGlass">
+              <button type="button" onClick={() => { setSelectedCategory(""); setShowCategoryMenu(false); }}>All Categories</button>
+              {categories.map(category => <button key={category} type="button" onClick={() => { setSelectedCategory(category); setShowCategoryMenu(false); }}>{category}</button>)}
+            </div>}
+          </div>
+          <button type="button" className="nhAll nhGlass" onClick={() => setShowAllServices(true)}><span>☷</span><span><small>Service List</small><strong>All Services</strong></span><ArrowRight size={17}/></button>
+          <div className="nhSearch"><Search size={19}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="സേവനം തിരയുക... / Search service..."/></div>
+        </div>
+        {!loading && <div className="nhGrid">
+          {(selectedCategory || search ? filtered : filtered.slice(0, 6)).map((s, i) => (
+            <button key={String(s.id || i)} type="button" onClick={() => openService(s)} className="nhSvc nhGlass">
+              <span className="nhIc">{iconFor(serviceName(s))}</span>
+              <span><h3>{serviceName(s)}</h3><p>സേവനത്തിന്റെ ആവശ്യകതകളും രേഖകളും കാണാൻ ക്ലിക്ക് ചെയ്യുക</p><em>വിശദാംശങ്ങൾ കാണുക <ArrowRight size={15}/></em></span>
             </button>
-            {showCategoryMenu && (
-              <div className={styles.categoryMenu}>
-                <button type="button" onClick={() => { setSelectedCategory(""); setShowCategoryMenu(false); }}>All Categories</button>
-                {categories.map(category => (
-                  <button key={category} type="button" onClick={() => { setSelectedCategory(category); setShowCategoryMenu(false); }}>
-                    {category}
-                  </button>
-                ))}
-              </div>
-            )}
+          ))}
+        </div>}
+        {loading && <div className="nhEmpty">സേവനങ്ങളുടെ ലിസ്റ്റ് ലോഡ് ചെയ്യുന്നു...</div>}
+        {!loading && filtered.length === 0 && <div className="nhEmpty">സേവനം കണ്ടെത്താനായില്ല. മറ്റൊരു പേര് Search ചെയ്യൂ.</div>}
+      </section>
+
+      <section className="nhSec">
+        <h2>എങ്ങനെ പ്രവർത്തിക്കുന്നു</h2>
+        <p className="nhSub">മൂന്ന് എളുപ്പ ഘട്ടങ്ങൾ</p>
+        <div className="nhSteps">
+          <div className="nhStep nhGlass"><em>1</em><h3>സേവനം തിരഞ്ഞെടുക്കൂ</h3><p>ആവശ്യമായ രേഖകൾ എന്തെല്ലാമെന്ന് കാണാം.</p></div>
+          <div className="nhStep nhGlass"><em>2</em><h3>വിവരങ്ങൾ നൽകൂ</h3><p>അപേക്ഷ Submit ചെയ്ത് 4 അക്ക അപേക്ഷ നമ്പർ നേടൂ.</p></div>
+          <div className="nhStep nhGlass"><em>3</em><h3>WhatsApp-ൽ രേഖകൾ അയയ്ക്കൂ</h3><p>അപേക്ഷ നമ്പർ ഉപയോഗിച്ച് status നോക്കാം.</p></div>
+        </div>
+      </section>
+
+      <section className="nhSec" id="status">
+        <div className="nhStatus nhGlass">
+          <span className="nhTag">അപേക്ഷാ സ്റ്റാറ്റസ്</span>
+          <h2>അപേക്ഷയുടെ നിലവിലെ സ്ഥിതി അറിയാം</h2>
+          <p className="nhSub">നിങ്ങൾക്ക് ലഭിച്ച 4 അക്ക അപേക്ഷ നമ്പർ നൽകൂ. സ്റ്റാഫ് update ചെയ്തിരിക്കുന്ന status ഇവിടെ കാണാം.</p>
+          <div className="nhRow">
+            <input inputMode="numeric" maxLength={4} value={statusNumber} onChange={e => setStatusNumber(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="4 അക്ക അപേക്ഷ നമ്പർ" onKeyDown={e => { if (e.key === "Enter") trackApplication(); }}/>
+            <button type="button" className="nhBtn nhB1" onClick={trackApplication} disabled={statusLoading}>{statusLoading ? "തിരയുന്നു..." : "Status നോക്കുക"}</button>
           </div>
+          {statusMessage && <p className="nhMsg">{statusMessage}</p>}
+          {statusResult && <div className="nhRes">
+            <div><span>അപേക്ഷ നമ്പർ</span><strong>{statusResult.applicationNumber}</strong></div>
+            <div><span>പേര്</span><strong>{statusResult.customer?.name || "—"}</strong></div>
+            <div><span>മൊബൈൽ</span><strong>{maskMobile(statusResult.customer?.mobile || "")}</strong></div>
+            <div><span>സേവനം</span><strong>{statusResult.service}</strong></div>
+            <div><span>നിലവിലെ സ്ഥിതി</span><strong>{statusResult.status}</strong></div>
+            {statusResult.note && <div><span>കുറിപ്പ് / Note</span><strong>{statusResult.note}</strong></div>}
+          </div>}
+        </div>
+      </section>
 
-          <button
-            type="button"
-            className={styles.allServicesCard}
-            onClick={() => setShowAllServices(true)}
-          >
-            <span className={styles.allServicesIcon}>☷</span>
-            <span>
-              <small>Service List</small>
-              <strong>All Services</strong>
-            </span>
-            <ArrowRight size={17} />
-          </button>
-
-          <div className={styles.searchBox}>
-            <Search size={19}/>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="സേവനം തിരയുക... / Search service..."/>
+      <section className="nhSec nhContact" id="contact">
+        <div>
+          <span className="nhTag">Contact · ബന്ധപ്പെടുക</span>
+          <h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2>
+          <p className="nhSub">സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.</p>
+          <div className="nhPts">
+            {homepageSettings.contact.whatsapp && <div><MessageCircle/><a href={"https://wa.me/" + homepageSettings.contact.whatsapp.replace(/\D/g, "")} target="_blank" rel="noopener noreferrer">WhatsApp: {homepageSettings.contact.whatsapp}</a></div>}
+            {homepageSettings.contact.mobile && <div><Phone/><a href={"tel:" + homepageSettings.contact.mobile.replace(/\D/g, "")}>Mobile: {homepageSettings.contact.mobile}</a></div>}
+            {homepageSettings.contact.mobile2 && <div><Phone/><a href={"tel:" + homepageSettings.contact.mobile2.replace(/\D/g, "")}>Mobile 2: {homepageSettings.contact.mobile2}</a></div>}
+            {homepageSettings.contact.email && <div><FileText/><a href={"mailto:" + homepageSettings.contact.email}>Email: {homepageSettings.contact.email}</a></div>}
+            <div><MapPin/><span>{homepageSettings.contact.address || "പൂക്കിപ്പറമ്പ്, കേരളം"}</span></div>
+            <div><FileText/><span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span></div>
           </div>
         </div>
-
-        {!loading && (selectedCategory || search) && (
-          <div className={styles.serviceGrid}>
-            {filtered.map((s, i) => (
-              <button key={String(s.id || i)} onClick={() => openService(s)} className={styles.serviceCard}>
-                <div className={styles.serviceEmoji}>{iconFor(serviceName(s))}</div>
-                <div className={styles.serviceText}>
-                  <h3>{serviceName(s)}</h3>
-                  <p>സേവനത്തിന്റെ ആവശ്യകതകളും രേഖകളും കാണാൻ ക്ലിക്ക് ചെയ്യുക</p>
-                  <span>വിശദാംശങ്ങൾ കാണുക <ArrowRight size={15}/></span>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-        {!loading && filtered.length === 0 && <div className={styles.emptyState}>സേവനം കണ്ടെത്താനായില്ല. മറ്റൊരു പേര് Search ചെയ്യൂ.</div>}
-      </div>
-    </section>
-
-    <section id="status" className={styles.statusSection}>
-      <div className={styles.container}>
-        <div className={styles.statusCard}>
-          <div className={styles.statusCopy}>
-            <span className={styles.statusBadge}>അപേക്ഷാ സ്റ്റാറ്റസ്</span>
-            <h2>അപേക്ഷയുടെ നിലവിലെ സ്ഥിതി അറിയാം</h2>
-            <p>നിങ്ങൾക്ക് ലഭിച്ച 4 അക്ക അപേക്ഷ നമ്പർ നൽകൂ. സ്റ്റാഫ് update ചെയ്തിരിക്കുന്ന status ഇവിടെ കാണാം.</p>
-            <div className={styles.statusSearch}>
-              <input
-                inputMode="numeric"
-                maxLength={4}
-                value={statusNumber}
-                onChange={e => setStatusNumber(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                placeholder="4 അക്ക അപേക്ഷ നമ്പർ"
-                onKeyDown={e => { if (e.key === "Enter") trackApplication(); }}
-              />
-              <button onClick={trackApplication} disabled={statusLoading}>
-                {statusLoading ? "തിരയുന്നു..." : "Status നോക്കുക"}
-              </button>
-            </div>
-            {statusMessage && <p className={styles.statusMessage}>{statusMessage}</p>}
-            {statusResult && (
-              <div className={styles.statusResult}>
-                <div><span>അപേക്ഷ നമ്പർ</span><strong>{statusResult.applicationNumber}</strong></div>
-                <div><span>പേര്</span><strong>{statusResult.customer?.name || "—"}</strong></div>
-                <div><span>മൊബൈൽ</span><strong>{maskMobile(statusResult.customer?.mobile || "")}</strong></div>
-                <div><span>സേവനം</span><strong>{statusResult.service}</strong></div>
-                <div><span>നിലവിലെ സ്ഥിതി</span><strong className={styles.liveStatus}>{statusResult.status}</strong></div>
-                {statusResult.note && (
-                  <div className={styles.statusNote}>
-                    <span>കുറിപ്പ് / Note</span>
-                    <strong>{statusResult.note}</strong>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+        <div className="nhBox nhGlass">
+          <h3>നേരിട്ട് സഹായം വേണോ?</h3>
+          <p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p>
+          <a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className="nhBtn nhWa"><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a>
         </div>
-      </div>
-    </section>
+      </section>
+      <footer className="nhFoot">© അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</footer>
+    </div>
+
+    <a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className="nhFab" aria-label="WhatsApp"><MessageCircle size={26}/></a>
 
     {showAllServices && (
       <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) setShowAllServices(false); }}>
         <div className={styles.allServicesModal}>
           <div className={styles.allServicesModalHeader}>
-            <div>
-              <span>All Services</span>
-              <h2>സേവനങ്ങളുടെ മുഴുവൻ ലിസ്റ്റ്</h2>
-              <p>ഒരു service തിരഞ്ഞെടുക്കാൻ താഴെയുള്ള card ക്ലിക്ക് ചെയ്യുക.</p>
-            </div>
+            <div><span>All Services</span><h2>സേവനങ്ങളുടെ മുഴുവൻ ലിസ്റ്റ്</h2><p>ഒരു service തിരഞ്ഞെടുക്കാൻ താഴെയുള്ള card ക്ലിക്ക് ചെയ്യുക.</p></div>
             <button type="button" onClick={() => setShowAllServices(false)}><X/></button>
           </div>
           <div className={styles.allServicesModalBody}>
@@ -586,17 +578,9 @@ export default function HomePage() {
             ) : (
               <div className={styles.allServicesGrid}>
                 {services.map((s, i) => (
-                  <button
-                    key={String(s.id || i)}
-                    type="button"
-                    className={styles.allServiceItem}
-                    onClick={() => { setShowAllServices(false); openService(s); }}
-                  >
+                  <button key={String(s.id || i)} type="button" className={styles.allServiceItem} onClick={() => { setShowAllServices(false); openService(s); }}>
                     <div className={styles.allServiceIcon}>{iconFor(serviceName(s))}</div>
-                    <div>
-                      <strong>{serviceName(s)}</strong>
-                      <span>{serviceCategory(serviceName(s))}</span>
-                    </div>
+                    <div><strong>{serviceName(s)}</strong><span>{serviceCategory(serviceName(s))}</span></div>
                     <ArrowRight size={16}/>
                   </button>
                 ))}
@@ -607,60 +591,8 @@ export default function HomePage() {
       </div>
     )}
 
-    <section id="contact" className={styles.infoSection}>
-      <div className={styles.container + " " + styles.infoGrid}>
-        <div>
-          <div className={styles.sectionHeading}>
-            <span>Contact · ബന്ധപ്പെടുക</span>
-            <h2>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</h2>
-            <p>സേവനം സംബന്ധിച്ച സംശയങ്ങൾക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം.</p>
-          </div>
-          <div className={styles.points}>
-            {homepageSettings.contact.whatsapp && (
-              <div>
-                <MessageCircle/>
-                <a href={"https://wa.me/" + homepageSettings.contact.whatsapp.replace(/\D/g, "")} target="_blank" rel="noopener noreferrer">WhatsApp: {homepageSettings.contact.whatsapp}</a>
-              </div>
-            )}
-            {homepageSettings.contact.mobile && (
-              <div>
-                <Phone/>
-                <a href={"tel:" + homepageSettings.contact.mobile.replace(/\D/g, "")}>Mobile: {homepageSettings.contact.mobile}</a>
-              </div>
-            )}
-            {homepageSettings.contact.mobile2 && (
-              <div>
-                <Phone/>
-                <a href={"tel:" + homepageSettings.contact.mobile2.replace(/\D/g, "")}>Mobile 2: {homepageSettings.contact.mobile2}</a>
-              </div>
-            )}
-            {homepageSettings.contact.email && (
-              <div>
-                <FileText/>
-                <a href={"mailto:" + homepageSettings.contact.email}>Email: {homepageSettings.contact.email}</a>
-              </div>
-            )}
-            <div>
-              <MapPin/>
-              <span>{homepageSettings.contact.address || "പൂക്കിപ്പറമ്പ്, കേരളം"}</span>
-            </div>
-            <div>
-              <FileText/>
-              <span>ആവശ്യമായ രേഖകൾ സേവനം അനുസരിച്ച് മാറാം.</span>
-            </div>
-          </div>
-        </div>
-        <div className={styles.contactCard}>
-          <h2>നേരിട്ട് സഹായം വേണോ?</h2>
-          <p>നിങ്ങളുടെ സേവനം തിരഞ്ഞെടുക്കൂ, വിവരങ്ങൾ നൽകൂ, തുടർന്ന് WhatsApp വഴി ഞങ്ങളുമായി ബന്ധപ്പെടൂ.</p>
-          <a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className={styles.whatsappButton}><MessageCircle size={20}/> WhatsApp ബന്ധപ്പെടുക</a>
-        </div>
-      </div>
-    </section>
+    {receiptMessage && <div role="status" aria-live="polite" style={{position:"fixed",right:14,bottom:84,zIndex:100,background:"#10213f",color:"#fff",padding:"11px 14px",borderRadius:12,maxWidth:320,fontSize:13,boxShadow:"0 10px 30px #10213f33"}}>{receiptBusy ? "ഫോട്ടോ പ്രോസസ് ചെയ്യുന്നു..." : receiptMessage}<button type="button" onClick={()=>setReceiptMessage("")} aria-label="Close" style={{marginLeft:10,color:"#fff",fontWeight:800}}>×</button></div>}
 
-
-
-    {receiptMessage && <div role="status" aria-live="polite" style={{position:"fixed",right:14,bottom:14,zIndex:100,background:"#10213f",color:"#fff",padding:"11px 14px",borderRadius:12,maxWidth:320,fontSize:13,boxShadow:"0 10px 30px #10213f33"}}>{receiptBusy ? "ഫോട്ടോ പ്രോസസ് ചെയ്യുന്നു..." : receiptMessage}<button type="button" onClick={()=>setReceiptMessage("")} aria-label="Close" style={{marginLeft:10,color:"#fff",fontWeight:800}}>×</button></div>}
     {selected && flow && <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) closeService(); }}>
       <div className={styles.serviceModal}>
         <div className={styles.modalHeader}><div><span>Service Request</span><h2>{serviceName(selected)}</h2></div><button onClick={closeService}><X/></button></div>
@@ -672,7 +604,6 @@ export default function HomePage() {
         <div className={styles.modalFooter}>{submitError && <span className={styles.submitError}>{submitError}</span>}<button className={styles.secondaryButton} onClick={closeService}>Cancel</button><button className={styles.primaryButton} onClick={submitApplication}><CheckCircle2 size={18}/> Submit അപേക്ഷ</button></div>
       </div>
     </div>}
-
 
     {showApplicationPopup && selected && flow && <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) closeApplicationPopup(); }}>
       <div className={styles.applicationPopup}>
@@ -689,5 +620,6 @@ export default function HomePage() {
         <small>WhatsApp തുറന്ന ശേഷം ആവശ്യമായ രേഖകൾ attach ചെയ്ത് അയയ്ക്കുക. അപേക്ഷ നമ്പറും സേവന വിവരവും മെസ്സേജിൽ സ്വയം വരും.</small>
         <button className={styles.popupCloseButton} onClick={closeApplicationPopup}>പിന്നീട് Upload ചെയ്യാം</button>
       </div>
-    </div>}  </main>;
+    </div>}
+  </main>;
 }

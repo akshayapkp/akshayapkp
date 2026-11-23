@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./effects/effects.css";
+import FxProvider from "./effects/FxProvider";
 
 export const metadata: Metadata = {
   title: "Akshaya Pookiparamba",
@@ -19,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="bg-[#eef4ff]">
       <body suppressHydrationWarning className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+       <FxProvider />
         {children}
       </body>
     </html>
