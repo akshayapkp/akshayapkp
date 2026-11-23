@@ -594,34 +594,7 @@ window.applyResumeCategory = function() {
     });
 };
 
-const EDUCATION_SUGGESTIONS_KEY = 'resume-builder-education-suggestions';
-function readEducationSuggestions() {
-    try { return JSON.parse(localStorage.getItem(EDUCATION_SUGGESTIONS_KEY) || '{"degrees":[],"schools":[]}'); } catch { return { degrees: [], schools: [] }; }
-}
-function renderEducationSuggestions() {
-    const container = document.getElementById('educationSavedSuggestions');
-    if (!container) return;
-    const saved = readEducationSuggestions();
-    const values = [...saved.degrees.map(value => `Degree: ${value}`), ...saved.schools.map(value => `Board: ${value}`)];
-    container.innerHTML = values.map(label => `<span class="saved-suggestion">${label}<button type="button" aria-label="Delete saved education suggestion" onclick="window.deleteEducationSuggestion('${label.replace(/^(Degree: |Board: )/, '').replace(/'/g, "\\'")}')"><i class="fas fa-times"></i></button></span>`).join('');
-}
-window.deleteEducationSuggestion = function(value) {
-    const saved = readEducationSuggestions();
-    saved.degrees = saved.degrees.filter(item => item !== value);
-    saved.schools = saved.schools.filter(item => item !== value);
-    localStorage.setItem(EDUCATION_SUGGESTIONS_KEY, JSON.stringify(saved));
-    renderEducationSuggestions();
-};
-function saveEducationSuggestions() {
-    const saved = readEducationSuggestions();
-    document.querySelectorAll('.edu-degree').forEach(field => { const value = field.value.trim(); if (value && !saved.degrees.includes(value)) saved.degrees.push(value); });
-    document.querySelectorAll('.edu-school').forEach(field => { const value = field.value.trim(); if (value && !saved.schools.includes(value)) saved.schools.push(value); });
-    localStorage.setItem(EDUCATION_SUGGESTIONS_KEY, JSON.stringify(saved));
-    renderEducationSuggestions();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    renderEducationSuggestions();
     const categorySelect = document.getElementById('resumeCategory');
     const categoryButton = document.getElementById('resumeCategoryAutoFill');
     if (categorySelect) {
@@ -630,9 +603,6 @@ document.addEventListener('DOMContentLoaded', () => {
             categoryButton?.focus();
         });
     }
-    document.addEventListener('blur', (event) => {
-        if (event.target.matches?.('.edu-degree, .edu-school')) saveEducationSuggestions();
-    }, true);
 
     let currentResumeId = null;
 
