@@ -10,7 +10,8 @@
     skill: ['Communication', 'Customer Service', 'MS Office', 'Excel', 'Tally', 'Data Entry', 'Typing', 'Accounting', 'Sales', 'HTML', 'CSS', 'JavaScript', 'React', 'PHP', 'Python', 'Photoshop'],
     language: ['English', 'Malayalam', 'Hindi', 'Arabic', 'Tamil', 'Urdu', 'Kannada', 'Telugu', 'Bengali', 'French', 'German'],
     hobby: ['Reading', 'Travelling', 'Music', 'Sports', 'Cooking', 'Photography', 'Drawing', 'Gardening', 'Movies', 'Volunteering'],
-    education: ['SSLC', 'Plus Two', 'VHSE', 'ITI', 'Diploma', 'Bachelor Degree', 'BCom', 'BBA', 'BSc', 'BA', 'BCA', 'BTech', 'Master Degree', 'MCom', 'MBA', 'MSc', 'MA', 'MCA', 'MTech', 'PhD'],
+    education: ['SSLC', 'Plus Two', 'Higher Secondary', 'VHSE', 'CBSE 10th', 'CBSE 12th', 'ICSE', 'ISC', 'NIOS', 'ITI', 'Diploma', 'Polytechnic Diploma', 'Bachelor Degree', 'BA', 'BCom', 'BBA', 'BSc', 'BCA', 'BEd', 'BTech', 'BE', 'LLB', 'MBBS', 'BPharm', 'BSc Nursing', 'Master Degree', 'MA', 'MCom', 'MBA', 'MSc', 'MCA', 'MEd', 'MTech', 'ME', 'LLM', 'PhD'],
+    educationBoard: ['University of Kerala', 'University of Calicut', 'Mahatma Gandhi University', 'Kannur University', 'Cochin University of Science and Technology (CUSAT)', 'APJ Abdul Kalam Technological University (KTU)', 'Kerala University of Health Sciences (KUHS)', 'Kerala Agricultural University', 'Sree Sankaracharya University of Sanskrit', 'Thunchath Ezhuthachan Malayalam University', 'National University of Advanced Legal Studies (NUALS)', 'Indira Gandhi National Open University (IGNOU)', 'University of Madras', 'Bharathiar University', 'Kerala Board of Public Examinations', 'Directorate of Higher Secondary Education (DHSE), Kerala', 'Vocational Higher Secondary Education (VHSE), Kerala', 'Kerala State Board', 'Central Board of Secondary Education (CBSE)', 'Council for the Indian School Certificate Examinations (CISCE)', 'National Institute of Open Schooling (NIOS)', 'Board of Technical Education, Kerala'],
     job: ['Salesman', 'Sales Executive', 'Accountant', 'Cashier', 'Teacher', 'Office Assistant', 'Data Entry Operator', 'Customer Service Executive', 'Receptionist', 'Driver', 'Electrician', 'Plumber', 'Nurse', 'Chef', 'Store Keeper', 'Computer Operator']
   };
 
@@ -66,10 +67,84 @@
     });
   };
 
+  const educationDropdowns = new WeakSet();
+  const educationOptions = {
+    education: lists.education,
+    educationBoard: lists.educationBoard
+  };
+  const readCustomEducation = key => {
+    try {
+      const all = JSON.parse(localStorage.getItem(storeKey) || '{}');
+      const old = JSON.parse(localStorage.getItem('resume-builder-education-suggestions') || '{}');
+      const legacy = key === 'education' ? (old.degrees || []) : (old.schools || []);
+      return [...(all[key] || []), ...legacy];
+    } catch { return []; }
+  };
+  const saveEducationOption = (key, value) => {
+    const clean = String(value || '').trim();
+    if (!clean) return;
+    const all = custom();
+    const current = all[key] || [];
+    if (current.some(item => item.toLowerCase() === clean.toLowerCase()) ||
+        (educationOptions[key] || []).some(item => item.toLowerCase() === clean.toLowerCase())) return;
+    all[key] = [...current, clean];
+    localStorage.setItem(storeKey, JSON.stringify(all));
+  };
+  const enhanceEducationDropdown = (input, key) => {
+    if (!input || educationDropdowns.has(input)) return;
+    educationDropdowns.add(input);
+    input.removeAttribute('list');
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('placeholder', key === 'education' ? 'Select or type qualification' : 'Select or type university / board');
+    let menu = null, active = -1;
+    const close = () => { if (menu) menu.remove(); menu = null; active = -1; input.setAttribute('aria-expanded', 'false'); };
+    const options = () => [...new Map([...(educationOptions[key] || []), ...readCustomEducation(key)].filter(Boolean).map(v => [v.toLowerCase(), v])).values()];
+    const choose = value => { input.value = value; saveEducationOption(key, value); input.dispatchEvent(new Event('input', {bubbles:true})); input.dispatchEvent(new Event('change', {bubbles:true})); close(); };
+    const render = () => {
+      close();
+      const q = input.value.trim().toLowerCase();
+      const matches = options().filter(v => !q || v.toLowerCase().includes(q)).slice(0, 80);
+      menu = document.createElement('div');
+      menu.setAttribute('role','listbox');
+      menu.style.cssText = 'position:fixed;z-index:1000002;max-height:240px;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 12px 32px rgba(15,23,42,.18);padding:5px;box-sizing:border-box;';
+      const rect = input.getBoundingClientRect();
+      menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - Math.min(Math.max(rect.width,240), window.innerWidth-16) - 8)) + 'px';
+      menu.style.width = Math.min(Math.max(rect.width,240), window.innerWidth-16) + 'px';
+      menu.style.top = Math.min(rect.bottom + 4, window.innerHeight - 250) + 'px';
+      matches.forEach((value,index) => {
+        const option=document.createElement('button'); option.type='button'; option.textContent=value;
+        option.setAttribute('role','option');
+        option.style.cssText='display:block;width:100%;text-align:left;border:0;background:#fff;color:#1e293b;padding:9px 11px;border-radius:7px;font:inherit;cursor:pointer;';
+        option.addEventListener('mouseenter',()=>{active=index;});
+        option.addEventListener('pointerdown',e=>{e.preventDefault();choose(value);});
+        menu.appendChild(option);
+      });
+      if (q && !matches.some(v=>v.toLowerCase()===q)) {
+        const add=document.createElement('button');add.type='button';add.textContent='＋ Add "'+input.value.trim()+'"';
+        add.style.cssText='display:block;width:100%;text-align:left;border:0;border-top:1px solid #e2e8f0;background:#f8fafc;color:#0369a1;padding:10px 11px;border-radius:7px;font:inherit;font-weight:700;cursor:pointer;';
+        add.addEventListener('pointerdown',e=>{e.preventDefault();const value=input.value.trim();saveEducationOption(key,value);choose(value);});
+        menu.appendChild(add);
+      }
+      if (!matches.length && !q) { const empty=document.createElement('div');empty.textContent='No saved options yet. Type to add one.';empty.style.cssText='padding:10px;color:#64748b;font-size:12px;';menu.appendChild(empty); }
+      document.body.appendChild(menu);
+      input.setAttribute('aria-expanded','true');
+    };
+    input.addEventListener('focus',render);
+    input.addEventListener('click',render);
+    input.addEventListener('input',render);
+    input.addEventListener('blur',()=>{setTimeout(()=>{if(!menu)return;const value=input.value.trim();if(value)saveEducationOption(key,value);close();},140);});
+    input.addEventListener('keydown',e=>{
+      if(e.key==='Escape'){close();return;}
+      if(e.key==='Enter'&&menu){e.preventDefault();const first=menu.querySelector('button');if(first)first.dispatchEvent(new Event('pointerdown',{bubbles:true}));else{saveEducationOption(key,input.value);close();}}
+    });
+  };
+
   const enhanceDynamicFields = () => {
     document.querySelectorAll('#guardianList .g-rel').forEach(input => enhance(input, 'guardian'));
     document.querySelectorAll('#languagesList .lang-name').forEach(input => enhance(input, 'language'));
-    document.querySelectorAll('#educationList .edu-degree').forEach(input => enhance(input, 'education'));
+    document.querySelectorAll('#educationList .edu-degree').forEach(input => enhanceEducationDropdown(input, 'education'));
+    document.querySelectorAll('#educationList .edu-school').forEach(input => enhanceEducationDropdown(input, 'educationBoard'));
     document.querySelectorAll('#experienceList .exp-title').forEach(input => enhance(input, 'job'));
   };
 
