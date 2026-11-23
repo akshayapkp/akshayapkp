@@ -692,3 +692,49 @@ body {
         break-inside: avoid;
     }
 }
+
+
+/* Resume Builder scroll behavior: hide only the outer page scrollbar; keep both work panels scrollable. */
+@media (min-width: 901px) {
+    html,
+    body {
+        height: 100%;
+        overflow: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
+    .app-container {
+        min-height: 0;
+        height: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+    }
+
+    .editor-panel {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    #bioDataForm,
+    .preview-panel {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        -ms-overflow-style: auto;
+    }
+
+    #bioDataForm::-webkit-scrollbar,
+    .preview-panel::-webkit-scrollbar {
+        display: block;
+        width: 8px;
+    }
+}
