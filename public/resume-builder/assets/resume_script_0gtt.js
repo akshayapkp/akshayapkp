@@ -1,3 +1,18 @@
+// Expand/collapse only the requested optional form sections without affecting Enable/Disable.
+window.toggleResumeSection = function(sectionId, button) {
+    const panel = document.getElementById(sectionId);
+    if (!panel || !button) return;
+    const isOpen = button.getAttribute('aria-expanded') === 'true';
+    panel.hidden = isOpen;
+    button.setAttribute('aria-expanded', String(!isOpen));
+    button.title = isOpen ? 'Show details' : 'Hide details';
+    const icon = button.querySelector('i');
+    if (icon) {
+        icon.classList.toggle('fa-chevron-down', isOpen);
+        icon.classList.toggle('fa-chevron-up', !isOpen);
+    }
+};
+
 // Expose dynamic generator functions globally before DOM parsing completes
 window.addContact = function() {
     const container = document.getElementById('contactList');
@@ -753,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize 1 default empty item in each dynamic form section
-    addContact(); addGuardian(); addIDCard(); addEducation(); addExperience(); addProject(); addReference(); addLanguage();
+    addEducation(); addExperience(); addLanguage();
 
     const templateSelector = document.getElementById('templateSelector');
     const updateTemplateLayout = () => {
