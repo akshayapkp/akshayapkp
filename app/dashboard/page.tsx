@@ -1429,6 +1429,19 @@ const loadDashboardData = () => {
                 }
                 continue;
               }
+              // Move legacy modal cards to their standalone routes so saved layouts do not keep launching old modals.
+              if (legacyUrl === "resume-builder-modal" || legacyName === "resume builder") {
+                normalizedOrder.push({ ...item, name: "Resume Builder", url: "/resume-builder", isInternal: true });
+                continue;
+              }
+              if (legacyUrl === "income-affidavit-modal" || legacyName === "income affidavit" || legacyName === "income update") {
+                normalizedOrder.push({ ...item, name: "Income Update", url: "/income-update", isInternal: true });
+                continue;
+              }
+              if (legacyUrl === "/dashboard/affidavit-writer" || legacyUrl === "/affidavit-writer" || legacyName === "affidavit & form writer") {
+                normalizedOrder.push({ ...item, name: "Affidavit & Form Writer", url: "/affidavit-writer", isInternal: true });
+                continue;
+              }
               normalizedOrder.push(item);
             }
             const savedKeys = new Set(
