@@ -23,11 +23,16 @@ window.addGuardian = function() {
     if (!container) return;
     const html = `
         <div class="dynamic-item rb-guardian-row">
-            <div class="rb-relation-picker">
-                <input type="hidden" class="g-rel" value="">
-                <button type="button" class="rb-relation-trigger" aria-label="Choose relationship" aria-expanded="false" onclick="toggleGuardianRelations(this)"><span class="rb-relation-value"></span><i class="fas fa-chevron-down"></i></button>
-                <div class="rb-relation-menu" hidden><button type="button" onclick="selectGuardianRelation(this,'Father')">Father</button><button type="button" onclick="selectGuardianRelation(this,'Mother')">Mother</button><button type="button" onclick="selectGuardianRelation(this,'Husband')">Husband</button><button type="button" onclick="selectGuardianRelation(this,'Wife')">Wife</button><button type="button" onclick="selectGuardianRelation(this,'Son')">Son</button><button type="button" onclick="selectGuardianRelation(this,'Daughter')">Daughter</button><button type="button" onclick="selectGuardianRelation(this,'Brother')">Brother</button><button type="button" onclick="selectGuardianRelation(this,'Sister')">Sister</button><button type="button" onclick="selectGuardianRelation(this,'Guardian')">Guardian</button><button type="button" onclick="selectGuardianRelation(this,'Grandfather')">Grandfather</button><button type="button" onclick="selectGuardianRelation(this,'Grandmother')">Grandmother</button><button type="button" onclick="selectGuardianRelation(this,'Uncle')">Uncle</button><button type="button" onclick="selectGuardianRelation(this,'Aunt')">Aunt</button><button type="button" onclick="selectGuardianRelation(this,'Other')">Other</button></div>
-            </div>
+            <select class="g-rel rb-relation-select" aria-label="Guardian relationship" onchange="updateDynamicPreview('guardian')">
+                <option value="" selected></option>
+                <option value="Father">Father</option><option value="Mother">Mother</option>
+                <option value="Husband">Husband</option><option value="Wife">Wife</option>
+                <option value="Spouse">Spouse</option><option value="Son">Son</option>
+                <option value="Daughter">Daughter</option><option value="Brother">Brother</option>
+                <option value="Sister">Sister</option><option value="Guardian">Guardian</option>
+                <option value="Grandfather">Grandfather</option><option value="Grandmother">Grandmother</option>
+                <option value="Uncle">Uncle</option><option value="Aunt">Aunt</option><option value="Other">Other</option>
+            </select>
             <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
         </div>`;
     container.insertAdjacentHTML('beforeend', html);
@@ -781,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize 1 default empty item in each dynamic form section
-    addContact(); addGuardian(); addIDCard(); addEducation(); addExperience(); addProject(); addReference(); addLanguage();
+    addIDCard(); addExperience(); addProject(); addReference(); addLanguage();
 
     const templateSelector = document.getElementById('templateSelector');
     const updateTemplateLayout = () => {
@@ -1108,16 +1113,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (Array.isArray(data.guardians) && data.guardians.length > 0) {
-            data.guardians.forEach(g => {
+            data.guardians.slice(0, 1).forEach(g => {
                 addGuardian();
                 const items = document.querySelectorAll('#guardianList .dynamic-item');
                 const last = items[items.length - 1];
                 if (last) {
                     const relEl = last.querySelector('.g-rel');
-                    const relLabel = last.querySelector('.rb-relation-value');
                     const nameEl = last.querySelector('.g-name');
                     if (relEl) relEl.value = g.rel || '';
-                    if (relLabel) relLabel.textContent = g.rel || '';
                     if (nameEl) nameEl.value = g.name || '';
                 }
             });
