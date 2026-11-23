@@ -755,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bioForm) {
         const autoEnableSection = (e) => {
             const section = e.target.closest('.form-section');
-            if (!section || e.target.closest('.toggle-switch')) return;
+            if (!section || e.target.closest('.toggle-switch') || e.target.closest('.section-collapse-btn')) return;
 
             const sectionToggle = section.querySelector('.toggle-switch input[data-toggle]');
             if (sectionToggle && !sectionToggle.checked) {
