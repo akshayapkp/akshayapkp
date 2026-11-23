@@ -68,6 +68,35 @@
       }
     };
   }
+  // Keep shared Supabase templates in sync while retaining local fallback if the migration is not yet applied.
+  if (window.fetch) {
+    fetch("/api/affidavit-form-templates", { cache: "no-store", credentials: "same-origin" })
+      .then(function (response) { return response.ok ? response.json() : null; })
+      .then(function (payload) {
+        if (!payload || !Array.isArray(payload.forms)) return;
+        var remote = payload.forms;
+        var local = readForms();
+        if (!remote.length && local.length && isAdmin) {
+          return Promise.all(local.map(function (form) {
+            return fetch("/api/affidavit-form-templates", {
+              method: "POST", credentials: "same-origin",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ form: form })
+            }).then(function (response) { return response.ok; }).catch(function () { return false; });
+          }));
+        }
+        var remoteJson = JSON.stringify(remote);
+        var localJson = JSON.stringify(local);
+        if (remoteJson !== localJson) {
+          localStorage.setItem(KEY, remoteJson);
+          if (params.get("synced") !== "1") {
+            var nextUrl = new URL(window.location.href);
+            nextUrl.searchParams.set("synced", "1");
+            window.location.replace(nextUrl.toString());
+          }
+        }
+      }).catch(function () {});
+  }
   customForms.forEach(function (form) {
     if (form && form.id && form.title && Array.isArray(form.fields)) {
       window.AFF_DEFS.push(makeDefinition(form));
@@ -116,8 +145,13 @@
       savedRoot.querySelectorAll("[data-remove]").forEach(function (btn) {
         btn.addEventListener("click", function () {
           if (!window.confirm("Delete this custom form?")) return;
-          localStorage.setItem(KEY, JSON.stringify(readForms().filter(function (f) { return f.id !== btn.getAttribute("data-remove"); })));
-          window.location.reload();
+          var deleteId = btn.getAttribute("data-remove");
+          fetch("/api/affidavit-form-templates?id=" + encodeURIComponent(deleteId), { method: "DELETE", credentials: "same-origin" })
+            .then(function (response) {
+              if (!response.ok && response.status !== 503) throw new Error("Delete failed");
+              localStorage.setItem(KEY, JSON.stringify(readForms().filter(function (f) { return f.id !== deleteId; })));
+              window.location.reload();
+            }).catch(function () { alert("Could not delete this form from the shared database. Please check the connection."); });
         });
       });
     }
@@ -141,11 +175,33 @@
       var id = "custom_" + Date.now();
       var forms = readForms();
       forms.push({ id: id, title: title, sub: overlay.querySelector("#cfSub").value.trim(), declaration: overlay.querySelector("#cfDeclaration").value.trim(), fields: fields });
-      try {
-        localStorage.setItem(KEY, JSON.stringify(forms));
-        alert("Form saved. The form list will refresh now.");
-        window.location.reload();
-      } catch (_) { alert("Could not save the form. Browser storage may be full."); }
+      var newForm = forms[forms.length - 1];
+      overlay.querySelector("#cfSave").disabled = true;
+      overlay.querySelector("#cfSave").textContent = "Saving…";
+      fetch("/api/affidavit-form-templates", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ form: newForm })
+      }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (payload) {
+          if (!response.ok) {
+            if (response.status === 503) {
+              localStorage.setItem(KEY, JSON.stringify(forms));
+              alert("The shared form database is not ready. This form was saved in this browser only. Apply the Supabase migration to share it with staff.");
+              window.location.reload();
+              return;
+            }
+            throw new Error(payload.error || "Could not save the form.");
+          }
+          localStorage.setItem(KEY, JSON.stringify(forms));
+          alert("Form saved to the shared form library.");
+          window.location.reload();
+        });
+      }).catch(function (error) {
+        overlay.querySelector("#cfSave").disabled = false;
+        overlay.querySelector("#cfSave").textContent = "Save form";
+        alert(error.message || "Could not save the form.");
+      });
     });
   }
 })();
