@@ -12,6 +12,7 @@
     hobby: ['Reading', 'Travelling', 'Music', 'Sports', 'Cooking', 'Photography', 'Drawing', 'Gardening', 'Movies', 'Volunteering'],
     education: ['SSLC', 'Plus Two', 'VHSE', 'ITI', 'Diploma', 'Bachelor Degree', 'BCom', 'BBA', 'BSc', 'BA', 'BCA', 'BTech', 'Master Degree', 'MCom', 'MBA', 'MSc', 'MA', 'MCA', 'MTech', 'PhD'],
     school: ['Kerala Board of Public Examinations', 'Kerala Board of Higher Secondary Education', 'University of Calicut', 'University of Kerala', 'Mahatma Gandhi University', 'Kannur University', 'Kerala University of Health Sciences', 'University of Madras', 'IGNOU', 'CBSE', 'ICSE'],
+    school: ['Kerala Board of Public Examinations', 'Kerala Board of Higher Secondary Education', 'University of Calicut', 'University of Kerala', 'Mahatma Gandhi University', 'Kannur University', 'Kerala University of Health Sciences', 'University of Madras', 'IGNOU', 'CBSE', 'ICSE'],
     job: ['Salesman', 'Sales Executive', 'Accountant', 'Cashier', 'Teacher', 'Office Assistant', 'Data Entry Operator', 'Customer Service Executive', 'Receptionist', 'Driver', 'Electrician', 'Plumber', 'Nurse', 'Chef', 'Store Keeper', 'Computer Operator']
   };
 
@@ -71,6 +72,7 @@
     document.querySelectorAll('#guardianList .g-rel').forEach(input => enhance(input, 'guardian'));
     document.querySelectorAll('#languagesList .lang-name').forEach(input => enhance(input, 'language'));
     document.querySelectorAll('#educationList .edu-degree').forEach(input => enhance(input, 'education'));
+    document.querySelectorAll('#educationList .edu-school').forEach(input => enhance(input, 'school'));
     document.querySelectorAll('#educationList .edu-school').forEach(input => enhance(input, 'school'));
     document.querySelectorAll('#experienceList .exp-title').forEach(input => enhance(input, 'job'));
   };
