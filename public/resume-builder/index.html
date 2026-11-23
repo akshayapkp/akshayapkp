@@ -88,6 +88,33 @@
 #guardianList .g-rel{min-width:0}
 @media(max-width:520px){.rb-contact-row>.contact-type{width:90px}.rb-contact-row .contact-country{width:92px}}
 </style>
+<style>
+.rg-fmt{padding:0;overflow:hidden}.rg-fmt:hover{transform:none}.rg-fmt>summary{list-style:none;cursor:pointer;padding:1rem 1.25rem;display:flex;align-items:center;gap:8px;color:var(--text-light);font-size:1rem;font-weight:700}.rg-fmt>summary::-webkit-details-marker{display:none}.rg-fmt>summary .rg-caret{margin-left:auto;transition:transform .2s;color:var(--text-muted)}.rg-fmt[open]>summary .rg-caret{transform:rotate(180deg)}.rg-fmt-body{padding:0 1.25rem 1.25rem;display:flex;flex-direction:column;gap:1rem}
+.rg-block{border:1px solid var(--glass-border);border-radius:14px;padding:.9rem 1rem;background:rgba(255,255,255,.55)}.rg-block h4{font-size:.85rem;color:var(--text-light);margin-bottom:.7rem;display:flex;align-items:center;gap:8px}.rg-block h4 .rg-reset{margin-left:auto}.rg-block select{width:100%;padding:.55rem .7rem;border-radius:10px;border:1.5px solid rgba(255,255,255,.9);background:rgba(255,255,255,.8);color:var(--text-light);font-family:inherit;font-size:.85rem;margin-bottom:.7rem}
+.rg-row{display:grid;grid-template-columns:110px 1fr 64px;align-items:center;gap:10px;margin-bottom:.55rem}.rg-row:last-child{margin-bottom:0}.rg-row label{font-size:.8rem;font-weight:600;color:var(--text-muted)}.rg-row input[type=range]{width:100%;accent-color:var(--accent)}.rg-row output{font-size:.8rem;font-weight:700;color:var(--text-light);text-align:right}
+.rg-mini{border:1px solid var(--glass-border);background:rgba(255,255,255,.85);color:var(--accent);border-radius:8px;padding:.25rem .6rem;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit}.rg-hint{font-size:.75rem;color:var(--text-muted);margin-top:.5rem;line-height:1.45}
+.rg-switch{display:flex;gap:10px;align-items:flex-start;margin:.2rem 0 .6rem;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--text-light)}.rg-switch input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}.rg-switch small{display:block;font-weight:400;color:var(--text-muted);font-size:.74rem}
+.rg-swatches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:.8rem}.rg-sw{width:30px;height:30px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;box-shadow:0 2px 8px rgba(11,87,165,.25);transition:transform .15s}.rg-sw:hover{transform:scale(1.12)}.rg-sw.active{box-shadow:0 0 0 3px var(--accent),0 2px 8px rgba(11,87,165,.25)}
+.rg-pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rg-pick{font-size:.78rem;font-weight:600;color:var(--text-muted)}.rg-pick input[type=color]{width:100%;height:32px;padding:3px;border:1.5px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;display:block;margin:5px 0 2px}.rg-pick output{font-size:.72rem;text-transform:uppercase}
+#resumePreview{--rb-all-scale:1;--rb-heading-colour:inherit;--rb-line-colour:currentColor}#resumePreview .header-section h1{font-size:calc(2.35rem * var(--rb-all-scale))!important;line-height:1.12;overflow-wrap:anywhere}#resumePreview .header-section h2{font-size:calc(1.25rem * var(--rb-all-scale))!important}
+#resumePreview .content-section h4,#resumePreview .sidebar-section h4,#resumePreview #prev-idcards-container>h4{font-size:calc(1rem * var(--rb-all-scale))!important;color:var(--rb-heading-colour)!important;border-color:var(--rb-line-colour)!important}
+#resumePreview p,#resumePreview .item-block,#resumePreview .item-header,#resumePreview .item-sub,#resumePreview .tag-list span,#resumePreview .lang-item-preview,#resumePreview .contact-info,#resumePreview .personal-details-info{font-size:calc(1em * var(--rb-all-scale))}
+#resumePreview .content-section,#resumePreview .sidebar-section{margin-bottom:calc(1.5rem * var(--rb-all-scale))}#resumePreview [data-rb-design-selected]{outline:2px dashed #0aafdd;outline-offset:3px}#resumePreview.rb-no-split .item-block{break-inside:avoid;page-break-inside:avoid}
+@media(max-width:520px){.rg-row{grid-template-columns:90px 1fr 56px}.rg-pick-grid{grid-template-columns:1fr}}@media print{#resumePreview [data-rb-design-selected]{outline:none!important}}
+</style>
+<style>
+/* Resume form: one compact row initially, add more only on request. */
+#contactList .rb-contact-row{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%;padding:12px!important}
+#contactList .rb-contact-row>.contact-type{width:190px;max-width:100%;flex:none}
+#contactList .rb-contact-row .phone-input-group{display:flex;flex-direction:row;align-items:center;gap:9px;width:min(100%,560px);flex:none}
+#contactList .rb-contact-row .contact-country{width:150px;flex:0 0 150px}
+#contactList .rb-contact-row .contact-num{flex:1;min-width:0;width:auto}
+#contactList .rb-contact-row .contact-error{width:min(100%,560px)!important}
+#guardianList .rb-guardian-row{display:grid;grid-template-columns:minmax(130px,.65fr) minmax(220px,1.35fr);gap:12px;align-items:center;padding:12px!important}
+#guardianList .rb-guardian-row .g-rel{width:100%}
+#guardianList .rb-guardian-row .remove-btn{display:none}
+@media(max-width:520px){#contactList .rb-contact-row .phone-input-group{width:100%}#contactList .rb-contact-row .contact-country{width:105px;flex-basis:105px}#guardianList .rb-guardian-row{grid-template-columns:110px minmax(0,1fr)}}
+</style>
 </head>
 <body>
 
@@ -184,6 +211,47 @@
                     </div>
                 </div>
 
+<details class="form-section rg-fmt" id="rbDesignSettings">
+                  <summary><i class="fas fa-text-height"></i> Colours, Text Size &amp; Spacing <i class="fas fa-chevron-down rg-caret"></i></summary>
+                  <div class="rg-fmt-body">
+                    <section class="rg-block">
+                      <h4><i class="fas fa-palette"></i> Colour theme <span class="rg-for">- Resume</span><button type="button" class="rg-mini" id="rbResetColours">↶ Default colours</button></h4>
+                      <div class="rg-swatches" id="rbThemeSwatches">
+                        <button type="button" class="rg-sw active" data-colour="#1e293b" style="background:#1e293b" aria-label="Slate"></button>
+                        <button type="button" class="rg-sw" data-colour="#010152" style="background:#010152" aria-label="Navy"></button>
+                        <button type="button" class="rg-sw" data-colour="#0b57a5" style="background:#0b57a5" aria-label="Blue"></button>
+                        <button type="button" class="rg-sw" data-colour="#0f766e" style="background:#0f766e" aria-label="Teal"></button>
+                        <button type="button" class="rg-sw" data-colour="#15803d" style="background:#15803d" aria-label="Green"></button>
+                        <button type="button" class="rg-sw" data-colour="#92400e" style="background:#92400e" aria-label="Brown"></button>
+                        <button type="button" class="rg-sw" data-colour="#c2410c" style="background:#c2410c" aria-label="Orange"></button>
+                        <button type="button" class="rg-sw" data-colour="#9f1239" style="background:#9f1239" aria-label="Rose"></button>
+                        <button type="button" class="rg-sw" data-colour="#be185d" style="background:#be185d" aria-label="Pink"></button>
+                        <button type="button" class="rg-sw" data-colour="#6d28d9" style="background:#6d28d9" aria-label="Purple"></button>
+                        <button type="button" class="rg-sw" data-colour="#334155" style="background:#334155" aria-label="Charcoal"></button>
+                      </div>
+                      <div class="rg-pick-grid">
+                        <label class="rg-pick">Heading text colour<input type="color" id="rbHeadingColour" value="#1e293b"><output id="rbHeadingColourValue">#1E293B</output></label>
+                        <label class="rg-pick">Heading underline colour<input type="color" id="rbLineColour" value="#1e293b"><output id="rbLineColourValue">#1E293B</output></label>
+                      </div>
+                    </section>
+                    <section class="rg-block">
+                      <h4><i class="fas fa-layer-group"></i> All sections <button type="button" class="rg-mini rg-reset" id="rbResetAll">↶ Reset all</button></h4>
+                      <div class="rg-row"><label for="rbAllFont">Font size</label><input id="rbAllFont" type="range" min="75" max="130" value="100"><output id="rbAllFontOut">100%</output></div>
+                      <div class="rg-row"><label for="rbAllMargin">Section margin</label><input id="rbAllMargin" type="range" min="0" max="40" value="16"><output id="rbAllMarginOut">16 px</output></div>
+                      <label class="rg-switch"><input type="checkbox" id="rbAllowSplit" checked><span>Allow sections to split across pages<small>(when printing or saving as PDF, entries may continue onto the next page)</small></span></label>
+                      <p class="rg-hint">Font size scales every resume section together. Section margin adjusts spacing between sections.</p>
+                    </section>
+                    <section class="rg-block">
+                      <h4><i class="fas fa-crosshairs"></i> Selected section <button type="button" class="rg-mini rg-reset" id="rbResetSelected">↶ Reset section</button></h4>
+                      <select id="rbSelectedSection"><option value="">Choose a section...</option><option value="name">Name &amp; job title</option><option value="contact">Contact &amp; personal details</option><option value="id">ID details</option><option value="summary">Summary</option><option value="education">Education</option><option value="experience">Professional experience</option><option value="projects">Projects</option><option value="skills">Skills</option><option value="languages">Languages</option><option value="hobbies">Hobbies</option><option value="references">References</option><option value="declaration">Declaration</option></select>
+                      <div class="rg-row"><label for="rbSectionFont">Font size</label><input id="rbSectionFont" type="range" min="75" max="130" value="100" disabled><output id="rbSectionFontOut">100%</output></div>
+                      <div class="rg-row"><label for="rbSectionTop">Top margin</label><input id="rbSectionTop" type="range" min="0" max="48" value="0" disabled><output id="rbSectionTopOut">0 px</output></div>
+                      <div class="rg-row"><label for="rbSectionBottom">Bottom margin</label><input id="rbSectionBottom" type="range" min="0" max="48" value="0" disabled><output id="rbSectionBottomOut">0 px</output></div>
+                      <p class="rg-hint">Tip: click any section in the preview to select it here. Section values are applied on top of the “All sections” values.</p>
+                    </section>
+                  </div>
+                </details>
+
                 <!-- Personal Info -->
                 <div class="form-section">
                     <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
@@ -240,6 +308,7 @@
                                 </div>
                             </div>
                         </div>
+                        <button type="button" class="add-btn" onclick="addGuardian()"><i class="fas fa-plus"></i> Add Guardian</button>
 
                         <div class="form-group" style="grid-column: span 2;">
                             <label>Contact Numbers (Mobile / WhatsApp)</label>
@@ -1007,6 +1076,73 @@
     document.getElementById('applyCrop').onclick=function(){if(!src)return;try{var out=document.createElement('canvas');out.width=Math.max(1,Math.round(rect.w));out.height=Math.max(1,Math.round(rect.h));var c=out.getContext('2d');if(!c)throw new Error('Cannot prepare the cropped image.');c.drawImage(src,rect.x,rect.y,rect.w,rect.h,0,0,out.width,out.height);modal.style.display='none';if(onDone)onDone(out.toDataURL('image/jpeg',.96));}catch(e){window.alert(e&&e.message?e.message:'Could not crop this image.');}};
   };
   window.closeRbCropDialog=function(){modal.style.display='none';};
+})();
+</script>
+<script>
+(() => {
+  const KEY='resume-builder-design-settings-v2';
+  const defaults={allFont:100,allMargin:16,allowSplit:true,headingColour:'#1e293b',lineColour:'#1e293b',sections:{}};
+  const map={name:'.header-section',contact:'.contact-info',id:'#prev-idcards-container',summary:'#prev-summary-container',education:'#prev-education-container',experience:'#prev-experience-container',projects:'#prev-projects-container',skills:'#prev-skills-container',languages:'#prev-languages-container',hobbies:'#prev-hobbies-container',references:'#prev-references-container',declaration:'#prev-declaration-container'};
+  const $=id=>document.getElementById(id), p=()=>$('resumePreview');
+  let state=JSON.parse(JSON.stringify(defaults)), selected='';
+  const sectionDefaults=()=>({font:100,top:0,bottom:0});
+  const nodeFor=key=>p()?.querySelector(map[key]);
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{}}
+  function apply(){
+    const preview=p();if(!preview)return;
+    preview.style.setProperty('--rb-all-scale',state.allFont/100);
+    preview.style.setProperty('--rb-heading-colour',state.headingColour);
+    preview.style.setProperty('--rb-line-colour',state.lineColour);
+    preview.classList.toggle('rb-no-split',!state.allowSplit);
+    preview.querySelectorAll('.content-section,.sidebar-section').forEach(n=>{n.style.marginBottom=state.allMargin+'px';});
+    Object.keys(map).forEach(key=>{
+      const n=nodeFor(key);if(!n)return;
+      const v=state.sections[key]||sectionDefaults();
+      n.style.marginTop=v.top+'px';
+      n.style.marginBottom=(state.allMargin+v.bottom)+'px';
+      n.style.zoom=String(v.font/100);
+    });
+    preview.querySelectorAll('[data-rb-design-selected]').forEach(n=>n.removeAttribute('data-rb-design-selected'));
+    const chosen=selected?nodeFor(selected):null;if(chosen)chosen.setAttribute('data-rb-design-selected','');
+    $('rbAllFont').value=state.allFont;$('rbAllFontOut').textContent=state.allFont+'%';
+    $('rbAllMargin').value=state.allMargin;$('rbAllMarginOut').textContent=state.allMargin+' px';
+    $('rbAllowSplit').checked=state.allowSplit;
+    $('rbHeadingColour').value=state.headingColour;$('rbHeadingColourValue').textContent=state.headingColour.toUpperCase();
+    $('rbLineColour').value=state.lineColour;$('rbLineColourValue').textContent=state.lineColour.toUpperCase();
+    document.querySelectorAll('#rbThemeSwatches .rg-sw').forEach(b=>b.classList.toggle('active',b.dataset.colour===state.headingColour));
+    const v=state.sections[selected]||sectionDefaults();
+    ['rbSectionFont','rbSectionTop','rbSectionBottom'].forEach(id=>$(id).disabled=!selected);
+    $('rbSectionFont').value=v.font;$('rbSectionFontOut').textContent=v.font+'%';
+    $('rbSectionTop').value=v.top;$('rbSectionTopOut').textContent=v.top+' px';
+    $('rbSectionBottom').value=v.bottom;$('rbSectionBottomOut').textContent=v.bottom+' px';
+  }
+  function choose(key){selected=key||'';$('rbSelectedSection').value=selected;if(selected&&!state.sections[selected])state.sections[selected]=sectionDefaults();apply();}
+  function init(){
+    if(!$('rbDesignSettings')||!p())return;
+    try{const saved=JSON.parse(localStorage.getItem(KEY)||'{}');state={...state,...saved};state.sections=saved.sections||{};}catch{}
+    $('rbAllFont').addEventListener('input',e=>{state.allFont=Number(e.target.value);apply();save();});
+    $('rbAllMargin').addEventListener('input',e=>{state.allMargin=Number(e.target.value);apply();save();});
+    $('rbAllowSplit').addEventListener('change',e=>{state.allowSplit=e.target.checked;apply();save();});
+    $('rbHeadingColour').addEventListener('input',e=>{state.headingColour=e.target.value;apply();save();});
+    $('rbLineColour').addEventListener('input',e=>{state.lineColour=e.target.value;apply();save();});
+    document.querySelectorAll('#rbThemeSwatches .rg-sw').forEach(b=>b.addEventListener('click',()=>{state.headingColour=b.dataset.colour;state.lineColour=b.dataset.colour;apply();save();}));
+    $('rbSelectedSection').addEventListener('change',e=>choose(e.target.value));
+    [['rbSectionFont','font'],['rbSectionTop','top'],['rbSectionBottom','bottom']].forEach(([id,key])=>$(id).addEventListener('input',e=>{
+      if(!selected)return;state.sections[selected]=state.sections[selected]||sectionDefaults();state.sections[selected][key]=Number(e.target.value);apply();save();
+    }));
+    $('rbResetColours').addEventListener('click',()=>{state.headingColour=defaults.headingColour;state.lineColour=defaults.lineColour;apply();save();});
+    $('rbResetAll').addEventListener('click',()=>{state.allFont=defaults.allFont;state.allMargin=defaults.allMargin;state.allowSplit=defaults.allowSplit;state.sections={};apply();save();});
+    $('rbResetSelected').addEventListener('click',()=>{if(!selected)return;delete state.sections[selected];apply();save();});
+    p().addEventListener('click',e=>{
+      const selectors=Object.entries(map);
+      const target=e.target.closest(selectors.map(x=>x[1]).join(','));
+      if(!target)return;
+      const match=selectors.find(([,selector])=>target.matches(selector));
+      if(match)choose(match[0]);
+    });
+    apply();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
 </body></html>
