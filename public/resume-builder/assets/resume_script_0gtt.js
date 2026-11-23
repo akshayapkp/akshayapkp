@@ -22,12 +22,11 @@ window.addGuardian = function() {
     const container = document.getElementById('guardianList');
     if (!container) return;
     const html = `
-        <div class="dynamic-item">
-            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('guardian')"><i class="fas fa-trash"></i></button>
-            <div class="form-grid">
-                <input type="text" class="g-rel" placeholder="Relationship (e.g. Father)" oninput="updateDynamicPreview('guardian')">
-                <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
-            </div>
+        <div class="dynamic-item rb-guardian-row">
+            <select class="g-rel" onchange="updateDynamicPreview('guardian')" aria-label="Guardian relationship">
+                <option value="">Relationship</option><option>Father</option><option>Mother</option><option>Husband</option><option>Wife</option><option>Spouse</option><option>Son</option><option>Daughter</option><option>Brother</option><option>Sister</option><option>Guardian</option><option>Grandfather</option><option>Grandmother</option><option>Uncle</option><option>Aunt</option><option>Other</option>
+            </select>
+            <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
         </div>`;
     container.insertAdjacentHTML('beforeend', html);
     updateDynamicPreview('guardian');
@@ -1058,24 +1057,22 @@ document.addEventListener('DOMContentLoaded', () => {
             wrapPhoto.style.display = 'none';
         }
 
-        const contactItems = document.querySelectorAll('#contactList .dynamic-item');
         const savedContacts = Array.isArray(data.contacts) ? data.contacts : [];
-        savedContacts.forEach((c, index) => {
-            if (index > 0) addContact();
-            const item = document.querySelectorAll('#contactList .dynamic-item')[index];
-            if (!item) return;
-            const iconEl = item.querySelector('.contact-type');
-            const countryEl = item.querySelector('.contact-country');
-            const numEl = item.querySelector('.contact-num');
-            const raw = (c.number || '').trim();
+        const firstContact = savedContacts.find(c => c && (c.number || '').trim());
+        const contactItem = document.querySelector('#contactList .dynamic-item');
+        if (contactItem && firstContact) {
+            const iconEl = contactItem.querySelector('.contact-type');
+            const countryEl = contactItem.querySelector('.contact-country');
+            const numEl = contactItem.querySelector('.contact-num');
+            const raw = (firstContact.number || '').trim();
             const match = raw.match(/^(\+\d{1,4})\s*(.*)$/);
-            if (iconEl) iconEl.value = c.icon || 'fas fa-phone';
-            if (countryEl) countryEl.value = c.countryCode || match?.[1] || '+91';
+            if (iconEl) iconEl.value = firstContact.icon || 'fas fa-phone';
+            if (countryEl) countryEl.value = firstContact.countryCode || match?.[1] || '+91';
             if (numEl) numEl.value = match ? match[2].trim() : raw.replace(/^\+91\s*/, '');
-        });
+        }
         updateDynamicPreview('contact');
 
-        const firstGuardian = Array.isArray(data.guardians) ? data.guardians.find(g => g.rel || g.name) : null;
+        const firstGuardian = Array.isArray(data.guardians) ? data.guardians.find(g => g && (g.rel || g.name)) : null;
         const guardianItem = document.querySelector('#guardianList .dynamic-item');
         if (guardianItem && firstGuardian) {
             const relEl = guardianItem.querySelector('.g-rel');
