@@ -699,7 +699,9 @@ body {
     html,
     body {
         height: 100%;
-        overflow: hidden;
+        overflow: hidden !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
         scrollbar-width: none;
         -ms-overflow-style: none;
     }
@@ -783,23 +785,23 @@ body {
 
 /* Exact requested alignment for the three collapsible section headers. */
 /* Keep every Enable/Disable switch on the same vertical line; reserve the arrow slot. */
-.section-header-flex {
+.section-header-flex:has(.toggle-switch) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto 30px;
     column-gap: 10px;
     align-items: center;
 }
-.section-header-flex:not(:has(.section-collapse-btn))::after {
+.section-header-flex:has(.toggle-switch):not(:has(.section-collapse-btn))::after {
     content: "";
     display: block;
     width: 30px;
     height: 1px;
 }
-.section-header-flex .section-collapse-btn {
+ .section-header-flex:has(.toggle-switch) .section-collapse-btn {
     grid-column: 3;
     justify-self: end;
 }
-.section-header-flex .toggle-switch {
+ .section-header-flex:has(.toggle-switch) .toggle-switch {
     grid-column: 2;
     justify-self: end;
 }
