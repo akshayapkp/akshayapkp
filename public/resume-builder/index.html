@@ -79,6 +79,30 @@
     text-align: center;
   }
 </style>
+<style>
+  .rb-design-controls { border: 1px solid #cfe3f7; background: rgba(255,255,255,.72); }
+  .rb-design-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:14px; }
+  .rb-design-control { min-width:0; padding:11px 12px; border:1px solid #dbeafe; border-radius:12px; background:#fff; }
+  .rb-design-control label { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; color:#334155; font-size:12px; font-weight:700; }
+  .rb-design-control label strong { color:#2563eb; white-space:nowrap; }
+  .rb-design-control input[type="range"] { width:100%; accent-color:#2563eb; cursor:pointer; }
+  .rb-design-control input[type="color"] { width:100%; height:34px; padding:3px; border:1px solid #dbeafe; border-radius:8px; background:#fff; cursor:pointer; }
+  .rb-design-note { display:block; margin-top:10px; color:#64748b; line-height:1.5; }
+  #resumePreview .header-section h1 { font-size:var(--rb-name-size,36px) !important; line-height:1.12; max-width:100%; overflow-wrap:anywhere; text-wrap:balance; }
+  #resumePreview .content-section h4,
+  #resumePreview .sidebar-section h4,
+  #resumePreview #prev-idcards-container > h4 { font-size:var(--rb-heading-size,16px) !important; color:var(--rb-heading-color,inherit) !important; border-bottom-color:var(--rb-line-color,currentColor) !important; }
+  #resumePreview .content-section p,
+  #resumePreview .item-block,
+  #resumePreview .item-header,
+  #resumePreview .item-sub,
+  #resumePreview .contact-info p,
+  #resumePreview .personal-details-info p,
+  #resumePreview .tag-list span,
+  #resumePreview .lang-item-preview { font-size:var(--rb-body-size,15px) !important; }
+  #resumePreview .sidebar-section h4 { border-bottom:1px solid var(--rb-line-color,currentColor) !important; padding-bottom:.35rem; }
+  @media(max-width:640px) { .rb-design-grid { grid-template-columns:1fr; } }
+</style>
 </head>
 <body>
 
@@ -174,6 +198,40 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- Resume typography and section colour controls -->
+                <section class="form-section rb-design-controls" id="resumeDesignControls">
+                    <div class="section-header-flex">
+                        <div>
+                            <h3><i class="fas fa-sliders"></i> Resume Design Controls</h3>
+                            <small>Adjust the name, section headings, content text and heading colours.</small>
+                        </div>
+                        <button type="button" class="secondary-btn" id="rbDesignReset">Reset</button>
+                    </div>
+                    <div class="rb-design-grid">
+                        <div class="rb-design-control">
+                            <label for="rbNameSize">Full name size <strong id="rbNameSizeValue">36 px</strong></label>
+                            <input id="rbNameSize" type="range" min="18" max="48" step="1" value="36">
+                        </div>
+                        <div class="rb-design-control">
+                            <label for="rbHeadingSize">Section heading size <strong id="rbHeadingSizeValue">16 px</strong></label>
+                            <input id="rbHeadingSize" type="range" min="10" max="24" step="1" value="16">
+                        </div>
+                        <div class="rb-design-control">
+                            <label for="rbBodySize">Content text size <strong id="rbBodySizeValue">15 px</strong></label>
+                            <input id="rbBodySize" type="range" min="10" max="20" step="1" value="15">
+                        </div>
+                        <div class="rb-design-control rb-color-control">
+                            <label for="rbHeadingColor">Heading text colour</label>
+                            <input id="rbHeadingColor" type="color" value="#1e293b">
+                        </div>
+                        <div class="rb-design-control rb-color-control">
+                            <label for="rbLineColor">Heading underline colour</label>
+                            <input id="rbLineColor" type="color" value="#1e293b">
+                        </div>
+                    </div>
+                    <small class="rb-design-note">Changes appear immediately in the preview and are remembered on this device. Reduce the name size if a long name wraps onto too many lines.</small>
+                </section>
 
                 <!-- Personal Info -->
                 <div class="form-section">
@@ -888,4 +946,53 @@
         }, true);
     </script>
 
+<script>
+(() => {
+  const KEY = 'resume-builder-design-controls-v1';
+  const defaults = { nameSize:36, headingSize:16, bodySize:15, headingColor:'#1e293b', lineColor:'#1e293b' };
+  const ids = ['nameSize','headingSize','bodySize','headingColor','lineColor'];
+  const getPreview = () => document.getElementById('resumePreview');
+  const load = () => {
+    try { return { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; }
+    catch { return { ...defaults }; }
+  };
+  const apply = (settings) => {
+    const preview = getPreview();
+    if (!preview) return;
+    preview.style.setProperty('--rb-name-size', Number(settings.nameSize) + 'px');
+    preview.style.setProperty('--rb-heading-size', Number(settings.headingSize) + 'px');
+    preview.style.setProperty('--rb-body-size', Number(settings.bodySize) + 'px');
+    preview.style.setProperty('--rb-heading-color', settings.headingColor);
+    preview.style.setProperty('--rb-line-color', settings.lineColor);
+    ids.forEach(key => {
+      const input = document.getElementById('rb' + key[0].toUpperCase() + key.slice(1));
+      if (input) input.value = settings[key];
+      const output = document.getElementById('rb' + key[0].toUpperCase() + key.slice(1) + 'Value');
+      if (output) output.textContent = settings[key] + (key.endsWith('Size') ? ' px' : '');
+    });
+  };
+  const init = () => {
+    const preview = getPreview();
+    if (!preview || !document.getElementById('rbNameSize')) return;
+    let settings = load();
+    apply(settings);
+    ids.forEach(key => {
+      const input = document.getElementById('rb' + key[0].toUpperCase() + key.slice(1));
+      if (!input) return;
+      input.addEventListener('input', () => {
+        settings[key] = input.type === 'range' ? Number(input.value) : input.value;
+        apply(settings);
+        try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch {}
+      });
+    });
+    document.getElementById('rbDesignReset')?.addEventListener('click', () => {
+      settings = { ...defaults };
+      apply(settings);
+      try { localStorage.removeItem(KEY); } catch {}
+    });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once:true });
+  else init();
+})();
+</script>
 </body></html>
