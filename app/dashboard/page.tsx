@@ -1326,6 +1326,13 @@ export default function DashboardPage() {
       isInternal: true,
     },
     {
+      id: "affidavit-form-writer",
+      name: "Affidavit & Form Writer",
+      url: "/dashboard/affidavit-writer",
+      bgColor: "from-sky-600 to-blue-700",
+      isInternal: true,
+    },
+    {
       id: "aadhaar-gazette",
       name: "Aadhaar Gazette",
       url: "aadhaar-gazette-modal",
