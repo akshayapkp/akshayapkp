@@ -79,6 +79,15 @@
     text-align: center;
   }
 </style>
+<style>
+.rb-contact-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px!important}
+.rb-contact-row>.contact-type{width:112px;flex:none;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155}
+.rb-contact-row .phone-input-group{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.rb-contact-row .contact-country{width:104px;flex:none;padding:10px 8px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#334155;font-weight:600}
+.rb-contact-row .contact-num{flex:1;min-width:90px;width:100%;padding:10px 12px!important;border:1px solid #cbd5e1;border-radius:10px}
+#guardianList .g-rel{min-width:0}
+@media(max-width:520px){.rb-contact-row>.contact-type{width:90px}.rb-contact-row .contact-country{width:92px}}
+</style>
 </head>
 <body>
 
@@ -217,31 +226,43 @@
                         <div class="form-group" style="grid-column: span 2;">
                             <label>Guardian Details</label>
                             <div id="guardianList">
-        <div class="dynamic-item">
-            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('guardian')"><i class="fas fa-trash"></i></button>
-            <div class="form-grid">
-                <input type="text" class="g-rel" placeholder="Relationship (e.g. Father)" oninput="updateDynamicPreview('guardian')">
-                <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
-            </div>
-        </div></div>
-                            <button type="button" class="add-btn" onclick="addGuardian()"><i class="fas fa-plus"></i> Add Guardian</button>
+                                <div class="dynamic-item">
+                                    <div class="form-grid">
+                                        <select class="g-rel" onchange="updateDynamicPreview('guardian')" aria-label="Guardian relationship">
+                                            <option value="">Relationship</option>
+                                            <option>Father</option><option>Mother</option><option>Husband</option><option>Wife</option>
+                                            <option>Spouse</option><option>Son</option><option>Daughter</option><option>Brother</option>
+                                            <option>Sister</option><option>Guardian</option><option>Grandfather</option><option>Grandmother</option>
+                                            <option>Uncle</option><option>Aunt</option><option>Other</option>
+                                        </select>
+                                        <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group" style="grid-column: span 2;">
                             <label>Contact Numbers (Mobile / WhatsApp)</label>
                             <div id="contactList">
-        <div class="dynamic-item" style="flex-direction: row; gap: 0.5rem; align-items: center; padding: 0.8rem; flex-wrap: wrap;">
-            <button class="remove-btn" type="button" style="top: 0.8rem;" onclick="this.parentElement.remove(); updateDynamicPreview('contact')"><i class="fas fa-trash"></i></button>
-            <select class="contact-type" onchange="updateDynamicPreview('contact')" style="padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px;">
-                <option value="fas fa-phone" selected="selected">Mobile</option>
-                <option value="fab fa-whatsapp">WhatsApp</option>
-            </select>
-            <div class="phone-input-group" style="flex-grow: 1;">
-                <span class="phone-prefix">+91</span>
-                <input type="tel" class="contact-num" maxlength="10" inputmode="numeric" placeholder="98765 43210" oninput="validateIndianMobile(this); updateDynamicPreview('contact')" style="flex-grow: 1; padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px;">
-            </div>
-            <span class="field-error contact-error" style="display:none; width:100%;"></span>
-        </div></div>
+                                <div class="dynamic-item rb-contact-row">
+                                    <select class="contact-type" onchange="updateDynamicPreview('contact')" aria-label="Contact type">
+                                        <option value="fas fa-phone" selected>Mobile</option>
+                                        <option value="fab fa-whatsapp">WhatsApp</option>
+                                    </select>
+                                    <div class="phone-input-group">
+                                        <select class="contact-country" aria-label="Country calling code" onchange="updateDynamicPreview('contact')">
+                                            <option value="+91" selected>IN +91</option><option value="+971">AE +971</option><option value="+966">SA +966</option>
+                                            <option value="+974">QA +974</option><option value="+968">OM +968</option><option value="+965">KW +965</option>
+                                            <option value="+973">BH +973</option><option value="+1">US/CA +1</option><option value="+44">UK +44</option>
+                                            <option value="+61">AU +61</option><option value="+64">NZ +64</option><option value="+65">SG +65</option>
+                                            <option value="+60">MY +60</option><option value="+94">LK +94</option><option value="+977">NP +977</option>
+                                            <option value="+880">BD +880</option><option value="+92">PK +92</option>
+                                        </select>
+                                        <input type="tel" class="contact-num" maxlength="15" inputmode="tel" placeholder="Mobile number" oninput="updateDynamicPreview('contact')">
+                                    </div>
+                                    <span class="field-error contact-error" style="display:none;width:100%;"></span>
+                                </div>
+                            </div>
                             <button type="button" class="add-btn" onclick="addContact()"><i class="fas fa-plus"></i> Add Contact</button>
                         </div>
                     </div>
@@ -371,12 +392,13 @@
                             <span class="toggle-text">Disabled</span>
                         </label>
                     </div>
+                    <datalist id="educationDegreeOptions"></datalist><datalist id="educationBoardOptions"></datalist>
                     <div id="educationList">
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('edu')"><i class="fas fa-trash"></i></button>
             <div class="form-grid">
-                <input type="text" class="edu-degree" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
-                <input type="text" class="edu-school" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-degree" list="educationDegreeOptions" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-school" list="educationBoardOptions" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
                 <input type="text" class="edu-date" placeholder="e.g. 2016 - 2020" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
             </div>
         </div></div>
