@@ -1181,6 +1181,32 @@ export default function DashboardPage() {
   const [showImageToTextModal, setShowImageToTextModal] = useState(false);
   const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
+
+  // The Resume Builder already has two intentional inner scroll areas
+  // (editor and live preview). Lock the dashboard page behind its fullscreen
+  // modal so it does not add a third, unrelated scrollbar.
+  useEffect(() => {
+    if (!showResumeBuilderModal) return;
+
+    const dashboardContent = document.querySelector<HTMLElement>(".dashboard-content");
+    const previousDashboardOverflow = dashboardContent?.style.overflow;
+    const previousDashboardOverflowY = dashboardContent?.style.overflowY;
+    const previousBodyOverflow = document.body.style.overflow;
+
+    if (dashboardContent) {
+      dashboardContent.style.overflow = "hidden";
+      dashboardContent.style.overflowY = "hidden";
+    }
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      if (dashboardContent) {
+        dashboardContent.style.overflow = previousDashboardOverflow || "";
+        dashboardContent.style.overflowY = previousDashboardOverflowY || "";
+      }
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [showResumeBuilderModal]);
   const [showIncomeAffidavitModal, setShowIncomeAffidavitModal] = useState(false);
   const [showAadhaarGazetteModal, setShowAadhaarGazetteModal] = useState(false);
   const [showServiceDocumentGeneratorModal, setShowServiceDocumentGeneratorModal] = useState(false);
