@@ -7,7 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 
 type Data=Record<string,string>;
 type RecordItem={id:string;name:string;house_name:string;mobile:string;ration_card:string;updated_at:string;data:Data};
-type Props={onClose?:()=>void;publicMode?:boolean};
+type Props={onClose?:()=>void;publicMode?:boolean;standalone?:boolean};
 
 const MEMBERS=[
  ["Applicant","അപേക്ഷകൻ/അപേക്ഷക"],["Spouse","ഭാര്യ/ഭർത്താവ്"],["Father","പിതാവ്"],["Mother","മാതാവ്"],
@@ -37,7 +37,7 @@ const money=(v:string)=>{const n=v.replace(/[^0-9]/g,"");return n?`₹ ${Number(
 const dateFmt=(v:string)=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);return m?`${m[3]}/${m[2]}/${m[1]}`:v};
 const F=(v:string)=>v||"____________________________";
 
-export default function IncomeAffidavitTool({onClose,publicMode=false}:Props){
+export default function IncomeAffidavitTool({onClose,publicMode=false,standalone=false}:Props){
  const [form,setForm]=useState<Data>(initial),[auto,setAuto]=useState(true),[records,setRecords]=useState<RecordItem[]>([]);
  const [historyOpen,setHistoryOpen]=useState(false),[previewOpen,setPreviewOpen]=useState(false),[query,setQuery]=useState("");
  const [toast,setToast]=useState(""),[busy,setBusy]=useState(false),[dirty,setDirty]=useState(false),[currentId,setCurrentId]=useState<string|null>(null);
@@ -49,7 +49,7 @@ export default function IncomeAffidavitTool({onClose,publicMode=false}:Props){
  const [villageList,setVillageList]=useState<string[]>(DEFAULT_VILLAGES),[placeList,setPlaceList]=useState<string[]>(DEFAULT_PLACES),[purposeList,setPurposeList]=useState<string[]>(DEFAULT_PURPOSES);
  const [savedSuggestions,setSavedSuggestions]=useState<{house:string[];parent:string[];applicant:string[];mobile:string[]}>({house:[],parent:[],applicant:[],mobile:[]});
  const [activeList,setActiveList]=useState<string|null>(null);
- const [sidebarInset,setSidebarInset]=useState(72);
+ const [sidebarInset,setSidebarInset]=useState(0);
  const pages=useRef<(HTMLDivElement|null)[]>([]);
  useEffect(()=>{
   if(!activeList)return;
@@ -98,7 +98,7 @@ export default function IncomeAffidavitTool({onClose,publicMode=false}:Props){
  },[]);
  useEffect(()=>{
   const updateInset=()=>{
-   if(publicMode || window.innerWidth<768){setSidebarInset(0);return;}
+   if(standalone || publicMode || window.innerWidth<768){setSidebarInset(0);return;}
    const shell=document.querySelector(".dashboard-sidebar-shell") as HTMLElement|null;
    const rail=document.querySelector('[aria-label="Collapsed navigation"]') as HTMLElement|null;
    const shellRect=shell?.getBoundingClientRect();
@@ -181,7 +181,7 @@ export default function IncomeAffidavitTool({onClose,publicMode=false}:Props){
  return typeof document !== "undefined" ? createPortal(<div className="ia-overlay" style={{"--ia-left":`${sidebarInset}px`} as React.CSSProperties}><div className="ia-shell">
   <header className="ia-header"><div className="ia-logo"><FileSignature size={20}/><div><h1>Income Affidavit</h1><span>Income Certificate Affidavit</span></div><b>MPM250</b></div>
    <div className="ia-actions"><label className="ia-toggle"><input type="checkbox" checked={auto} onChange={e=>{setAuto(e.target.checked);localStorage.setItem("aff_auto_convert",e.target.checked?"1":"0")}}/><span/> Auto Convert <em>മലയാളം</em></label>
-    {!publicMode&&<><button onClick={save}><Save size={15}/>Save</button><button className="purple" onClick={()=>setHistoryOpen(true)}><History size={15}/>History</button><button className="light" onClick={()=>setQrOpen(true)}><QrCode size={15}/>Customer QR</button></>}{(!publicMode||customerAccess.preview)&&<button className="light" onClick={()=>setPreviewOpen(true)}><Eye size={15}/>Preview</button>}{(!publicMode||customerAccess.print)&&<button className="light" onClick={print}><Printer size={15}/>Print</button>}{(!publicMode||customerAccess.download)&&<button className="green" onClick={pdf} disabled={busy}><Download size={15}/>{busy?"Preparing...":"Download PDF"}</button>}{!publicMode&&<button className="light" onClick={()=>setAccessOpen(true)}>Customer Access</button>}{publicMode&&<button className="green" onClick={save} disabled={busy}><CheckCircle2 size={15}/>{busy?"Submitting...":"Submit to Centre"}</button>}{onClose&&<button className="close" onClick={onClose}><X size={18}/></button>}
+    {!publicMode&&<><button onClick={save}><Save size={15}/>Save</button><button className="purple" onClick={()=>setHistoryOpen(true)}><History size={15}/>History</button><button className="light" onClick={()=>setQrOpen(true)}><QrCode size={15}/>Customer QR</button></>}{(!publicMode||customerAccess.preview)&&<button className="light" onClick={()=>setPreviewOpen(true)}><Eye size={15}/>Preview</button>}{(!publicMode||customerAccess.print)&&<button className="light" onClick={print}><Printer size={15}/>Print</button>}{(!publicMode||customerAccess.download)&&<button className="green" onClick={pdf} disabled={busy}><Download size={15}/>{busy?"Preparing...":"Download PDF"}</button>}{!publicMode&&<button className="light" onClick={()=>setAccessOpen(true)}>Customer Access</button>}{publicMode&&<button className="green" onClick={save} disabled={busy}><CheckCircle2 size={15}/>{busy?"Submitting...":"Submit to Centre"}</button>}{onClose&&<button className={standalone?"close ia-back-dashboard":"close"} onClick={onClose} style={standalone?{width:"auto",minWidth:150,padding:"0 14px",borderRadius:12,fontWeight:800,fontSize:12,whiteSpace:"nowrap"}:undefined}>{standalone?"← Back to Dashboard":<X size={18}/>}</button>}
    </div></header>
   <main className="ia-main">{publicMode&&submitted&&<section style={{margin:"14px",padding:18,borderRadius:12,background:"#ecfdf5",color:"#065f46"}}><h2>Application submitted successfully</h2><p>Your application has been sent to the centre. Please note your reference: {sharedId}</p></section>}<section className="ia-hero"><h2><FileText size={18}/> Income Certificate Affidavit</h2><p>വരുമാന സർട്ടിഫിക്കറ്റിനുള്ള അപേക്ഷയിൽ അന്വേഷണ ഉദ്യോഗസ്ഥൻ മുൻപാകെ അപേക്ഷകൻ നൽകുന്ന സ്റ്റേറ്റ്മെന്റ്</p><small>Type in English and leave the field — it can convert to Malayalam automatically.</small></section>
    <section className="ia-card"><h3><span>👤</span> Applicant Details <em>അപേക്ഷകന്റെ വിവരങ്ങൾ</em></h3><div className="ia-grid">{listField("village","Village","വില്ലേജ്","Type to search village")}{listField("place","Place","സ്ഥലം","Type to search place")}{historyField("house","House name","വീട്ടുപേര്","Type to search saved house name",true)}{historyField("parent","Parent / guardian name","പിതാവ്/രക്ഷാകർത്താവിന്റെ പേര്","Type to search saved parent name",true)}{select("rel","Relation","മകൻ / മകൾ")}{historyField("applicant","Applicant name","അപേക്ഷകന്റെ പേര്","Type to search saved applicant name",true)}{historyField("mobile","Mobile number","മൊബൈൽ നമ്പർ","Type to search saved mobile number")}</div></section>
