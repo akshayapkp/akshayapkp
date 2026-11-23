@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   FileText,
   FilePlus,
+  FileSignature,
   Receipt,
   Settings,
   Settings2,
@@ -64,6 +65,13 @@ const allMenuItems: MenuItem[] = [
     icon: FileText,
     section: "Main",
     permissionKey: "Application Forms",
+  },
+  {
+    name: "Affidavit & Form Writer",
+    path: "/dashboard/affidavit-writer",
+    icon: FileSignature,
+    section: "Main",
+    permissionKey: "Affidavit & Form Writer",
   },
   {
     name: "Service Entry",
