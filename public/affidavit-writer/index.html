@@ -1,1000 +1,845 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Application Forms Vault</title>
-    <link href="Application%20Forms%20Vault_files/all.min_mphp.css" rel="stylesheet">
-    <link href="Application%20Forms%20Vault_files/css2_mphp.css" rel="stylesheet">
-    <style>
-        :root {
-            --accent:  #0ea5e9;
-            --accent2: #0369a1;
-            --accent3: #7c3aed;
-            --danger:  #ef4444;
-            --success: #10b981;
-            --glass-bg:     rgba(255, 255, 255, 0.45);
-            --glass-card:   rgba(255, 255, 255, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.55);
-            --card-shadow:  0 8px 32px rgba(14, 165, 233, 0.12);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #f0e8ff 50%, #e0f7fa 100%);
-            height: 100dvh;
-            color: #1e293b;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+<html lang="en">
 
-        /* ── HEADER ── */
-        .header {
-            background: rgba(255,255,255,0.75);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            color: #1e293b;
-            padding: 0.65rem 1.5rem;
-            border-bottom: 1px solid var(--glass-border);
-            box-shadow: var(--card-shadow);
-            flex-shrink: 0;
-            z-index: 100;
-        }
-        .header-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .logo-section { display: flex; align-items: center; gap: 0.75rem; }
-        .logo-section h1 {
-            font-size: 1.15rem; font-weight: 700; letter-spacing: -0.025em;
-            background: linear-gradient(135deg, #0ea5e9, #7c3aed);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .center-badge {
-            background: #eef8fe; color: #1e293b; padding: 0.3rem 0.7rem;
-            border-radius: 50px; font-size: 0.75rem; font-weight: 600; border: 1px solid #f0f8fe;
-        }
-        .header-actions { display: flex; align-items: center; gap: 0.65rem; }
-        .back-btn {
-            background: linear-gradient(135deg, #0ea5e9, #7c3aed); color: white;
-            padding: 0.45rem 0.9rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;
-            box-shadow: 0 4px 12px rgba(14,165,233,0.3);
-        }
-        .upload-btn {
-            background: linear-gradient(135deg, #10b981, #0ea5e9); color: white; border: none;
-            padding: 0.45rem 0.9rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600;
-            cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;
-            box-shadow: 0 4px 12px rgba(16,185,129,0.3); font-family: inherit;
-        }
-        .logout-btn {
-            background: #ee5557; color: white; border: 1px solid #e4bec6;
-            padding: 0.45rem 0.9rem; border-radius: 50px; font-size: 0.75rem; font-weight: 500;
-            cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;
-        }
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Affidavit Writer - Akshaya ACE</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--tx: #14213d;
+			--tx2: #4a5a78;
+			--mut: #7d8aa5;
+			--ac: #1e6fe0;
+			--ac2: #22c5ee;
+			--bd: rgba(255, 255, 255, .75);
+			--glass: rgba(255, 255, 255, .62);
+			--sh: 0 10px 34px rgba(31, 52, 110, .13);
+		}
 
-        /* Mobile View Toggle Bar */
-        .mobile-view-nav {
-            display: none;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(8px);
-            padding: 6px 12px;
-            gap: 8px;
-            border-bottom: 1px solid var(--glass-border);
-            flex-shrink: 0;
-            z-index: 95;
-        }
-        .mobile-nav-btn {
-            flex: 1;
-            padding: 7px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(14, 165, 233, 0.2);
-            background: white;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #475569;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .mobile-nav-btn.active {
-            background: linear-gradient(135deg, #0ea5e9, #7c3aed);
-            color: white;
-            border-color: transparent;
-        }
-        .mobile-back-to-list {
-            display: none;
-            align-items: center;
-            gap: 6px;
-            background: #f1f5f9;
-            color: #0284c7;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 8px;
-            border: none;
-            width: fit-content;
-        }
+		* {
+			box-sizing: border-box;
+		}
 
-        /* ── WORKSPACE ── */
-        .workspace {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 16px;
-            padding: 16px 20px;
-            flex: 1;
-            height: calc(100dvh - 60px);
-            min-height: 0;
-        }
-        @media (min-width: 1400px) { .workspace { grid-template-columns: 360px 1fr; } }
+		html,
+		body {
+			margin: 0;
+		}
 
-        .glass-panel {
-            background: var(--glass-card);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 18px;
-            box-shadow: var(--card-shadow);
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            position: relative;
-        }
+		body {
+			font-family: 'Inter', 'Noto Sans Malayalam', sans-serif;
+			color: var(--tx);
+			min-height: 100vh;
+			-webkit-font-smoothing: antialiased;
+			background:
+				radial-gradient(circle at 8% 10%, rgba(142, 161, 255, .45), transparent 42%),
+				radial-gradient(circle at 92% 8%, rgba(91, 228, 255, .40), transparent 40%),
+				radial-gradient(circle at 70% 95%, rgba(143, 240, 216, .40), transparent 45%),
+				#eef1fb;
+			background-attachment: fixed;
+		}
 
-        /* ── FILTER BOX ── */
-        .filter-box { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; flex-shrink: 0; position: relative; z-index: 20; }
-        .search-wrap { position: relative; }
-        .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none; }
-        .search-wrap input {
-            width: 100%; padding: 9px 12px 9px 34px; border-radius: 10px;
-            border: 1.5px solid rgba(14,165,233,0.3); background: rgba(255,255,255,0.8);
-            font-size: 0.8rem; font-family: inherit; outline: none; color: #1e293b;
-        }
-        .search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,0.12); }
-        .scope-hint { font-size: 0.68rem; color: #64748b; margin-top: -2px; }
-        .chip-row { display: flex; gap: 8px; }
-        .chip {
-            flex: 1; background: rgba(255,255,255,0.7); border: 1.5px solid rgba(14,165,233,0.25);
-            color: #334155; padding: 7px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;
-            cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-            font-family: inherit; transition: all 0.18s;
-        }
-        .chip:hover { border-color: var(--accent); color: var(--accent); }
-        .chip.active { background: linear-gradient(135deg, #0ea5e9, #7c3aed); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(14,165,233,0.3); }
+		body.noscroll {
+			overflow: hidden;
+		}
 
-        /* Latest chip: white glass button with a slowly rotating fire outline; solid fire fill when selected */
-        @property --fire-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-        .chip-hot { position: relative; overflow: hidden; }
-        .chip-hot:not(.active) {
-            border: 1.5px solid transparent; color: #334155;
-            background:
-                linear-gradient(180deg, #ffffff 0%, #fff7ed 100%) padding-box,
-                conic-gradient(from var(--fire-angle), #facc15, #f97316, #dc2626, #f97316, #facc15) border-box;
-            box-shadow: 0 0 10px rgba(249,115,22,0.22);
-            animation: fireSpin 5s linear infinite;
-        }
-        .chip-hot:not(.active) i { color: #f97316; }
-        .chip-hot:not(.active):hover { color: #c2410c; box-shadow: 0 0 14px rgba(249,115,22,0.35); }
-        /* glass sheen sweeping left to right over the white face */
-        .chip-hot:not(.active)::after {
-            content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%;
-            background: linear-gradient(105deg, transparent 0%, rgba(251,146,60,0.18) 40%, rgba(255,255,255,0.95) 50%, rgba(251,146,60,0.12) 60%, transparent 100%);
-            transform: skewX(-20deg); animation: chipShimmer 2.8s ease-in-out infinite; pointer-events: none;
-        }
-        .chip-hot.active {
-            background: linear-gradient(135deg, #facc15 0%, #f97316 45%, #dc2626 100%);
-            color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(249,115,22,0.4);
-        }
-        @keyframes fireSpin { to { --fire-angle: 360deg; } }
-        @keyframes chipShimmer { 0% { left: -60%; } 55%, 100% { left: 130%; } }
-        @media (prefers-reduced-motion: reduce) { .chip-hot:not(.active) { animation: none; } .chip-hot:not(.active)::after { animation: none; display: none; } }
+		/* top bar */
+		.topbar {
+			position: sticky;
+			top: 0;
+			z-index: 60;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			padding: 6px 24px;
+			background: rgba(255, 255, 255, .55);
+			backdrop-filter: blur(22px) saturate(180%);
+			-webkit-backdrop-filter: blur(22px) saturate(180%);
+			border-bottom: 1px solid var(--bd);
+			box-shadow: 0 4px 22px rgba(31, 52, 110, .08);
+		}
 
-        /* ── SEARCHABLE DROPDOWN (combo) ── */
-        .combo { position: relative; }
-        .combo-input {
-            width: 100%; padding: 9px 52px 9px 12px; border-radius: 10px;
-            border: 1.5px solid rgba(14,165,233,0.3); background: rgba(255,255,255,0.8);
-            font-size: 0.8rem; font-family: inherit; outline: none; color: #1e293b;
-        }
-        .combo-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,0.12); }
-        .combo-input:disabled { opacity: 0.55; cursor: not-allowed; background: rgba(241,245,249,0.8); }
-        .combo-caret { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; color: #94a3b8; pointer-events: none; }
-        .combo-clear {
-            display: none; position: absolute; right: 30px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.8rem; padding: 2px 4px;
-        }
-        .combo-clear:hover { color: var(--danger); }
-        .combo.has-value .combo-clear { display: block; }
-        .combo-tag {
-            display: none; position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
-            background: #ede9fe; color: var(--accent3); font-size: 0.6rem; font-weight: 700;
-            padding: 2px 6px; border-radius: 6px; pointer-events: none;
-        }
-        .combo.is-custom .combo-tag { display: block; }
-        .combo.is-custom .combo-input { padding-right: 90px; }
-        .combo-list {
-            display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px);
-            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
-            box-shadow: 0 12px 30px rgba(15,23,42,0.18); z-index: 60; overflow: hidden;
-        }
-        .combo.open .combo-list { display: block; }
-        .combo-opts { max-height: 200px; overflow-y: auto; }
-        .combo-opt { padding: 8px 12px; font-size: 0.8rem; cursor: pointer; color: #334155; }
-        .combo-opt.hi, .combo-opt:hover { background: #e0f2fe; }
-        .combo-opt.sel { font-weight: 700; color: var(--accent2); }
-        .combo-empty { padding: 10px 12px; font-size: 0.78rem; color: #94a3b8; font-style: italic; }
-        .combo-add {
-            border-top: 1px solid rgba(0,0,0,0.07); padding: 9px 12px; font-size: 0.78rem;
-            font-weight: 600; color: var(--accent3); cursor: pointer; background: #faf5ff;
-        }
-        .combo-add:hover:not(.disabled) { background: #f3e8ff; }
-        .combo-add.disabled { color: #94a3b8; cursor: default; background: #f8fafc; font-weight: 500; }
+		.topbar img {
+			width: 54px;
+			height: 54px;
+			object-fit: contain;
+			display: block;
+		}
 
-        /* ── FILE LIST ── */
-        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-shrink: 0; }
-        .list-header h3 { font-size: 0.9rem; font-weight: 700; color: #1e293b; }
-        .file-list {
-            flex: 1; overflow-y: auto; display: flex; flex-direction: column;
-            gap: 6px; padding-right: 4px; min-height: 0;
-        }
-        .file-item {
-            background: rgba(255,255,255,0.6); border: 1px solid var(--glass-border);
-            border-radius: 10px; padding: 10px 12px; display: flex; align-items: center;
-            justify-content: space-between; gap: 8px; cursor: pointer; transition: all 0.18s; flex-shrink: 0;
-        }
-        .file-item:hover, .file-item.active {
-            background: white; border-color: var(--accent); transform: translateX(2px);
-            box-shadow: 0 4px 12px rgba(14,165,233,0.12);
-        }
-        .file-info { display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1; min-width: 0; }
-        .file-info i { color: #ef4444; font-size: 1.1rem; flex-shrink: 0; }
-        .file-info > div { min-width: 0; }
-        .file-title { font-size: 0.82rem; font-weight: 600; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .file-size { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .rank-badge { background: #fff7ed; color: #ea580c; border-radius: 8px; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; flex-shrink: 0; }
-        .list-note { text-align: center; padding: 26px 12px; font-size: 0.8rem; color: #94a3b8; }
+		.tb-title {
+			text-align: center;
+			flex: 1;
+		}
 
-        /* ── PREVIEW PANE ── */
-        .preview-pane { display: flex; flex-direction: column; height: 100%; padding: 16px; position: relative; min-height: 0; }
-        .thumbnail-reel {
-            display: flex; gap: 8px; overflow-x: auto; padding: 4px 4px 10px 4px; margin-bottom: 8px;
-            border-bottom: 1px solid rgba(0,0,0,0.05); height: 85px; flex-shrink: 0; align-items: center;
-        }
-        .thumbnail-card {
-            height: 68px; min-width: 50px; background: rgba(255,255,255,0.7); border: 2px solid transparent;
-            border-radius: 6px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); padding: 2px; flex-shrink: 0;
-        }
-        .thumbnail-card.active { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(14,165,233,0.3); }
-        .thumbnail-card canvas { max-height: 100%; max-width: 100%; object-fit: contain; display: block; }
+		.tb-title h1 {
+			margin: 0;
+			font-size: 19px;
+			font-weight: 800;
+		}
 
-        .viewport-outer-wrapper { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-        .pdf-viewport {
-            width: 100%; height: 100%; flex: 1; background: rgba(0,0,0,0.02); border-radius: 14px;
-            display: flex; justify-content: flex-start; align-items: flex-start; position: relative;
-            overflow: auto; min-height: 0; padding: 12px; -webkit-overflow-scrolling: touch;
-        }
-        #pageStack { flex: none; margin: auto; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 4px 0; }
-        .pdf-page { position: relative; flex: none; background: #fff; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); overflow: hidden; }
-        .pdf-page canvas { display: block; width: 100%; height: 100%; }
-        .pdf-page:empty::after { content: 'Page ' attr(data-page); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.8rem; }
+		.tb-title span {
+			display: block;
+			font-size: 12.5px;
+			color: var(--mut);
+			margin-top: 1px;
+		}
 
-        .floating-action-bar { position: absolute; top: 14px; right: 18px; display: flex; align-items: center; gap: 8px; z-index: 60; }
-        .btn-frosted {
-            background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 16px rgba(0,0,0,0.08); color: #1e293b;
-            padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
-            display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); font-family: inherit;
-        }
-        .btn-frosted:hover:not(:disabled) { background: rgba(255,255,255,0.95); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,165,233,0.2); color: var(--accent); }
-        .btn-frosted.btn-primary { background: linear-gradient(135deg, rgba(14,165,233,0.85), rgba(124,58,237,0.85)); color: white; border: 1px solid rgba(255,255,255,0.4); }
-        .btn-frosted.btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #0ea5e9, #7c3aed); color: white; }
-        .btn-frosted:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-        .btn-frosted.btn-secondary { background: linear-gradient(135deg, #1ace0ad9, #04682dd9); color: white; border: 1px solid rgba(255,255,255,0.4); }
-        .btn-frosted.btn-secondary:hover:not(:disabled) { background: linear-gradient(135deg, #16aa08d9, #035023d9); color: white; }
+		.back {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 9px 18px;
+			border-radius: 30px;
+			background: rgba(255, 255, 255, .8);
+			border: 1px solid var(--bd);
+			color: var(--tx);
+			text-decoration: none;
+			font-weight: 600;
+			font-size: 13px;
+			box-shadow: 0 5px 14px rgba(31, 52, 110, .10);
+		}
 
-        .floating-page-indicator {
-            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
-            background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border); padding: 4px 14px; border-radius: 30px;
-            font-size: 0.78rem; font-weight: 600; color: #475569; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-            display: none; z-index: 60;
-        }
+		/* chooser */
+		.wrap {
+			width: 100%;
+			max-width: none;
+			margin: 0;
+			padding: 18px 20px 90px;
+		}
 
-        /* ── MODALS ── */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(15,23,42,0.45);
-            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            display: none; align-items: center; justify-content: center; z-index: 2000;
-            padding: 14px;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-box {
-            background: rgba(255,255,255,0.95); border: 1px solid var(--glass-border);
-            box-shadow: 0 16px 40px rgba(0,0,0,0.18); border-radius: 18px;
-            padding: 22px 26px; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto;
-        }
-        .modal-box.wide { max-width: 460px; }
-        .modal-box h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; display:flex; align-items:center; gap:8px; }
-        .print-options { display: flex; flex-direction: column; gap: 8px; font-size: 0.84rem; margin-bottom: 12px; }
-        .print-options label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .range-input {
-            width: 100%; padding: 8px 12px; border-radius: 8px; border: 1.5px solid rgba(14,165,233,0.3);
-            font-size: 0.85rem; outline: none; margin-bottom: 16px; font-family: inherit;
-        }
-        .range-input:focus { border-color: var(--accent); }
-        .range-input:disabled { opacity: 0.5; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
-        .btn-cancel {
-            background: transparent; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 8px;
-            cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #475569; font-family: inherit;
-        }
-        .btn-confirm {
-            background: linear-gradient(135deg, #0ea5e9, #7c3aed); border: none; padding: 8px 16px;
-            border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: white; font-family: inherit;
-        }
-        .btn-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
+		.chooser {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			flex-wrap: wrap;
+			padding: 12px 16px;
+			margin-bottom: 16px;
+			border-radius: 18px;
+			background: var(--glass);
+			backdrop-filter: blur(18px);
+			-webkit-backdrop-filter: blur(18px);
+			border: 1px solid var(--bd);
+			box-shadow: var(--sh);
+		}
 
-        /* upload modal */
-        .field { margin-bottom: 12px; }
-        .field > label { display: block; font-size: 0.72rem; font-weight: 700; color: #475569; margin-bottom: 5px; }
-        .field > label small { font-weight: 500; color: #94a3b8; }
-        .field .range-input { margin-bottom: 0; }
-        .dropzone {
-            border: 2px dashed rgba(14,165,233,0.4); border-radius: 12px; padding: 18px 14px; text-align: center;
-            background: rgba(255,255,255,0.45); cursor: pointer; transition: all 0.2s ease; margin-bottom: 12px;
-        }
-        .dropzone:hover:not(.disabled), .dropzone.dragover { background: rgba(224,242,254,0.8); border-color: var(--accent); }
-        .dropzone.disabled { opacity: 0.5; cursor: not-allowed; border-color: #cbd5e1; }
-        .dropzone i { font-size: 1.6rem; color: var(--accent); margin-bottom: 4px; }
-        .dropzone.disabled i { color: #94a3b8; }
-        .dropzone p { font-size: 0.82rem; font-weight: 600; color: #1e293b; }
-        .dropzone span { font-size: 0.7rem; color: #64748b; }
-        .picked-file {
-            display: none; align-items: center; gap: 10px; background: #f0fdf4; border: 1px solid #bbf7d0;
-            border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; font-size: 0.78rem;
-        }
-        .picked-file.show { display: flex; }
-        .picked-file i.fa-file-pdf { color: #ef4444; font-size: 1.1rem; }
-        .picked-file .pf-name { font-weight: 600; color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .picked-file .pf-meta { color: #64748b; font-size: 0.68rem; }
-        .picked-file button { margin-left: auto; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.9rem; }
-        .picked-file button:hover { color: var(--danger); }
-        .approval-note { font-size: 0.7rem; color: #64748b; margin-bottom: 12px; display: flex; gap: 6px; align-items: flex-start; }
+		.chooser label {
+			font-size: 13px;
+			font-weight: 800;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
 
-        /* ── TOAST ── */
-        .toast {
-            position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: white;
-            padding: 10px 16px; border-radius: 10px; font-size: 0.8rem; display: flex; align-items: center;
-            gap: 8px; z-index: 3000; transform: translateY(120%); opacity: 0; transition: all 0.35s ease; max-width: calc(100% - 40px);
-        }
-        .toast.show { transform: translateY(0); opacity: 1; }
-        .toast.success { background: #065f46; }
-        .toast.error { background: #991b1b; }
+		.chooser label i {
+			color: var(--ac);
+		}
 
-        /* ═════════════════ MOBILE RESPONSIVE TWEAKS ═════════════════ */
-        @media (max-width: 850px) {
-            .header { padding: 0.5rem 0.8rem; }
-            .logo-section h1 { font-size: 0.95rem; }
-            .header-actions { gap: 0.4rem; }
-            .btn-text { display: none; }
-            .header-actions .upload-btn,
-            .header-actions .back-btn,
-            .header-actions .logout-btn {
-                padding: 0.45rem 0.65rem;
-                font-size: 0.85rem;
-            }
-            .center-badge { display: none; }
+		.chooser select {
+			flex: 1;
+			min-width: 260px;
+			max-width: 560px;
+			font-family: inherit;
+			font-size: 14.5px;
+			font-weight: 600;
+			padding: 11px 14px;
+			border-radius: 12px;
+			border: 1.5px solid rgba(30, 111, 224, .3);
+			background: #fff;
+			color: var(--tx);
+			outline: none;
+			cursor: pointer;
+		}
 
-            .mobile-view-nav { display: flex; }
+		.chooser select:focus {
+			border-color: var(--ac);
+			box-shadow: 0 0 0 3px rgba(30, 111, 224, .12);
+		}
 
-            .workspace {
-                display: block;
-                padding: 8px;
-                height: calc(100dvh - 96px);
-                position: relative;
-            }
+		.chooser small {
+			font-size: 12px;
+			color: var(--tx2);
+		}
 
-            #panelList, #panelPreview {
-                width: 100%;
-                height: 100%;
-                border-radius: 14px;
-                padding: 12px;
-            }
+		/* layout */
+		.layout {
+			display: grid;
+			grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+			gap: 18px;
+			align-items: start;
+		}
 
-            /* Toggle between panes on mobile */
-            body.mobile-view-list #panelPreview { display: none !important; }
-            body.mobile-view-list #panelList { display: flex !important; }
+		.panel {
+			background: var(--glass);
+			backdrop-filter: blur(22px) saturate(170%);
+			-webkit-backdrop-filter: blur(22px) saturate(170%);
+			border: 1px solid var(--bd);
+			border-radius: 20px;
+			box-shadow: var(--sh);
+		}
 
-            body.mobile-view-preview #panelList { display: none !important; }
-            body.mobile-view-preview #panelPreview { display: flex !important; }
+		.p-head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			flex-wrap: wrap;
+			padding: 14px 16px;
+			border-bottom: 1px solid rgba(255, 255, 255, .7);
+		}
 
-            .mobile-back-to-list { display: inline-flex; }
+		.p-head h2 {
+			margin: 0;
+			font-size: 15px;
+			font-weight: 800;
+		}
 
-            .preview-pane { padding: 10px; }
-            .thumbnail-reel { height: 70px; margin-bottom: 6px; }
-            .thumbnail-card { height: 56px; min-width: 42px; }
+		/* Malayalam switch */
+		.ml-sw {
+			display: inline-flex;
+			align-items: center;
+			gap: 9px;
+			font-size: 12.5px;
+			font-weight: 700;
+			cursor: pointer;
+			user-select: none;
+		}
 
-            .pdf-viewport {
-                padding: 6px;
-                padding-bottom: 54px; /* clearance for bottom action bar */
-            }
+		.ml-sw input {
+			display: none;
+		}
 
-            .floating-action-bar {
-                top: auto;
-                bottom: 12px;
-                right: 50%;
-                transform: translateX(50%);
-                width: calc(100% - 24px);
-                justify-content: center;
-                gap: 6px;
-            }
+		.ml-sw .tg {
+			width: 42px;
+			height: 24px;
+			border-radius: 20px;
+			background: #c4cde0;
+			position: relative;
+			transition: background .2s;
+			flex: none;
+		}
 
-            .floating-action-bar .btn-frosted {
-                flex: 1;
-                justify-content: center;
-                padding: 8px 6px;
-                font-size: 0.72rem;
-            }
+		.ml-sw .tg::after {
+			content: '';
+			position: absolute;
+			left: 3px;
+			top: 3px;
+			width: 18px;
+			height: 18px;
+			border-radius: 50%;
+			background: #fff;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
+			transition: transform .2s;
+		}
 
-            .floating-page-indicator {
-                bottom: 58px;
-            }
+		.ml-sw input:checked+.tg {
+			background: linear-gradient(135deg, var(--ac), var(--ac2));
+		}
 
-            .modal-box {
-                padding: 16px 18px;
-            }
-        }
-    </style>
+		.ml-sw input:checked+.tg::after {
+			transform: translateX(18px);
+		}
+
+		.ml-hint {
+			margin: 0;
+			padding: 8px 16px;
+			font-size: 11.5px;
+			color: var(--tx2);
+			background: rgba(34, 197, 238, .10);
+			border-bottom: 1px solid rgba(255, 255, 255, .7);
+		}
+
+		/* form */
+		#formBody {
+			padding: 10px 12px 14px;
+			max-height: calc(100vh - 215px);
+			overflow-y: auto;
+		}
+
+		.fs {
+			margin-bottom: 9px;
+			border-radius: 14px;
+			background: rgba(255, 255, 255, .55);
+			border: 1px solid rgba(255, 255, 255, .85);
+		}
+
+		.fs>summary {
+			list-style: none;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 10px 12px;
+			font-size: 13px;
+			font-weight: 700;
+		}
+
+		.fs>summary::-webkit-details-marker {
+			display: none;
+		}
+
+		.fs-n {
+			width: 22px;
+			height: 22px;
+			border-radius: 50%;
+			background: rgba(30, 111, 224, .15);
+			color: var(--ac);
+			font-size: 11px;
+			font-weight: 800;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex: none;
+		}
+
+		.fs>summary i {
+			margin-left: auto;
+			color: var(--mut);
+			font-size: 11px;
+			transition: transform .2s;
+		}
+
+		.fs[open]>summary i {
+			transform: rotate(180deg);
+		}
+
+		.fs-b {
+			padding: 2px 12px 12px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			gap: 10px 14px;
+		}
+
+		.fs-b>.tbl,
+		.fs-b>.addrow,
+		.fs-b>.full {
+			grid-column: 1 / -1;
+		}
+
+		.fs-b>.addrow {
+			justify-self: start;
+		}
+
+		.ff {
+			display: block;
+		}
+
+		.ff>span {
+			display: block;
+			font-size: 11.5px;
+			font-weight: 700;
+			color: var(--tx2);
+			margin-bottom: 4px;
+		}
+
+		.ff>span em {
+			font-weight: 500;
+			color: var(--mut);
+			font-style: normal;
+		}
+
+		.af-in {
+			width: 100%;
+			font-family: 'Inter', 'Noto Sans Malayalam', sans-serif;
+			font-size: 14px;
+			padding: 9px 11px;
+			border-radius: 11px;
+			border: 1.5px solid rgba(30, 111, 224, .2);
+			background: rgba(255, 255, 255, .92);
+			color: var(--tx);
+			outline: none;
+			resize: vertical;
+		}
+
+		.af-in:focus {
+			border-color: var(--ac);
+			box-shadow: 0 0 0 3px rgba(30, 111, 224, .12);
+		}
+
+		.pills {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 7px;
+		}
+
+		.pill {
+			font-family: inherit;
+			font-size: 12.5px;
+			font-weight: 600;
+			padding: 7px 13px;
+			border-radius: 20px;
+			border: 1.5px solid rgba(30, 111, 224, .25);
+			background: rgba(255, 255, 255, .85);
+			color: var(--tx2);
+			cursor: pointer;
+		}
+
+		.pill.on {
+			background: linear-gradient(135deg, var(--ac), var(--ac2));
+			color: #fff;
+			border-color: transparent;
+		}
+
+		.tbl {
+			display: grid;
+			gap: 6px;
+			overflow-x: auto;
+		}
+
+		.tr {
+			display: grid;
+			gap: 6px;
+			align-items: center;
+			min-width: 380px;
+		}
+
+		.tr.th span {
+			font-size: 11px;
+			font-weight: 700;
+			color: var(--tx2);
+		}
+
+		.tr .af-in {
+			padding: 7px 9px;
+			font-size: 13px;
+		}
+
+		.tr .rl {
+			font-size: 11.5px;
+			font-weight: 600;
+			color: var(--tx2);
+			line-height: 1.25;
+		}
+
+		.rm {
+			width: 30px;
+			height: 30px;
+			border-radius: 50%;
+			border: none;
+			background: rgba(239, 68, 68, .12);
+			color: #d33;
+			font-size: 17px;
+			cursor: pointer;
+		}
+
+		.addrow {
+			margin-top: 8px;
+			font-family: inherit;
+			font-size: 12.5px;
+			font-weight: 700;
+			padding: 8px 14px;
+			border-radius: 20px;
+			border: 1.5px dashed rgba(30, 111, 224, .45);
+			background: rgba(255, 255, 255, .6);
+			color: var(--ac);
+			cursor: pointer;
+		}
+
+		.addrow:disabled {
+			opacity: .5;
+			cursor: default;
+		}
+
+		.addrow small {
+			font-weight: 500;
+			color: var(--mut);
+		}
+
+		/* preview */
+		.pv-wrap {
+			position: sticky;
+			top: 76px;
+		}
+
+		.pv-bar {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+
+		.btn {
+			font-family: inherit;
+			font-size: 13px;
+			font-weight: 700;
+			padding: 9px 16px;
+			border-radius: 12px;
+			border: none;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			background: rgba(255, 255, 255, .85);
+			color: var(--tx);
+			box-shadow: 0 5px 14px rgba(31, 52, 110, .12);
+		}
+
+		.btn.pri {
+			background: linear-gradient(135deg, var(--ac), var(--ac2));
+			color: #fff;
+			box-shadow: 0 8px 20px rgba(30, 111, 224, .35);
+		}
+
+		.btn.dng {
+			color: #c0392b;
+		}
+
+		.btn:disabled {
+			opacity: .6;
+			cursor: default;
+		}
+
+		#pvPages {
+			padding: 14px;
+			max-height: calc(100vh - 215px);
+			overflow-y: auto;
+			background: rgba(60, 70, 110, .08);
+			border-radius: 0 0 20px 20px;
+		}
+
+		.pv-sheet {
+			position: relative;
+			margin: 0 auto 16px;
+			width: 100%;
+			max-width: 1100px;
+			box-shadow: 0 8px 26px rgba(20, 30, 70, .22);
+			background: #fff;
+		}
+
+		.pv-no {
+			position: absolute;
+			right: 8px;
+			bottom: -13px;
+			font-size: 10px;
+			color: var(--mut);
+		}
+
+		/* page rendering (also reused in print / pdf) */
+		.afp {
+			position: relative;
+			overflow: hidden;
+			background: #fff;
+		}
+
+		.afbg {
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			display: block;
+			user-select: none;
+			-webkit-user-drag: none;
+		}
+
+		.afv {
+			position: absolute;
+			display: block;
+			overflow: hidden;
+			font-family: 'Noto Sans Malayalam', 'Noto Sans', Arial, sans-serif;
+			font-weight: 500;
+			color: #0a1d52;
+		}
+
+		.afv.multi {
+			line-height: 1.3;
+		}
+
+		.afv.multi span {
+			white-space: pre-wrap;
+			display: block;
+			width: 100%;
+		}
+
+		.afv span {
+			white-space: nowrap;
+		}
+
+		.afs {
+			position: absolute;
+			background: #1a1a1a;
+		}
+
+		/* suggestion popup */
+		.ml-pop {
+			position: fixed;
+			z-index: 1000;
+			display: none;
+			background: #fff;
+			border: 1px solid rgba(30, 111, 224, .3);
+			border-radius: 12px;
+			box-shadow: 0 14px 34px rgba(20, 30, 70, .25);
+			padding: 4px;
+			font-family: 'Noto Sans Malayalam', 'Inter', sans-serif;
+		}
+
+		.mp-it {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 8px 12px;
+			border-radius: 8px;
+			font-size: 16px;
+			cursor: pointer;
+			color: var(--tx);
+		}
+
+		.mp-it b {
+			width: 18px;
+			font-size: 11px;
+			color: var(--mut);
+			font-family: 'Inter', sans-serif;
+		}
+
+		.mp-it.on {
+			background: rgba(30, 111, 224, .14);
+		}
+
+		.mp-it.keep {
+			font-size: 14px;
+			font-family: 'Inter', sans-serif;
+			color: var(--tx);
+			margin-top: 3px;
+			border-top: 1px solid #e4e8f2;
+			border-radius: 0 0 8px 8px;
+			background: #f6f8fd;
+		}
+
+		.mp-it.keep.on {
+			background: rgba(30, 111, 224, .14);
+		}
+
+		.mp-it.keep b {
+			width: auto;
+			min-width: 24px;
+			text-align: center;
+			font-size: 12px;
+			color: #fff;
+			background: #6b7692;
+			border-radius: 5px;
+			padding: 1px 5px;
+		}
+
+		.mp-it.keep .kh {
+			margin-left: auto;
+			font-size: 11px;
+		}
+
+		.mp-it small {
+			color: var(--mut);
+		}
+
+		/* full preview modal */
+		.modal {
+			position: fixed;
+			inset: 0;
+			z-index: 500;
+			display: none;
+			flex-direction: column;
+			background: rgba(15, 22, 50, .72);
+			backdrop-filter: blur(6px);
+		}
+
+		.modal.open {
+			display: flex;
+		}
+
+		.m-bar {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 10px 16px;
+			background: rgba(255, 255, 255, .9);
+		}
+
+		.m-bar h3 {
+			margin: 0 auto 0 0;
+			font-size: 15px;
+		}
+
+		#pvModalBody {
+			flex: 1;
+			overflow-y: auto;
+			padding: 18px 12px 30px;
+		}
+
+		.pv-sheet.big {
+			margin-bottom: 20px;
+		}
+
+		.toast {
+			position: fixed;
+			left: 50%;
+			bottom: 22px;
+			transform: translate(-50%, 90px);
+			background: #14213d;
+			color: #fff;
+			padding: 11px 20px;
+			border-radius: 14px;
+			font-size: 13.5px;
+			font-weight: 600;
+			z-index: 2000;
+			opacity: 0;
+			transition: transform .3s, opacity .3s;
+		}
+
+		.toast.show {
+			transform: translate(-50%, 0);
+			opacity: 1;
+		}
+
+		#pdfStage {
+			position: fixed;
+			left: -12000px;
+			top: 0;
+		}
+
+		/* mobile */
+		@media (max-width: 1020px) {
+			.layout {
+				grid-template-columns: 1fr;
+			}
+
+			.pv-wrap {
+				position: static;
+			}
+
+			#formBody,
+			#pvPages {
+				max-height: none;
+			}
+
+			.topbar {
+				padding: 6px 12px;
+			}
+
+			.wrap {
+				padding: 12px 10px 90px;
+			}
+
+			.mob-bar {
+				display: flex !important;
+			}
+		}
+
+		.mob-bar {
+			display: none;
+			position: fixed;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 70;
+			gap: 8px;
+			padding: 10px 12px;
+			background: rgba(255, 255, 255, .9);
+			backdrop-filter: blur(16px);
+			border-top: 1px solid var(--bd);
+		}
+
+		.mob-bar .btn {
+			flex: 1;
+			justify-content: center;
+		}
+
+		@media print {
+
+			.topbar,
+			.wrap,
+			.modal,
+			.mob-bar {
+				display: none !important;
+			}
+		}
+	</style>
 </head>
-<body class="mobile-view-list">
 
-    <header class="header">
-        <div class="header-content">
-            <div class="logo-section">
-                <h1><i class="fas fa-file-signature" style="font-size:1.1rem;margin-right:6px;"></i> Application Forms Vault</h1>
-                <div class="center-badge">
-                    <i class="fas fa-building"></i> MPM250                </div>
-            </div>
-            <div class="header-actions">
-                <button type="button" class="upload-btn" onclick="openUploadModal()" title="Upload Forms">
-                    <i class="fas fa-cloud-arrow-up"></i>
-                    <span class="btn-text">Upload Forms</span>
-                </button>
-                <a href="https://akshayaonline.in/dashboard.php" class="back-btn" title="Dashboard">
-                    <i class="fas fa-house"></i>
-                    <span class="btn-text">Dashboard</span>
-                </a>
-                <form method="POST" style="display: inline;">
-                    <input type="hidden" name="csrf_token" value="15d624d9c486597ee30350bb443d0ab3754ba4c9e06744d62ac24d3d1b134669">
-                    <input type="hidden" name="action" value="logout">
-                    <button type="submit" class="logout-btn" title="Logout" onclick="return confirm('Are you sure you want to logout?')">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span class="btn-text">Logout</span>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </header>
+<body>
 
-    <!-- MOBILE NAVIGATION SWITCHER -->
-    <div class="mobile-view-nav">
-        <button class="mobile-nav-btn active" id="tabBtnList" onclick="switchMobileTab('list')">
-            <i class="fas fa-list-ul"></i> Forms List
-        </button>
-        <button class="mobile-nav-btn" id="tabBtnPreview" onclick="switchMobileTab('preview')">
-            <i class="fas fa-eye"></i> Form Preview
-        </button>
-    </div>
+	<div class="topbar">
+		<img src="/akshaya-logo.png" alt="" onerror="this.style.visibility='hidden'">
+		<div class="tb-title">
+			<h1>Affidavit Writer</h1>
+			<span>Fill, preview, print or download affidavits &amp; passport annexures</span>
+		</div>
+		<a class="back" href="/dashboard"><i class="fa-solid fa-arrow-left"></i> Back</a>
+	</div>
 
-    <div class="workspace">
-        <!-- LEFT PANEL: SEARCH, FILTERS & LIST -->
-        <div class="glass-panel" id="panelList">
-            <div class="filter-box">
-                <div class="search-wrap">
-                    <i class="fas fa-magnifying-glass"></i>
-                    <input type="text" id="searchInput" placeholder="Search form, department or office…" maxlength="100" autocomplete="off" autofocus="">
-                </div>
-                <div id="deptFilter" class="combo">
-                    <input type="text" class="combo-input" autocomplete="off" spellcheck="false" placeholder="All departments">
-                    <span class="combo-tag">NEW</span>
-                    <button type="button" class="combo-clear" tabindex="-1" title="Clear"><i class="fas fa-xmark"></i></button>
-                    <i class="fas fa-chevron-down combo-caret"></i>
-                    <div class="combo-list"><div class="combo-opts"></div><div class="combo-add" hidden=""></div></div></div>
-                <div id="officeFilter" class="combo">
-                    <input type="text" class="combo-input" autocomplete="off" spellcheck="false" placeholder="Select a department to pick an office" disabled="disabled">
-                    <span class="combo-tag">NEW</span>
-                    <button type="button" class="combo-clear" tabindex="-1" title="Clear"><i class="fas fa-xmark"></i></button>
-                    <i class="fas fa-chevron-down combo-caret"></i>
-                    <div class="combo-list"><div class="combo-opts"></div><div class="combo-add" hidden=""></div></div></div>
-                <div class="scope-hint" id="scopeHint">Searching all departments</div>
-                <div class="chip-row">
-                    <button type="button" class="chip chip-hot" id="chipLatest"><i class="fas fa-clock"></i> Latest</button>
-                    <button type="button" class="chip" id="chipFrequent"><i class="fas fa-fire"></i> Frequent</button>
-                </div>
-            </div>
+	<div class="wrap">
 
-            <div class="list-header">
-                <h3><i class="fas fa-folder-open" style="color:var(--accent);margin-right:6px;"></i> <span id="listTitle">Application Forms</span></h3>
-                <span id="fileCount" style="font-size:0.75rem; color:#64748b; font-weight:600;">40+ Forms</span>
-            </div>
+		<div class="chooser">
+			<label for="affSelect"><i class="fa-solid fa-file-signature"></i> Select affidavit</label>
+			<select id="affSelect"></select>
+			<small id="affSub"></small><button type="button" class="btn" id="customFormBtn" style="display:none">＋ Add new form</button>
+		</div>
 
-            <div class="file-list" id="fileListContainer"><div class="file-item" id="file-item-38"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Admission Register Extract Format">Admission Register Extract Format</div><div class="file-size">Miscellaneous › Application Form · 396 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-10"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Age 18 above Resident Indian, or NRI having POA in India">Age 18 above Resident Indian, or NRI having POA in India</div><div class="file-size">UIDAI Aadhaar › New and Update · 326 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-11"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Age 5 to 18 above Resident Indian or NRI having POA in India">Age 5 to 18 above Resident Indian or NRI having POA in India</div><div class="file-size">UIDAI Aadhaar › New and Update · 312 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-12"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Age below 5 Resident Indian, or NRI having POA in India">Age below 5 Resident Indian, or NRI having POA in India</div><div class="file-size">UIDAI Aadhaar › New and Update · 164 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-17"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Aged above 18 Resident Foreign National">Aged above 18 Resident Foreign National</div><div class="file-size">UIDAI Aadhaar › New and Update · 387 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-16"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Aged below 18 Resident Foreign National">Aged below 18 Resident Foreign National</div><div class="file-size">UIDAI Aadhaar › New and Update · 385 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-63"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="AIMS Land lease Agreement">AIMS Land lease Agreement</div><div class="file-size">Miscellaneous › Application Form · 371 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-18"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Annexure B">Annexure B</div><div class="file-size">UIDAI Aadhaar › Annexure · 137 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-19"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Annexure C">Annexure C</div><div class="file-size">UIDAI Aadhaar › Annexure · 141 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-20"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Annexure D">Annexure D</div><div class="file-size">UIDAI Aadhaar › Annexure · 153 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-21"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Annexure E For adult">Annexure E For adult</div><div class="file-size">UIDAI Aadhaar › Annexure · 145 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-22"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Annexure F for Minor">Annexure F for Minor</div><div class="file-size">UIDAI Aadhaar › Annexure · 154 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-51"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Application for issue of Duplicate SSLC / HSM / PSLC">Application for issue of Duplicate SSLC / HSM / PSLC</div><div class="file-size">Education › Application Forms · 7 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-66"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Application Form Jal Jeevan Mission">Application Form Jal Jeevan Mission</div><div class="file-size">Miscellaneous › Application Form · 166 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-77"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="ASWASAKIRANAM">ASWASAKIRANAM</div><div class="file-size">Miscellaneous › Application Form · 41 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-74"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="BIrth Order Affidavit">BIrth Order Affidavit</div><div class="file-size">LSGD › Common Application Form · 75 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-35"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="BPL Certificate Application">BPL Certificate Application</div><div class="file-size">LSGD › Grama Panchayath · 37 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-9"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="CANCER PATIENT PENSION">CANCER PATIENT PENSION</div><div class="file-size">Revenue › Village Office · 1467 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-46"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Conduct Certificate">Conduct Certificate</div><div class="file-size">Miscellaneous › Application Form · 5 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-40"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Consent of the Nominee - Pension application">Consent of the Nominee - Pension application</div><div class="file-size">NRI › Pravasi Welfare · 378 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-75"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Death Certificate Affidavit">Death Certificate Affidavit</div><div class="file-size">LSGD › Common Application Form · 132 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-69"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Disability Pension">Disability Pension</div><div class="file-size">LSGD › Common Application Form · 40 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-60"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Driving License Backlog">Driving License Backlog</div><div class="file-size">Motor Transport › Parivahan Licence · 375 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-49"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Ente Kutti Format 1">Ente Kutti Format 1</div><div class="file-size">Education › Scholarship Forms · 56 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-50"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Ente Kutti Format 2">Ente Kutti Format 2</div><div class="file-size">Education › Scholarship Forms · 2158 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-28"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="EWS AYY (Yellow) , PHH (Pink) ANEX III">EWS AYY (Yellow) , PHH (Pink) ANEX III</div><div class="file-size">Revenue › Village Office · 72 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-29"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="EWS AYY (Yellow) , PHH (Pink) Anex IV">EWS AYY (Yellow) , PHH (Pink) Anex IV</div><div class="file-size">Revenue › Village Office · 68 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-5"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="EWS CERTIFICATE">EWS CERTIFICATE</div><div class="file-size">Revenue › Village Office · 180 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-30"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="EWS Subsidy (Blue) Non subsidy(White) ANEX I">EWS Subsidy (Blue) Non subsidy(White) ANEX I</div><div class="file-size">Revenue › Village Office · 73 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-31"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="EWS Subsidy (Blue) Non subsidy(White) ANEX II">EWS Subsidy (Blue) Non subsidy(White) ANEX II</div><div class="file-size">Revenue › Village Office · 66 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-64"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Fair Price Shop License Application">Fair Price Shop License Application</div><div class="file-size">Civil Supplies › Application Form · 181 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-4"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="FAMILY MEMBERSHIP AFFIDAVIT">FAMILY MEMBERSHIP AFFIDAVIT</div><div class="file-size">Revenue › Village Office · 46 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-23"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="FAMILY MEMBERSHIP AFFIDAVIT 2">FAMILY MEMBERSHIP AFFIDAVIT 2</div><div class="file-size">Revenue › Village Office · 2590 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-24"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="FAMILY MEMBERSHIP AFFIDAVIT 3">FAMILY MEMBERSHIP AFFIDAVIT 3</div><div class="file-size">Revenue › Village Office · 227 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-56"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Form 15 H">Form 15 H</div><div class="file-size">Income Tax Department › PAN Card · 22 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-54"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Form 15G">Form 15G</div><div class="file-size">EPF › Application Form · 153 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-42"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Form 1B Pension Application - Pravasi returned">Form 1B Pension Application - Pravasi returned</div><div class="file-size">NRI › Pravasi Welfare · 49 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-68"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Imbici Bava Scheme">Imbici Bava Scheme</div><div class="file-size">Miscellaneous › Application Form · 1090 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-79"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Incom Affidavit One Side">Incom Affidavit One Side</div><div class="file-size">Revenue › Village Office · 1166 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div><div class="file-item" id="file-item-3"><div class="file-info"><i class="fas fa-file-pdf"></i><div><div class="file-title" title="Income Affidavit">Income Affidavit</div><div class="file-size">Revenue › Village Office · 54 KB</div></div></div><i class="fas fa-chevron-right" style="font-size: 0.75rem; color: rgb(203, 213, 225);"></i></div></div>
-        </div>
+		<div class="layout">
 
-        <!-- RIGHT PANEL: PREVIEW PANE -->
-        <div class="glass-panel preview-pane" id="panelPreview">
-            <button type="button" class="mobile-back-to-list" onclick="switchMobileTab('list')">
-                <i class="fas fa-arrow-left"></i> Back to search
-            </button>
+			<section class="panel">
+				<div class="p-head">
+					<h2 id="formTitle">Details</h2>
+					<label class="ml-sw" id="mlWrap" title="Type English and pick the Malayalam word">
+						<input type="checkbox" id="mlSwitch" checked>
+						<span class="tg"></span>
+						<span>English → മലയാളം</span>
+					</label>
+				</div>
+				<p class="ml-hint" id="mlHint"><b>Malayalam typing is on.</b> Type the name in English (e.g. <i>sajin</i>) and pick one of the Malayalam spellings: click it, use <b>↑ ↓</b>, or just press <b>Space</b> for the first. To <b>keep the English as typed</b>, pick the <b>Aa</b> row at the bottom of the list or press <b>Ctrl+Enter</b> (that word is then remembered and stays English next time). Letters followed by a digit (<i>KL01</i>) stay English automatically. Numeric fields are not converted.</p>
+				<p class="ml-hint" id="enHint" style="display:none"><b>English form.</b> Type in English. Fill the details on the left; the form text on the right fills in as you type. Words that do not apply (father / mother, he / she, I / We ...) are struck through, and reasons that do not apply get a cross mark.</p>
+				<div id="formBody"></div>
+			</section>
 
-            <div class="thumbnail-reel" id="thumbnailReel">
-                <div style="display:flex; align-items:center; justify-content:center; width:100%; color:#94a3b8; font-size:0.75rem; font-style:italic;">
-                    Select an application form to inspect pages
-                </div>
-            </div>
+			<section class="panel pv-wrap">
+				<div class="p-head">
+					<h2>Live preview</h2>
+					<div class="pv-bar">
+						<button type="button" class="btn" id="btnPreview"><i class="fa-solid fa-expand"></i> Preview</button>
+						<button type="button" class="btn" id="btnPrint"><i class="fa-solid fa-print"></i> Print</button>
+						<button type="button" class="btn pri" id="btnPdf"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+						<button type="button" class="btn dng" id="btnReset" title="Clear all"><i class="fa-solid fa-rotate-left"></i></button>
+					</div>
+				</div>
+				<div id="pvPages"></div>
+			</section>
 
-            <div class="viewport-outer-wrapper">
-                <div class="floating-action-bar">
-                    <button class="btn-frosted btn-primary" id="zoomToggleBtn" onclick="toggleZoomMode()" title="Toggle View" disabled="disabled">
-                        <i class="fas fa-magnifying-glass-plus" id="zoomIcon"></i> <span id="zoomLabel">Zoom</span>
-                    </button>
-                    <button class="btn-frosted btn-secondary" id="printBtn" onclick="printPdfFromMemory()" disabled="disabled">
-                        <i class="fas fa-print"></i> <span>Print</span>
-                    </button>
-                    <button class="btn-frosted btn-primary" id="downloadBtn" onclick="downloadPdfFromMemory()" disabled="disabled">
-                        <i class="fas fa-download"></i> <span>Download</span>
-                    </button>
-                </div>
+		</div>
+	</div>
 
-                <div class="pdf-viewport" id="pdfViewport">
-                    <div id="pageStack"></div>
-                </div>
+	<div class="mob-bar">
+		<button type="button" class="btn" onclick="document.getElementById('btnPreview').click()"><i class="fa-solid fa-expand"></i> Preview</button>
+		<button type="button" class="btn" onclick="document.getElementById('btnPrint').click()"><i class="fa-solid fa-print"></i> Print</button>
+		<button type="button" class="btn pri" onclick="document.getElementById('btnPdf').click()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+	</div>
 
-                <div class="floating-page-indicator" id="pageIndicator">Page 1 of 1</div>
-            </div>
-        </div>
-    </div>
+	<div class="modal" id="pvModal">
+		<div class="m-bar">
+			<h3>Preview</h3>
+			<button type="button" class="btn" id="pvPrint"><i class="fa-solid fa-print"></i> Print</button>
+			<button type="button" class="btn pri" id="pvPdf"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+			<button type="button" class="btn" id="pvClose"><i class="fa-solid fa-xmark"></i> Close</button>
+		</div>
+		<div id="pvModalBody"></div>
+	</div>
 
-    <!-- UPLOAD MODAL -->
-    <div id="uploadModal" class="modal-overlay">
-        <div class="modal-box wide">
-            <h3><i class="fas fa-cloud-arrow-up" style="color:var(--success);"></i> Upload Application Form</h3>
-            <p style="font-size:0.78rem; color:#64748b; margin-bottom:14px;">Choose where the form belongs, then add the PDF.</p>
+	<div id="pdfStage"></div>
+	<div class="toast" id="toast"></div>
 
-            <div class="field">
-                <label>1. Department</label>
-                <div id="upDept" class="combo">
-                    <input type="text" class="combo-input" autocomplete="off" spellcheck="false" placeholder="Search or select department…">
-                    <span class="combo-tag">NEW</span>
-                    <button type="button" class="combo-clear" tabindex="-1" title="Clear"><i class="fas fa-xmark"></i></button>
-                    <i class="fas fa-chevron-down combo-caret"></i>
-                    <div class="combo-list"><div class="combo-opts"></div><div class="combo-add" hidden=""></div></div></div>
-            </div>
-            <div class="field">
-                <label>2. Office</label>
-                <div id="upOffice" class="combo">
-                    <input type="text" class="combo-input" autocomplete="off" spellcheck="false" placeholder="Select a department first" disabled="disabled">
-                    <span class="combo-tag">NEW</span>
-                    <button type="button" class="combo-clear" tabindex="-1" title="Clear"><i class="fas fa-xmark"></i></button>
-                    <i class="fas fa-chevron-down combo-caret"></i>
-                    <div class="combo-list"><div class="combo-opts"></div><div class="combo-add" hidden=""></div></div></div>
-            </div>
-            <div class="field">
-                <label>Form name <small>(this is what people search for, e.g. Income Certificate)</small></label>
-                <input type="text" id="upName" class="range-input" maxlength="120" placeholder="e.g. Bio update form" autocomplete="off">
-            </div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script>
+		window.AFF_CFG = {
+			base: 'https://akshayaapp.com/assets/affidavit/',
+			translitUrl: 'https://akshayaapp.com/affidavit_generator/translit'
+		};
+	</script>
+	<script src="/affidavit-writer/js/affidavit-defs.js"></script>
+	<script src="/affidavit-writer/js/affidavit-annexures.js"></script>
+	<script src="/affidavit-writer/js/affidavit-onesame.js"></script>
+	<script src="/affidavit-writer/js/custom-forms.js"></script>
+	<script src="/affidavit-writer/js/affidavit-generator.js"></script>
 
-            <input type="file" id="upFileInput" accept="application/pdf,.pdf" style="display:none;">
-            <div class="dropzone disabled" id="upDrop" tabindex="0">
-                <i class="fas fa-cloud-arrow-up"></i>
-                <p id="upDropTitle">Select department and office first</p>
-                <span>PDF only · max 5 MB · max 10 pages</span>
-            </div>
-            <div class="picked-file" id="upPicked">
-                <i class="fas fa-file-pdf"></i>
-                <div style="min-width:0;">
-                    <div class="pf-name" id="upPickedName"></div>
-                    <div class="pf-meta" id="upPickedMeta"></div>
-                </div>
-                <button type="button" id="upPickedClear" title="Remove"><i class="fas fa-xmark"></i></button>
-            </div>
+<script>if(!localStorage.getItem("loggedInUser")){location.href="/login";}</script>
+</body>
 
-            <div class="approval-note"><i class="fas fa-circle-info" style="color:var(--accent);margin-top:2px;"></i>
-                <span>New forms are visible to others only after an admin approves them.</span></div>
-
-            <div class="modal-actions">
-                <button type="button" class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
-                <button type="button" class="btn-confirm" id="upSubmit" onclick="submitUpload()" disabled="disabled">
-                    <i class="fas fa-cloud-arrow-up"></i> Upload
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- PRINT OPTIONS MODAL -->
-    <div id="printModal" class="modal-overlay">
-        <div class="modal-box">
-            <h3><i class="fas fa-print" style="color:var(--accent);"></i> Print Application Form</h3>
-            <p style="font-size:0.8rem; color:#64748b; margin-bottom:14px;">Select which pages to print:</p>
-
-            <div class="print-options">
-                <label>
-                    <input type="radio" name="printPageScope" value="all" checked="checked" onchange="toggleCustomPageInput(false)">
-                    All Pages (<span id="modalTotalPages">1</span>)
-                </label>
-                <label>
-                    <input type="radio" name="printPageScope" value="current" onchange="toggleCustomPageInput(false)">
-                    Current Page Only (Page <span id="modalCurrentPage">1</span>)
-                </label>
-                <label>
-                    <input type="radio" name="printPageScope" value="custom" onchange="toggleCustomPageInput(true)">
-                    Custom Range
-                </label>
-            </div>
-
-            <input type="text" id="customPageInput" placeholder="e.g. 1, 2-3" disabled="disabled" class="range-input" style="margin-bottom:16px;">
-
-            <div class="modal-actions">
-                <button type="button" class="btn-cancel" onclick="closePrintModal()">Cancel</button>
-                <button type="button" class="btn-confirm" id="confirmPrintBtn" onclick="executeInBrowserPrint()">
-                    <i class="fas fa-print"></i> Start Print
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast" id="toast"><i class="fas fa-circle-check"></i> <span id="toastMsg"></span></div>
-
-    <script type="module">
-        // ── MOBILE TAB SWITCHER LOGIC ──
-        function switchMobileTab(tab) {
-            const body = document.body;
-            const btnList = $('tabBtnList');
-            const btnPreview = $('tabBtnPreview');
-
-            if (tab === 'preview') {
-                body.classList.remove('mobile-view-list');
-                body.classList.add('mobile-view-preview');
-                btnPreview.classList.add('active');
-                btnList.classList.remove('active');
-                if (currentPdf) {
-                    setTimeout(() => buildPages(true), 60);
-                }
-            } else {
-                body.classList.remove('mobile-view-preview');
-                body.classList.add('mobile-view-list');
-                btnList.classList.add('active');
-                btnPreview.classList.remove('active');
-            }
-        }
-        window.switchMobileTab = switchMobileTab;
-
-        // ── PDF.js (v4+ is ES-module only) ──
-        const PDFJS_VERSION = '6.3.289';
-        const PDFJS_BASE = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/`;
-        let pdfjsLib = null;
-        try {
-            pdfjsLib = await import(PDFJS_BASE + 'build/pdf.min.mjs');
-            pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'build/pdf.worker.min.mjs';
-        } catch (e) {
-            console.error('PDF.js failed to load', e);
-        }
-
-        const pdfTasks = new WeakMap();
-
-        async function openPdf(blob) {
-            if (!pdfjsLib) throw new Error('PDF engine could not load. Please update your browser and refresh.');
-            const task = pdfjsLib.getDocument({
-                data: new Uint8Array(await blob.arrayBuffer()),
-                isEvalSupported: false,
-                cMapUrl: PDFJS_BASE + 'cmaps/',
-                cMapPacked: true,
-                standardFontDataUrl: PDFJS_BASE + 'standard_fonts/',
-                wasmUrl: PDFJS_BASE + 'wasm/'
-            });
-            const pdf = await task.promise;
-            pdfTasks.set(pdf, task);
-            return pdf;
-        }
-
-        function destroyPdf(pdf) {
-            if (!pdf) return;
-            try {
-                const task = pdfTasks.get(pdf);
-                if (task && typeof task.destroy === 'function') task.destroy();
-                else if (typeof pdf.destroy === 'function') pdf.destroy();
-            } catch (e) { /* already gone */ }
-            pdfTasks.delete(pdf);
-        }
-
-        const CSRF_TOKEN    = "15d624d9c486597ee30350bb443d0ab3754ba4c9e06744d62ac24d3d1b134669";
-        const PDF_MAX_BYTES = 5242880;
-        const PDF_MAX_PAGES = 10;
-        const API = 'api/pdf_api.php';
-
-        const $ = (id) => document.getElementById(id);
-
-        async function apiFetch(url, opts = {}) {
-            opts.headers = Object.assign({ 'X-CSRF-Token': CSRF_TOKEN }, opts.headers || {});
-            opts.credentials = 'same-origin';
-            const res = await fetch(url, opts);
-            if (res.status === 401) { location.href = 'login.php'; throw new Error('Session expired'); }
-            let data = null;
-            try { data = await res.json(); } catch (_) {}
-            if (!data) throw new Error(res.status === 413 ? 'File too large for the server' : `Server error (${res.status})`);
-            if (res.status === 429) throw new Error(data.message || 'Too many requests, please wait a moment');
-            return data;
-        }
-        const formBody = (obj) => ({
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams(obj)
-        });
-
-        const NAME_RE = /^[\p{L}\p{M}\p{N} .,&()\/\-_']+$/u;
-        function cleanName(s, min, max) {
-            s = (s || '').normalize('NFC').replace(/\s+/g, ' ').trim();
-            return (s.length >= min && s.length <= max && NAME_RE.test(s)) ? s : null;
-        }
-
-        const DB_NAME = 'AkshayaSmart_AppForms_v2';
-        const DB_STORE = 'cached_forms';
-        const DB_VERSION = 1;
-        const CACHE_MAX = 40;
-
-        function openPdfCacheDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, { keyPath: 'id' });
-                };
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-        }
-
-        async function getCachedPdf(id, ver) {
-            try {
-                const db = await openPdfCacheDB();
-                return await new Promise((resolve) => {
-                    const req = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).get(id);
-                    req.onsuccess = () => resolve(req.result && req.result.ver === ver ? req.result.blob : null);
-                    req.onerror = () => resolve(null);
-                });
-            } catch (e) { return null; }
-        }
-
-        async function setCachedPdf(id, blob, ver) {
-            try {
-                const db = await openPdfCacheDB();
-                db.transaction(DB_STORE, 'readwrite').objectStore(DB_STORE).put({ id, blob, ver, cachedAt: Date.now() });
-                trimCache(db);
-            } catch (e) { console.warn('Local cache write skipped', e); }
-        }
-
-        async function deleteCachedPdf(id) {
-            try {
-                const db = await openPdfCacheDB();
-                db.transaction(DB_STORE, 'readwrite').objectStore(DB_STORE).delete(id);
-            } catch (e) { /* ignore */ }
-        }
-
-        function trimCache(db) {
-            const store = db.transaction(DB_STORE, 'readwrite').objectStore(DB_STORE);
-            const rows = [];
-            store.openCursor().onsuccess = (e) => {
-                const cur = e.target.result;
-                if (cur) { rows.push({ key: cur.key, t: cur.value.cachedAt || 0 }); cur.continue(); return; }
-                rows.sort((a, b) => b.t - a.t).slice(CACHE_MAX).forEach(r => store.delete(r.key));
-            };
-        }
-
-        async function evictStale(files) {
-            try {
-                const live = new Map(files.map(f => [f.id, f.ver]));
-                const db = await openPdfCacheDB();
-                const store = db.transaction(DB_STORE, 'readwrite').objectStore(DB_STORE);
-                store.openCursor().onsuccess = (e) => {
-                    const cur = e.target.result;
-                    if (!cur) return;
-                    if (live.has(cur.key) && live.get(cur.key) !== cur.value.ver) cur.delete();
-                    cur.continue();
-                };
-            } catch (err) { console.warn('Cache check skipped', err); }
-        }
-
-        let currentPdf = null;
-        let inMemoryBlob = null;
-        let activeFileId = null;
-        let activeFileName = 'form';
-        let activePageNum = 1;
-        let isZoomed = window.innerWidth > 850;
-        let loadSeq = 0;
-        let pageDims = [], pageDimsPdf = null, pageEls = [];
-        let buildSeq = 0, renderGen = 0, suppressScrollUntil = 0;
-        const pageTasks = new Map();
-        let printBlobUrls = [];
-
-        function showToast(msg, type = 'success') {
-            const toast = $('toast');
-            toast.className = 'toast ' + type;
-            $('toastMsg').textContent = msg;
-            toast.classList.add('show');
-            clearTimeout(showToast._t);
-            showToast._t = setTimeout(() => toast.classList.remove('show'), 3800);
-        }
-
-        class Combo {
-            constructor(root, opts) {
-                this.o = Object.assign({ placeholder: '', allowCustom: false, noun: 'item', onChange() {} }, opts);
-                this.root = root;
-                this.items = []; this.matches = []; this.selected = null;
-                this.query = ''; this.hi = -1; this.isOpen = false;
-
-                root.classList.add('combo');
-                root.innerHTML = `
-                    <input type="text" class="combo-input" autocomplete="off" spellcheck="false">
-                    <span class="combo-tag">NEW</span>
-                    <button type="button" class="combo-clear" tabindex="-1" title="Clear"><i class="fas fa-xmark"></i></button>
-                    <i class="fas fa-chevron-down combo-caret"></i>
-                    <div class="combo-list"><div class="combo-opts"></div><div class="combo-add" hidden></div></div>`;
-                this.input = root.querySelector('.combo-input');
-                this.optsEl = root.querySelector('.combo-opts');
-                this.addEl = root.querySelector('.combo-add');
-                this.clearBtn = root.querySelector('.combo-clear');
-                this.input.placeholder = this.o.placeholder;
-
-                const list = root.querySelector('.combo-list');
-                list.addEventListener('mousedown', e => e.preventDefault());
-                this.clearBtn.addEventListener('mousedown', e => e.preventDefault());
-                this.clearBtn.addEventListener('click', () => { this.choose(null); });
-
-                this.input.addEventListener('focus', () => {
-                    this.openList();
-                    setTimeout(() => this.input.select(), 0);
-                });
-                this.input.addEventListener('click', () => { if (!this.isOpen) this.openList(); });
-                this.input.addEventListener('blur', () => this.closeList());
-                this.input.addEventListener('input', () => {
-                    this.query = this.input.value;
-                    this.openList(true);
-                });
-                this.input.addEventListener('keydown', (e) => this.onKey(e));
-
-                this.optsEl.addEventListener('click', (e) => {
-                    const el = e.target.closest('.combo-opt');
-                    if (el) this.choose(this.matches[+el.dataset.i]);
-                });
-                this.addEl.addEventListener('click', () => this.addCustom());
-            }
-
-            setItems(items) { this.items = items || []; if (this.isOpen) this.render(); }
-
-            setDisabled(flag, placeholder) {
-                this.input.disabled = flag;
-                if (placeholder !== undefined) this.input.placeholder = placeholder;
-                if (flag) this.closeList();
-            }
-
-            clear(silent) {
-                this.selected = null; this.query = '';
-                this.input.value = '';
-                this.root.classList.remove('has-value', 'is-custom');
-                if (!silent) this.o.onChange(null);
-            }
-
-            choose(item) {
-                this.selected = item || null;
-                this.query = '';
-                this.input.value = item ? item.name : '';
-                this.root.classList.toggle('has-value', !!item);
-                this.root.classList.toggle('is-custom', !!(item && item.custom));
-                this.closeList();
-                this.input.blur();
-                this.o.onChange(this.selected);
-            }
-
-            openList(keepQuery) {
-                if (this.input.disabled) return;
-                if (!keepQuery) this.query = '';
-                this.isOpen = true;
-                this.root.classList.add('open');
-                this.render();
-            }
-
-            closeList() {
-                this.isOpen = false;
-                this.root.classList.remove('open');
-                this.query = '';
-                this.input.value = this.selected ? this.selected.name : '';
-            }
-
-            render() {
-                const toks = this.query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-                this.matches = this.items.filter(it => {
-                    const n = it.name.toLowerCase();
-                    return toks.every(t => n.includes(t));
-                });
-                this.hi = (toks.length && this.matches.length) ? 0 : -1;
-
-                this.optsEl.replaceChildren();
-                if (!this.matches.length) {
-                    const d = document.createElement('div');
-                    d.className = 'combo-empty';
-                    d.textContent = this.items.length ? 'No matches' : `No ${this.o.noun}s yet`;
-                    this.optsEl.appendChild(d);
-                } else {
-                    this.matches.forEach((it, i) => {
-                        const d = document.createElement('div');
-                        d.className = 'combo-opt' + (this.selected && this.selected.id === it.id ? ' sel' : '') + (i === this.hi ? ' hi' : '');
-                        d.dataset.i = i;
-                        d.textContent = it.name;
-                        this.optsEl.appendChild(d);
-                    });
-                }
-
-                if (this.o.allowCustom) {
-                    const typed = this.query.trim();
-                    const exact = typed && this.items.some(it => it.name.toLowerCase() === typed.toLowerCase());
-                    this.addEl.hidden = !!exact;
-                    if (!exact) {
-                        const ok = typed && cleanName(typed, 2, 80);
-                        this.addEl.classList.toggle('disabled', !ok);
-                        this.addEl.textContent = !typed
-                            ? `＋ Not listed? Type a name to add a new ${this.o.noun}`
-                            : ok ? `＋ Add “${ok}” as new ${this.o.noun}`
-                                 : `Use letters, numbers and . , & ( ) / - _ ' only (2–80)`;
-                    }
-                } else {
-                    this.addEl.hidden = true;
-                }
-            }
-
-            addCustom() {
-                const n = cleanName(this.query, 2, 80);
-                if (!n) return;
-                const existing = this.items.find(it => it.name.toLowerCase() === n.toLowerCase());
-                this.choose(existing || { id: null, name: n, custom: true });
-            }
-
-            onKey(e) {
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (!this.isOpen) this.openList();
-                    if (!this.matches.length) return;
-                    const d = e.key === 'ArrowDown' ? 1 : -1;
-                    this.hi = (this.hi + d + this.matches.length) % this.matches.length;
-                    [...this.optsEl.querySelectorAll('.combo-opt')].forEach((el, i) => {
-                        el.classList.toggle('hi', i === this.hi);
-                        if (i === this.hi) el.scrollIntoView({ block: 'nearest' });
-                    });
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (this.hi >= 0 && this.matches[this.hi]) this.choose(this.matches[this.hi]);
-                    else if (this.o.allowCustom && this.query.trim()) this.addCustom();
-                } else if (e.key === 'Escape') {
-                    if (this.isOpen) { e.stopPropagation(); this.closeList(); this.input.blur(); }
-                }
-            }
-        }
-
-        const filters = { q: '', dept: null, office: null, sort: 'name' };
-        const listState = { offset: 0, hasMore: false, loading: false };
-        let listSeq = 0;
-        const officeCache = new Map();
-
-        const deptFilter = new Combo($('deptFilter'), {
-            placeholder: 'All departments', noun: 'department',
-            onChange: async (item) => {
-                filters.dept = item; filters.office = null;
-                officeFilter.clear(true);
-                if (item) {
-                    officeFilter.setDisabled(false, 'Office or Scheme Name');
-                    officeFilter.setItems(await getOffices(item.id, 'filter'));
+</html>
