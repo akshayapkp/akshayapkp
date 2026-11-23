@@ -15,6 +15,7 @@
     } catch (_) { return []; }
   };
   var customForms = readForms();
+  if (params.get("synced") === "1") { params.delete("synced"); history.replaceState(null, "", window.location.pathname + (params.toString() ? "?" + params.toString() : "")); }
   window.AFF_DEFS = window.AFF_DEFS || [];
   window.AFF_HTML_CSS = (window.AFF_HTML_CSS || "") +
     ".custom-aff{font-family:'Noto Sans Malayalam','Noto Sans',Arial,sans-serif;font-size:14px;line-height:1.65;color:#111;text-align:left}" +
