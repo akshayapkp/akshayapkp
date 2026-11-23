@@ -715,15 +715,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cropper;
     const photoInput = document.getElementById('photoInput');
-    const modal = document.getElementById('cropperModal');
-    const imageToCrop = document.getElementById('imageToCrop');
-
-    if (photoInput && modal && imageToCrop) {
+    if (photoInput) {
         photoInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
+            const file = e.target.files && e.target.files[0];
             if (!file) return;
+            if (!file.type || !file.type.startsWith('image/')) {
+                window.alert('Please select an image file.');
+                photoInput.value = '';
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(event) {
+                if (typeof window.openRbCropDialog !== 'function') {
+                    window.alert('Photo crop tool is not ready. Please refresh the page and try again.');
+                    photoInput.value = '';
+                    return;
+                }
                 window.openRbCropDialog(
                     event.target.result,
                     function(croppedDataUrl) {
@@ -740,6 +747,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         photoInput.value = '';
                     }
                 );
+            };
+            reader.onerror = function() {
+                window.alert('Could not read this photo. Please choose another image.');
+                photoInput.value = '';
             };
             reader.readAsDataURL(file);
         });
