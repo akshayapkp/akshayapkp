@@ -3,17 +3,16 @@ window.addContact = function() {
     const container = document.getElementById('contactList');
     if (!container) return;
     const html = `
-        <div class="dynamic-item" style="flex-direction: row; gap: 0.5rem; align-items: center; padding: 0.8rem; flex-wrap: wrap;">
-            <button class="remove-btn" type="button" style="top: 0.8rem;" onclick="this.parentElement.remove(); updateDynamicPreview('contact')"><i class="fas fa-trash"></i></button>
-            <select class="contact-type" onchange="updateDynamicPreview('contact')" style="padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px;">
-                <option value="fas fa-phone">Mobile</option>
+        <div class="dynamic-item rb-contact-row">
+            <select class="contact-type" aria-label="Contact type" onchange="updateDynamicPreview('contact')">
+                <option value="fas fa-phone" selected>Mobile</option>
                 <option value="fab fa-whatsapp">WhatsApp</option>
             </select>
-            <div class="phone-input-group" style="flex-grow: 1;">
-                <span class="phone-prefix">+91</span>
-                <input type="tel" class="contact-num" maxlength="10" inputmode="numeric" placeholder="98765 43210" oninput="validateIndianMobile(this); updateDynamicPreview('contact')" style="flex-grow: 1; padding: 0.4rem; border: 1px solid #d1d5db; border-radius: 4px;">
+            <div class="phone-input-group">
+                <select class="contact-country" aria-label="Country calling code" onchange="updateDynamicPreview('contact')"><option value="+91" selected>IN +91</option><option value="+971">AE +971</option><option value="+966">SA +966</option><option value="+974">QA +974</option><option value="+968">OM +968</option><option value="+965">KW +965</option><option value="+973">BH +973</option><option value="+1">US/CA +1</option><option value="+44">UK +44</option><option value="+61">AU +61</option><option value="+64">NZ +64</option><option value="+65">SG +65</option><option value="+60">MY +60</option><option value="+94">LK +94</option><option value="+977">NP +977</option><option value="+880">BD +880</option><option value="+92">PK +92</option><option value="+63">PH +63</option><option value="+27">ZA +27</option><option value="+49">DE +49</option><option value="+33">FR +33</option><option value="+39">IT +39</option><option value="+34">ES +34</option><option value="+353">IE +353</option><option value="+81">JP +81</option></select>
+                <input type="tel" class="contact-num" maxlength="15" inputmode="tel" placeholder="Mobile number" oninput="validateInternationalMobile(this); updateDynamicPreview('contact')">
             </div>
-            <span class="field-error contact-error" style="display:none; width:100%;"></span>
+            <span class="field-error contact-error" style="display:none;width:100%;"></span>
         </div>`;
     container.insertAdjacentHTML('beforeend', html);
     updateDynamicPreview('contact');
@@ -23,12 +22,13 @@ window.addGuardian = function() {
     const container = document.getElementById('guardianList');
     if (!container) return;
     const html = `
-        <div class="dynamic-item">
-            <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('guardian')"><i class="fas fa-trash"></i></button>
-            <div class="form-grid">
-                <input type="text" class="g-rel" placeholder="Relationship (e.g. Father)" oninput="updateDynamicPreview('guardian')">
-                <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
+        <div class="dynamic-item rb-guardian-row">
+            <div class="rb-relation-picker">
+                <input type="hidden" class="g-rel" value="">
+                <button type="button" class="rb-relation-trigger" aria-label="Choose relationship" aria-expanded="false" onclick="toggleGuardianRelations(this)"><span class="rb-relation-value"></span><i class="fas fa-chevron-down"></i></button>
+                <div class="rb-relation-menu" hidden><button type="button" onclick="selectGuardianRelation(this,'Father')">Father</button><button type="button" onclick="selectGuardianRelation(this,'Mother')">Mother</button><button type="button" onclick="selectGuardianRelation(this,'Husband')">Husband</button><button type="button" onclick="selectGuardianRelation(this,'Wife')">Wife</button><button type="button" onclick="selectGuardianRelation(this,'Son')">Son</button><button type="button" onclick="selectGuardianRelation(this,'Daughter')">Daughter</button><button type="button" onclick="selectGuardianRelation(this,'Brother')">Brother</button><button type="button" onclick="selectGuardianRelation(this,'Sister')">Sister</button><button type="button" onclick="selectGuardianRelation(this,'Guardian')">Guardian</button><button type="button" onclick="selectGuardianRelation(this,'Grandfather')">Grandfather</button><button type="button" onclick="selectGuardianRelation(this,'Grandmother')">Grandmother</button><button type="button" onclick="selectGuardianRelation(this,'Uncle')">Uncle</button><button type="button" onclick="selectGuardianRelation(this,'Aunt')">Aunt</button><button type="button" onclick="selectGuardianRelation(this,'Other')">Other</button></div>
             </div>
+            <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
         </div>`;
     container.insertAdjacentHTML('beforeend', html);
     updateDynamicPreview('guardian');
@@ -891,9 +891,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const contacts = Array.from(document.querySelectorAll('#contactList .dynamic-item')).map(item => {
             const digits = item.querySelector('.contact-num')?.value.trim() || '';
+            const countryCode = item.querySelector('.contact-country')?.value || '+91';
             return {
                 icon: item.querySelector('.contact-type')?.value || 'fas fa-phone',
-                number: digits ? `+91 ${digits}` : ''
+                countryCode,
+                number: digits ? `${countryCode} ${digits}` : ''
             };
         }).filter(c => c.number);
 
@@ -1090,9 +1092,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const last = items[items.length - 1];
                 if (last) {
                     const iconEl = last.querySelector('.contact-type');
+                    const countryEl = last.querySelector('.contact-country');
                     const numEl = last.querySelector('.contact-num');
+                    const rawNumber = (c.number || '').trim();
+                    const legacyMatch = rawNumber.match(/^(\+\d{1,4})\s*(.*)$/);
+                    const countryCode = c.countryCode || legacyMatch?.[1] || '+91';
                     if (iconEl) iconEl.value = c.icon || 'fas fa-phone';
-                    if (numEl) numEl.value = (c.number || '').replace('+91', '').trim();
+                    if (countryEl) countryEl.value = countryCode;
+                    if (numEl) numEl.value = legacyMatch ? legacyMatch[2].trim() : rawNumber;
                 }
             });
             updateDynamicPreview('contact');
@@ -1107,8 +1114,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const last = items[items.length - 1];
                 if (last) {
                     const relEl = last.querySelector('.g-rel');
+                    const relLabel = last.querySelector('.rb-relation-value');
                     const nameEl = last.querySelector('.g-name');
                     if (relEl) relEl.value = g.rel || '';
+                    if (relLabel) relLabel.textContent = g.rel || '';
                     if (nameEl) nameEl.value = g.name || '';
                 }
             });
