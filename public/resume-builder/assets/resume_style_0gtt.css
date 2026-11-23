@@ -738,3 +738,44 @@ body {
         width: 8px;
     }
 }
+
+
+/* Resume Builder optional section expand/collapse controls */
+.resume-collapsible-fields[hidden] {
+    display: none !important;
+}
+.section-collapse-btn {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(14,165,233,0.25);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.8);
+    color: #0369a1;
+    cursor: pointer;
+    transition: background .18s ease, transform .18s ease;
+}
+.section-collapse-btn:hover {
+    background: rgba(14,165,233,0.12);
+}
+.section-collapse-btn[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+.section-collapse-btn i {
+    transition: transform .18s ease;
+}
+#guardianList .rb-guardian-row {
+    display: grid;
+    grid-template-columns: minmax(130px,.65fr) minmax(220px,1.35fr);
+    gap: 12px;
+    align-items: center;
+    padding: 12px !important;
+}
+#guardianList .rb-guardian-row .g-rel,
+#guardianList .rb-guardian-row .g-name {
+    width: 100%;
+    min-width: 0;
+}
