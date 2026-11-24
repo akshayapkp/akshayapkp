@@ -184,7 +184,7 @@ if (work) {
                 setOcrProgress(0);
               }}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 transition-all hover:-translate-y-0.5 hover:bg-slate-100 hover:text-slate-900"
-            >✕</button>
+            >✕</button>}
           </div>
         </div>
 
