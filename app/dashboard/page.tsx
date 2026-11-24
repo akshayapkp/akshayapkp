@@ -1331,7 +1331,7 @@ export default function DashboardPage() {
     {
       id: "aadhaar-name-change-check",
       name: "Aadhaar Name Check",
-      url: "/tools/aadhaar-name-check",
+      url: "/dashboard/tools/aadhaar-name-change",
       bgColor: "from-blue-600 to-violet-700",
       isInternal: true,
     },
@@ -1435,17 +1435,26 @@ const loadDashboardData = () => {
               }
               const standaloneToolRoutes: Record<string, string> = {
                 "sslc-modal": "sslc-modal",
+                "/tools/sslc-calculator": "sslc-modal",
                 "photo-studio-modal": "/dashboard/tools/photo-studio",
+                "/tools/photo-studio": "/dashboard/tools/photo-studio",
                 "crop-resize-modal": "/tools/photo-studio",
                 "psc-modal": "/tools/photo-studio",
                 "passport-size-modal": "/dashboard/tools/passport-size",
+                "/tools/passport-size": "/dashboard/tools/passport-size",
                 "translator-modal": "/dashboard/tools/translator",
+                "/tools/translator": "/dashboard/tools/translator",
                 "pdf-toolkit-modal": "/dashboard/tools/pdf-toolkit",
+                "/tools/pdf-toolkit": "/dashboard/tools/pdf-toolkit",
                 "converter-modal": "converter-modal",
+                "/tools/land-area-converter": "converter-modal",
                 "image-to-text-modal": "/dashboard/tools/image-to-text",
+                "/tools/image-to-text": "/dashboard/tools/image-to-text",
                 "aadhaar-gazette-modal": "/dashboard/tools/aadhaar-gazette",
+                "/tools/aadhaar-gazette": "/dashboard/tools/aadhaar-gazette",
                 "service-document-generator-modal": "/dashboard/tools/service-document-generator",
-                "aadhaar-name-check-modal": "/tools/aadhaar-name-check",
+                "/tools/service-document-generator": "/dashboard/tools/service-document-generator",
+                "aadhaar-name-check-modal": "/dashboard/tools/aadhaar-name-change",
               };
               const legacyNameRoutes: Record<string, string> = {
                 "sslc percentage": "sslc-modal",
@@ -1457,7 +1466,7 @@ const loadDashboardData = () => {
                 "image to text": "/dashboard/tools/image-to-text",
                 "aadhaar gazette": "/dashboard/tools/aadhaar-gazette",
                 "service document generator": "/dashboard/tools/service-document-generator",
-                "aadhaar name check": "/tools/aadhaar-name-check",
+                "aadhaar name check": "/dashboard/tools/aadhaar-name-change",
               };
               const legacyToolRoute = standaloneToolRoutes[legacyUrl] || legacyNameRoutes[legacyName];
               if (legacyToolRoute && item?.isInternal !== false) {
