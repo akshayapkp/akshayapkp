@@ -116,6 +116,7 @@ export default function CropResizeTool({
                 <button type="button" onClick={() => onSwitchMode("psc")} className="rounded-lg px-3 py-2 text-xs font-black text-white/90 transition hover:bg-white/15">PSC Creator</button>
               </div>
             )}
+            {!standalone && (
             <button
               type="button"
               onClick={onClose}
@@ -123,7 +124,7 @@ export default function CropResizeTool({
               aria-label="Close"
             >
               <X size={20} />
-            </button>}
+            </button>)}
           </div>
         </div>
 
