@@ -25,7 +25,7 @@ const PAPER_MM: Record<Paper, { width: number; height: number }> = {
 const BACKGROUNDS = [
   ["Original", "original"], ["White", "#ffffff"], ["Light Grey", "#e5e7eb"],
   ["Light Blue", "#dbeafe"], ["Blue", "#2563eb"], ["Cream", "#fff7e6"],
-  ["Red", "#dc2626"], ["Transparent", "transparent"],
+  ["Red", "#dc2626"], ["Transparent canvas", "transparent"],
 ] as const;
 
 function mmPx(mm: number, dpi: number) { return Math.max(1, Math.round((mm / 25.4) * dpi)); }
@@ -220,7 +220,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
       if (kind === "photo-png" || kind === "photo-jpg" || kind === "sheet") {
         const mime = kind === "photo-jpg" ? "image/jpeg" : "image/png";
         const rawBlob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error("Image export failed.")), mime, 0.96));
-        const blob = kind === "sheet" ? rawBlob : await embedDpiMetadata(rawBlob, dpi, mime);
+        const blob = await embedDpiMetadata(rawBlob, dpi, mime);
         downloadBlob(blob, kind === "photo-png" ? `passport-photo-${dpi}dpi.png` : kind === "photo-jpg" ? `passport-photo-${dpi}dpi.jpg` : `passport-photo-sheet-${dpi}dpi.png`);
       } else {
         const pdf = new jsPDF({ orientation: pageW > pageH ? "landscape" : "portrait", unit: "mm", format: [pageW, pageH], compress: true });
