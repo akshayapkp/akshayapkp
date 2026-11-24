@@ -87,7 +87,7 @@ export default function PassportSize({
       if (!canvas) return;
 
       const link = document.createElement("a");
-      link.download = "passport-photo-sheet.jpg";
+      link.download = "passport-photo-sheet.png";
       link.href = canvas.toDataURL("image/png", 1);
       link.click();
     };
