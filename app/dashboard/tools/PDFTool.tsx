@@ -311,6 +311,7 @@ export default function PDFToolkitTool({ onClose, standalone = false }: PDFToolk
               </div>
             </div>
 
+            {!standalone && (
             <button
               type="button"
               onClick={onClose}
@@ -318,7 +319,7 @@ export default function PDFToolkitTool({ onClose, standalone = false }: PDFToolk
               title="Close"
             >
               <X size={19} />
-            </button>}
+            </button>)}
           </div>
 
           <nav className="flex flex-wrap items-center gap-1 overflow-x-auto border-t border-slate-200 bg-slate-50 px-3 py-2">
