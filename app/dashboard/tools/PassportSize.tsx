@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Camera, Upload, X } from "lucide-react";
 import { usePassportSize } from "../hooks/usePassportSize";
-import PerspectiveCropDialog from "../components/PerspectiveCropDialog";
+import RectCropDialog from "../components/RectCropDialog";
 import PassportPhotoEnhancements from "./PassportPhotoEnhancements";
 
 export default function PassportSize({ onClose, standalone = false }: { onClose?: () => void; standalone?: boolean }) {
@@ -59,7 +59,8 @@ export default function PassportSize({ onClose, standalone = false }: { onClose?
         )}
       </div>
 
-      <PerspectiveCropDialog
+      <RectCropDialog
+        targetAspect={7 / 9}
         open={cropOpen}
         image={cropImage}
         onCancel={() => { setCropOpen(false); setCropImage(null); }}
