@@ -641,7 +641,6 @@ export default function PSCPhotoTool({
 
       </div>
       <RectCropDialog
-        targetAspect={7 / 9}
         open={Boolean(pendingCropImage)}
         image={pendingCropImage}
         onCancel={() => {
