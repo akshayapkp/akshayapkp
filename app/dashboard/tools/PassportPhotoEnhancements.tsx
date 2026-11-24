@@ -37,12 +37,12 @@ function loadImage(src: string) {
     img.src = src;
   });
 }
-function coverDraw(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, zoom: number) {
-  const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight) * zoom;
+function fitDraw(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, zoom: number, offsetX: number, offsetY: number) {
+  const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight) * zoom;
   const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  ctx.drawImage(img, x + (w - dw) / 2 + (offsetX / 100) * w, y + (h - dh) / 2 + (offsetY / 100) * h, dw, dh);
   ctx.restore();
 }
 function crc32(bytes: Uint8Array) {
@@ -117,6 +117,8 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
   const [saturation, setSaturation] = useState(100);
   const [warmth, setWarmth] = useState(0);
   const [zoom, setZoom] = useState(1);
+  const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [autoAdjusted, setAutoAdjusted] = useState(false);
@@ -150,7 +152,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
     ctx.filter = `brightness(${Math.max(0, brightness + shadows / 3)}%) contrast(${contrast}%) saturate(${saturation}%)`;
-    coverDraw(ctx, img, 0, 0, canvas.width, canvas.height, zoom);
+    fitDraw(ctx, img, 0, 0, canvas.width, canvas.height, zoom, offsetX, offsetY);
     ctx.filter = "none";
     if (warmth !== 0) {
       ctx.globalCompositeOperation = "soft-light";
@@ -159,7 +161,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
       ctx.globalCompositeOperation = "source-over";
     }
     return canvas;
-  }, [image, selectedSize.width, selectedSize.height, dpi, bg, customHex, brightness, contrast, shadows, saturation, warmth, zoom]);
+  }, [image, selectedSize.width, selectedSize.height, dpi, bg, customHex, brightness, contrast, shadows, saturation, warmth, zoom, offsetX, offsetY]);
 
   const drawSheet = useCallback(async () => {
     const photo = await drawPhoto();
@@ -238,7 +240,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
   };
 
   const resetAdjustments = () => {
-    setBrightness(100); setContrast(100); setShadows(0); setSaturation(100); setWarmth(0); setZoom(1); setBg("original"); setCustomHex("#ffffff"); setAutoAdjusted(false);
+    setBrightness(100); setContrast(100); setShadows(0); setSaturation(100); setWarmth(0); setZoom(1); setOffsetX(0); setOffsetY(0); setBg("original"); setCustomHex("#ffffff"); setAutoAdjusted(false);
   };
   const autoAdjust = () => { setBrightness(105); setContrast(108); setShadows(8); setSaturation(103); setWarmth(2); setAutoAdjusted(true); };
 
@@ -272,14 +274,14 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
               <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-xs text-slate-600">Export DPI<select value={dpi} onChange={e=>setDpi(Number(e.target.value))} className="mt-1 h-9 w-full rounded-lg border px-2"><option value={300}>300 DPI</option><option value={600}>600 DPI</option></select></label><div className="rounded-lg bg-slate-50 p-2 text-xs text-slate-600"><b>Output pixels</b><p className="mt-1 font-mono">{mmPx(selectedSize.width,dpi)} × {mmPx(selectedSize.height,dpi)} px</p></div></div>
             </div>
             <div className="rounded-2xl border p-4">
-              <h3 className="mb-3 text-sm font-black text-slate-800">Background & Colour</h3>
+              <h3 className="mb-3 text-sm font-black text-slate-800">Backdrop & Colour</h3>
               <div className="grid grid-cols-4 gap-2">{BACKGROUNDS.map(([label,value])=><button key={value} onClick={()=>setBg(value)} className={`rounded-lg border p-2 text-[10px] font-semibold ${bg===value?"border-rose-500 ring-2 ring-rose-100":"border-slate-200"}`}><span className="mx-auto mb-1 block h-6 w-6 rounded-full border" style={{background:value==="transparent"?"repeating-conic-gradient(#ddd 0% 25%, white 0% 50%) 50% / 8px 8px":value==="original"?"linear-gradient(135deg,#d1d5db,#fff)":value}}/>{label}</button>)}</div>
               <div className="mt-3 flex items-center gap-2 text-xs"><input type="color" value={customHex} onChange={e=>{setCustomHex(e.target.value);setBg("custom")}}/><span>Custom HEX colour</span><code>{customHex}</code></div>
-              <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[11px] leading-4 text-amber-800">These choices set the canvas behind the photo only. The original background pixels in the uploaded photograph remain unchanged; transparent mode does not cut out the subject. AI background removal is not used.</p>
+              <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[11px] leading-4 text-amber-800">These colours fill the canvas around the photo if the selected photo aspect ratio leaves space. They do not remove or replace the original background pixels. Transparent mode exports a transparent canvas around the photo, not a cut-out subject. AI background removal is not used.</p>
             </div>
             <div className="rounded-2xl border p-4">
               <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-black text-slate-800">Colour & Light</h3><button onClick={autoAdjust} className="text-xs font-bold text-rose-600">Auto Adjust (Basic)</button></div>
-              {([["Brightness",brightness,setBrightness,0,200],["Contrast",contrast,setContrast,0,200],["Shadows",shadows,setShadows,-50,50],["Saturation",saturation,setSaturation,0,200],["Warmth",warmth,setWarmth,-100,100],["Zoom",zoom,setZoom,0.5,2]] as const).map(([label,value,setter,min,max])=><label key={label} className="mb-3 block text-xs text-slate-600">{label}<input type="range" min={min} max={max} step={label==="Zoom"?0.05:1} value={value} onChange={e=>setter(Number(e.target.value))} className="mt-1 w-full accent-rose-600"/><span className="float-right text-[10px]">{value}</span></label>)}
+              {([["Brightness",brightness,setBrightness,0,200],["Contrast",contrast,setContrast,0,200],["Shadows",shadows,setShadows,-50,50],["Saturation",saturation,setSaturation,0,200],["Warmth",warmth,setWarmth,-100,100],["Zoom",zoom,setZoom,0.5,2],["Horizontal position",offsetX,setOffsetX,-50,50],["Vertical position",offsetY,setOffsetY,-50,50]] as const).map(([label,value,setter,min,max])=><label key={label} className="mb-3 block text-xs text-slate-600">{label}<input type="range" min={min} max={max} step={label==="Zoom"?0.05:1} value={value} onChange={e=>setter(Number(e.target.value))} className="mt-1 w-full accent-rose-600"/><span className="float-right text-[10px]">{value}</span></label>)}
               <button onClick={resetAdjustments} className="mt-1 rounded-lg border px-3 py-2 text-xs font-bold">Reset to Original</button>{autoAdjusted&&<span className="ml-2 text-[10px] text-emerald-700">Basic adjustment applied</span>}
             </div>
             <div className="rounded-2xl border p-4">
