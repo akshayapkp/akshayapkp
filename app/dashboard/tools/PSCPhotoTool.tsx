@@ -97,6 +97,7 @@ export default function PSCPhotoTool({
                 <button type="button" onClick={() => onSwitchMode("psc")} className="rounded-lg bg-white px-3 py-2 text-xs font-black text-emerald-700 shadow-sm">PSC Creator</button>
               </div>
             )}
+            {!standalone && (
             <button
               type="button"
               onClick={onClose}
@@ -104,7 +105,7 @@ export default function PSCPhotoTool({
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition-all hover:-translate-y-0.5 hover:bg-white/20"
             >
               ✕
-            </button>
+            </button>)}
           </div>
         </div>
 
