@@ -1,3 +1,6 @@
 "use client";
 import PassportSize from "../PassportSize";
-export default function PassportSizePage() { return <PassportSize />; }
+import StandaloneToolLayout from "../StandaloneToolLayout";
+export default function PassportSizePage() {
+  return <StandaloneToolLayout title="Passport Photo Creator"><PassportSize standalone /></StandaloneToolLayout>;
+}
