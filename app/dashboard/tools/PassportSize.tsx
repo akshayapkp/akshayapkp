@@ -11,6 +11,7 @@ import {
 import { usePassportSize } from "../hooks/usePassportSize";
 import { drawPassportSheet } from "../lib/passportCanvas";
 import PerspectiveCropDialog from "../components/PerspectiveCropDialog";
+import PassportPhotoEnhancements from "./PassportPhotoEnhancements";
 
 interface PassportSizeProps {
   onClose?: () => void;
@@ -382,6 +383,17 @@ export default function PassportSize({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="px-4 pb-6 sm:px-5 lg:px-6">
+        <PassportPhotoEnhancements
+          image={image}
+          onCropAgain={() => {
+            if (!image) return;
+            setCropImage(image);
+            setCropOpen(true);
+          }}
+        />
       </div>
 
       {/* Crop Dialog Component */}
