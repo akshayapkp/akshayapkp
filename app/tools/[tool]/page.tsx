@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import SSLCCalculatorTool from "@/app/dashboard/tools/SSLCCalculatorTool";
 import PassportSize from "@/app/dashboard/tools/PassportSize";
@@ -42,7 +42,7 @@ export default function StandaloneDashboardToolPage() {
   }, []);
 
   const close = () => router.push("/dashboard");
-  let content: React.ReactNode;
+  let content: ReactNode;
 
   switch (tool) {
     case "sslc-calculator": content = <SSLCCalculatorTool onClose={close} />; break;
