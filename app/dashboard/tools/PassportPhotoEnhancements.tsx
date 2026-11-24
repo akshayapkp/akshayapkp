@@ -84,8 +84,13 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
     ? { label: "Custom", width: Math.max(10, Math.min(100, Number(customW) || 35)), height: Math.max(10, Math.min(100, Number(customH) || 45)) }
     : SIZES[sizeIndex];
   const page = PAPER_MM[paper];
-  const pageW = orientation === "portrait" ? page.width : orientation === "landscape" ? page.height : page.width;
-  const pageH = orientation === "portrait" ? page.height : orientation === "landscape" ? page.width : page.height;
+  const portraitFit = Math.floor((page.width - 2 * margin + border) / (selectedSize.width + border)) *
+    Math.floor((page.height - 2 * margin + border) / (selectedSize.height + border));
+  const landscapeFit = Math.floor((page.height - 2 * margin + border) / (selectedSize.width + border)) *
+    Math.floor((page.width - 2 * margin + border) / (selectedSize.height + border));
+  const bestLandscape = landscapeFit > portraitFit;
+  const pageW = orientation === "portrait" ? page.width : orientation === "landscape" || bestLandscape ? page.height : page.width;
+  const pageH = orientation === "portrait" ? page.height : orientation === "landscape" || bestLandscape ? page.width : page.height;
   const cols = Math.max(0, Math.floor((pageW - 2 * margin + border) / (selectedSize.width + border)));
   const rows = Math.max(0, Math.floor((pageH - 2 * margin + border) / (selectedSize.height + border)));
   const maxCopies = Math.max(0, cols * rows);
@@ -228,7 +233,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
               <h3 className="mb-3 text-sm font-black text-slate-800">Background & Colour</h3>
               <div className="grid grid-cols-4 gap-2">{BACKGROUNDS.map(([label,value])=><button key={value} onClick={()=>setBg(value)} className={`rounded-lg border p-2 text-[10px] font-semibold ${bg===value?"border-rose-500 ring-2 ring-rose-100":"border-slate-200"}`}><span className="mx-auto mb-1 block h-6 w-6 rounded-full border" style={{background:value==="transparent"?"repeating-conic-gradient(#ddd 0% 25%, white 0% 50%) 50% / 8px 8px":value==="original"?"linear-gradient(135deg,#d1d5db,#fff)":value}}/>{label}</button>)}</div>
               <div className="mt-3 flex items-center gap-2 text-xs"><input type="color" value={customHex} onChange={e=>{setCustomHex(e.target.value);setBg("custom")}}/><span>Custom HEX colour</span><code>{customHex}</code></div>
-              <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[11px] leading-4 text-amber-800">Background colours are canvas/backdrop choices only. The original background inside the uploaded photograph is not removed. AI background removal is not used.</p>
+              <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[11px] leading-4 text-amber-800">These choices set the canvas behind the photo only. The original background pixels in the uploaded photograph remain unchanged; transparent mode does not cut out the subject. AI background removal is not used.</p>
             </div>
             <div className="rounded-2xl border p-4">
               <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-black text-slate-800">Colour & Light</h3><button onClick={autoAdjust} className="text-xs font-bold text-rose-600">Auto Adjust (Basic)</button></div>
