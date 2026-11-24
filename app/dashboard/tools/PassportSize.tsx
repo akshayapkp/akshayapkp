@@ -11,6 +11,7 @@ import {
 import { usePassportSize } from "../hooks/usePassportSize";
 import { drawPassportSheet } from "../lib/passportCanvas";
 import PerspectiveCropDialog from "../components/PerspectiveCropDialog";
+import PassportPhotoEnhancements from "./PassportPhotoEnhancements";
 
 interface PassportSizeProps {
   onClose?: () => void;
@@ -381,6 +382,19 @@ export default function PassportSize({
 
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="fixed inset-0 z-[99999] overflow-auto pointer-events-none">
+        <div className="mx-auto w-full max-w-6xl px-3 pb-8 sm:px-5 pointer-events-auto">
+          <PassportPhotoEnhancements
+            image={image}
+            onCropAgain={() => {
+              if (!image) return;
+              setCropImage(image);
+              setCropOpen(true);
+            }}
+          />
         </div>
       </div>
 
