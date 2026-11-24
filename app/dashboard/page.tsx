@@ -1247,49 +1247,49 @@ export default function DashboardPage() {
     {
       id: 1,
       name: "SSLC Percentage",
-      url: "/tools/sslc-calculator",
+      url: "sslc-modal",
       bgColor: "from-purple-500 to-purple-600",
       isInternal: true,
     },
     {
       id: "photo-studio",
       name: "Photo Studio",
-      url: "/tools/photo-studio",
+      url: "/dashboard/tools/photo-studio",
       bgColor: "from-blue-600 to-teal-600",
       isInternal: true,
     },
     {
       id: 7,
       name: "Passport Size",
-      url: "/tools/passport-size",
+      url: "/dashboard/tools/passport-size",
       bgColor: "from-rose-500 to-pink-600",
       isInternal: true,
     },
     {
       id: 8,
       name: "Translator",
-      url: "/tools/translator",
+      url: "/dashboard/tools/translator",
       bgColor: "from-blue-600 to-cyan-600",
       isInternal: true,
     },
     {
       id: "pdf-tool",
       name: "PDF Tool",
-      url: "/tools/pdf-toolkit",
+      url: "/dashboard/tools/pdf-toolkit",
       bgColor: "from-indigo-600 to-violet-700",
       isInternal: true,
     },
     {
       id: 9,
       name: "Converter Tool",
-      url: "/tools/land-area-converter",
+      url: "converter-modal",
       bgColor: "from-emerald-500 to-green-700",
       isInternal: true,
     },
     {
       id: 10,
       name: "Image To Text",
-      url: "/tools/image-to-text",
+      url: "/dashboard/tools/image-to-text",
       bgColor: "from-orange-500 to-red-600",
       isInternal: true,
     },
@@ -1317,14 +1317,14 @@ export default function DashboardPage() {
     {
       id: "aadhaar-gazette",
       name: "Aadhaar Gazette",
-      url: "/tools/aadhaar-gazette",
+      url: "/dashboard/tools/aadhaar-gazette",
       bgColor: "from-orange-500 to-red-600",
       isInternal: true,
     },
     {
       id: "service-document-generator",
       name: "Service Document Generator",
-      url: "/tools/service-document-generator",
+      url: "/dashboard/tools/service-document-generator",
       bgColor: "from-cyan-500 to-blue-700",
       isInternal: true,
     },
@@ -1434,29 +1434,29 @@ const loadDashboardData = () => {
                 continue;
               }
               const standaloneToolRoutes: Record<string, string> = {
-                "sslc-modal": "/tools/sslc-calculator",
-                "photo-studio-modal": "/tools/photo-studio",
+                "sslc-modal": "sslc-modal",
+                "photo-studio-modal": "/dashboard/tools/photo-studio",
                 "crop-resize-modal": "/tools/photo-studio",
                 "psc-modal": "/tools/photo-studio",
-                "passport-size-modal": "/tools/passport-size",
-                "translator-modal": "/tools/translator",
-                "pdf-toolkit-modal": "/tools/pdf-toolkit",
-                "converter-modal": "/tools/land-area-converter",
-                "image-to-text-modal": "/tools/image-to-text",
-                "aadhaar-gazette-modal": "/tools/aadhaar-gazette",
-                "service-document-generator-modal": "/tools/service-document-generator",
+                "passport-size-modal": "/dashboard/tools/passport-size",
+                "translator-modal": "/dashboard/tools/translator",
+                "pdf-toolkit-modal": "/dashboard/tools/pdf-toolkit",
+                "converter-modal": "converter-modal",
+                "image-to-text-modal": "/dashboard/tools/image-to-text",
+                "aadhaar-gazette-modal": "/dashboard/tools/aadhaar-gazette",
+                "service-document-generator-modal": "/dashboard/tools/service-document-generator",
                 "aadhaar-name-check-modal": "/tools/aadhaar-name-check",
               };
               const legacyNameRoutes: Record<string, string> = {
-                "sslc percentage": "/tools/sslc-calculator",
-                "photo studio": "/tools/photo-studio",
-                "passport size": "/tools/passport-size",
-                "translator": "/tools/translator",
-                "pdf tool": "/tools/pdf-toolkit",
-                "converter tool": "/tools/land-area-converter",
-                "image to text": "/tools/image-to-text",
-                "aadhaar gazette": "/tools/aadhaar-gazette",
-                "service document generator": "/tools/service-document-generator",
+                "sslc percentage": "sslc-modal",
+                "photo studio": "/dashboard/tools/photo-studio",
+                "passport size": "/dashboard/tools/passport-size",
+                "translator": "/dashboard/tools/translator",
+                "pdf tool": "/dashboard/tools/pdf-toolkit",
+                "converter tool": "converter-modal",
+                "image to text": "/dashboard/tools/image-to-text",
+                "aadhaar gazette": "/dashboard/tools/aadhaar-gazette",
+                "service document generator": "/dashboard/tools/service-document-generator",
                 "aadhaar name check": "/tools/aadhaar-name-check",
               };
               const legacyToolRoute = standaloneToolRoutes[legacyUrl] || legacyNameRoutes[legacyName];
@@ -2483,10 +2483,20 @@ setServiceDirectory(filteredWithUrls);
                   className={`relative flex flex-col transition-transform ${isCustomizing ? "cursor-grab active:cursor-grabbing" : ""}`}
                 >
                   <a
-                    href={isCustomizing || isStatusCenter ? undefined : tool.url}
+                    href={isCustomizing || isStatusCenter || isSslc || isConverterTool ? undefined : tool.url}
                     onClick={(e) => {
                       if (isCustomizing) {
                         e.preventDefault();
+                        return;
+                      }
+                      if (isSslc) {
+                        e.preventDefault();
+                        setShowSslcModal(true);
+                        return;
+                      }
+                      if (isConverterTool) {
+                        e.preventDefault();
+                        setShowConverterModal(true);
                         return;
                       }
                       if (isStatusCenter) {
