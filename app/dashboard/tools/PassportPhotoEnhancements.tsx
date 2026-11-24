@@ -59,7 +59,7 @@ async function embedDpiMetadata(blob: Blob, dpi: number, mime: string) {
     if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return blob;
     let app0 = -1;
     for (let i = 2; i < Math.min(bytes.length - 10, 64); i++) {
-      if (bytes[i] === 0xff && bytes[i + 1] === 0xe0 && String.fromCharCode(...bytes.slice(i + 4, i + 9)) === "JFIF\\0") { app0 = i; break; }
+      if (bytes[i] === 0xff && bytes[i + 1] === 0xe0 && String.fromCharCode(...bytes.slice(i + 4, i + 9)) === "JFIF\0") { app0 = i; break; }
     }
     if (app0 >= 0) {
       bytes[app0 + 11] = 1;
