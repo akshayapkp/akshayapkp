@@ -8,9 +8,10 @@ import { addWork } from "@/app/dashboard/work-status/storage";
 
 interface ImageToTextProps {
   onClose: () => void;
+  standalone?: boolean;
 }
 
-export default function ImageToTextTool({ onClose }: ImageToTextProps) {
+export default function ImageToTextTool({ onClose, standalone = false }: ImageToTextProps) {
   const [, setOcrImage] = useState<File | null>(null);
   const [ocrText, setOcrText] = useState("");
   const [ocrLoading, setOcrLoading] = useState(false);
@@ -166,8 +167,8 @@ if (work) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-slate-950/70 p-2 backdrop-blur-md sm:p-3">
-      <div className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] border border-white/80 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl sm:h-[calc(100dvh-1.5rem)] sm:rounded-[28px]">
+    <div className={standalone ? "flex h-full min-h-0 w-full overflow-hidden bg-white" : "fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-slate-950/70 p-2 backdrop-blur-md sm:p-3"}>
+      <div className={standalone ? "flex h-full min-h-0 w-full flex-col overflow-hidden bg-white" : "flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] border border-white/80 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl sm:h-[calc(100dvh-1.5rem)] sm:rounded-[28px]"}>
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 py-3.5 backdrop-blur-xl sm:px-6 sm:py-4">
           <div>
             <h3 className="text-lg font-black tracking-tight text-slate-800 sm:text-xl">Image & PDF To Text</h3>
@@ -175,7 +176,7 @@ if (work) {
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => { setShowHistory(v => !v); if (!showHistory) void loadHistory(); }} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"><History size={15}/>{showHistory ? "OCR Tool" : "History"}</button>
-            <button
+            {!standalone && <button
               onClick={() => {
                 onClose();
                 setOcrImage(null);
