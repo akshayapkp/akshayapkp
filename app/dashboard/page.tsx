@@ -1247,49 +1247,49 @@ export default function DashboardPage() {
     {
       id: 1,
       name: "SSLC Percentage",
-      url: "sslc-modal",
+      url: "/tools/sslc-calculator",
       bgColor: "from-purple-500 to-purple-600",
       isInternal: true,
     },
     {
       id: "photo-studio",
       name: "Photo Studio",
-      url: "photo-studio-modal",
+      url: "/tools/photo-studio",
       bgColor: "from-blue-600 to-teal-600",
       isInternal: true,
     },
     {
       id: 7,
       name: "Passport Size",
-      url: "passport-size-modal",
+      url: "/tools/passport-size",
       bgColor: "from-rose-500 to-pink-600",
       isInternal: true,
     },
     {
       id: 8,
       name: "Translator",
-      url: "translator-modal",
+      url: "/tools/translator",
       bgColor: "from-blue-600 to-cyan-600",
       isInternal: true,
     },
     {
       id: "pdf-tool",
       name: "PDF Tool",
-      url: "pdf-toolkit-modal",
+      url: "/tools/pdf-toolkit",
       bgColor: "from-indigo-600 to-violet-700",
       isInternal: true,
     },
     {
       id: 9,
       name: "Converter Tool",
-      url: "converter-modal",
+      url: "/tools/land-area-converter",
       bgColor: "from-emerald-500 to-green-700",
       isInternal: true,
     },
     {
       id: 10,
       name: "Image To Text",
-      url: "image-to-text-modal",
+      url: "/tools/image-to-text",
       bgColor: "from-orange-500 to-red-600",
       isInternal: true,
     },
@@ -1317,21 +1317,21 @@ export default function DashboardPage() {
     {
       id: "aadhaar-gazette",
       name: "Aadhaar Gazette",
-      url: "aadhaar-gazette-modal",
+      url: "/tools/aadhaar-gazette",
       bgColor: "from-orange-500 to-red-600",
       isInternal: true,
     },
     {
       id: "service-document-generator",
       name: "Service Document Generator",
-      url: "service-document-generator-modal",
+      url: "/tools/service-document-generator",
       bgColor: "from-cyan-500 to-blue-700",
       isInternal: true,
     },
     {
       id: "aadhaar-name-change-check",
       name: "Aadhaar Name Check",
-      url: "aadhaar-name-check-modal",
+      url: "/tools/aadhaar-name-check",
       bgColor: "from-blue-600 to-violet-700",
       isInternal: true,
     },
@@ -1431,6 +1431,25 @@ const loadDashboardData = () => {
               }
               if (legacyUrl === "/dashboard/affidavit-writer" || legacyUrl === "/affidavit-writer" || legacyName === "affidavit & form writer") {
                 normalizedOrder.push({ ...item, name: "Affidavit & Form Writer", url: "/affidavit-writer", isInternal: true });
+                continue;
+              }
+              const standaloneToolRoutes: Record<string, string> = {
+                "sslc-modal": "/tools/sslc-calculator",
+                "photo-studio-modal": "/tools/photo-studio",
+                "crop-resize-modal": "/tools/photo-studio",
+                "psc-modal": "/tools/photo-studio",
+                "passport-size-modal": "/tools/passport-size",
+                "translator-modal": "/tools/translator",
+                "pdf-toolkit-modal": "/tools/pdf-toolkit",
+                "converter-modal": "/tools/land-area-converter",
+                "image-to-text-modal": "/tools/image-to-text",
+                "aadhaar-gazette-modal": "/tools/aadhaar-gazette",
+                "service-document-generator-modal": "/tools/service-document-generator",
+                "aadhaar-name-check-modal": "/tools/aadhaar-name-check",
+              };
+              const legacyToolRoute = standaloneToolRoutes[legacyUrl];
+              if (legacyToolRoute && item?.isInternal !== false) {
+                normalizedOrder.push({ ...item, url: legacyToolRoute, isInternal: true });
                 continue;
               }
               normalizedOrder.push(item);
@@ -2452,66 +2471,13 @@ setServiceDirectory(filteredWithUrls);
                   className={`relative flex flex-col transition-transform ${isCustomizing ? "cursor-grab active:cursor-grabbing" : ""}`}
                 >
                   <a
-                    href={
-                      isCustomizing ||
-                      isSslc ||
-                      isPhotoStudio ||
-                      isCropResize ||
-                      isPsc ||
-                      isPassport ||
-                      isPdfTool ||
-                      isConverterTool ||
-                      isImageToTextTool ||
-                      isResumeBuilderTool ||
-                      isIncomeAffidavitTool ||
-                      isAadhaarGazetteTool ||
-                      isServiceDocumentGeneratorTool ||
-                      isAadhaarNameCheckTool
-                        ? undefined
-                        : tool.url
-                    }
+                    href={isCustomizing || isStatusCenter ? undefined : tool.url}
                     onClick={(e) => {
                       if (isCustomizing) {
                         e.preventDefault();
                         return;
                       }
-                      if (isSslc) {
-                        e.preventDefault();
-                        setShowSslcModal(true);
-                      } else if (isPhotoStudio || isCropResize || isPsc) {
-                        e.preventDefault();
-                        setShowPhotoStudioModal(true);
-                      } else if (isPassport) {
-                        e.preventDefault();
-                        setShowPassportToolModal(true);
-                      } else if (isPdfTool) {
-                        e.preventDefault();
-                        setShowPdfToolkitModal(true);
-                      } else if (isTranslatorTool) {
-                        e.preventDefault();
-                        setShowTranslatorModal(true);
-                      } else if (isConverterTool) {
-                        e.preventDefault();
-                        setShowConverterModal(true);
-                      } else if (isImageToTextTool) {
-                        e.preventDefault();
-                        setShowImageToTextModal(true);
-                      } else if (isResumeBuilderTool) {
-                        e.preventDefault();
-                        setShowResumeBuilderModal(true);
-                      } else if (isIncomeAffidavitTool) {
-                        e.preventDefault();
-                        setShowIncomeAffidavitModal(true);
-                      } else if (isAadhaarGazetteTool) {
-                        e.preventDefault();
-                        setShowAadhaarGazetteModal(true);
-                      } else if (isServiceDocumentGeneratorTool) {
-                        e.preventDefault();
-                        setShowServiceDocumentGeneratorModal(true);
-                      } else if (isAadhaarNameCheckTool) {
-                        e.preventDefault();
-                        setStatusCenterView("aadhaar-name");
-                      } else if (isStatusCenter) {
+                      if (isStatusCenter) {
                         e.preventDefault();
                         setStatusCenterView("center");
                       }
