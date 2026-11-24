@@ -7,6 +7,7 @@ import Tesseract from "tesseract.js";
 import { supabase } from "@/lib/supabase";
 import { SERVICE_CATALOG } from "@/app/dashboard/tools/serviceDocumentCatalog";
 import styles from "./home.module.css";
+import "./home-new.css";
 
 type ServiceItem = {
   id?: string;
@@ -426,13 +427,41 @@ export default function HomePage() {
     setShowApplicationPopup(false);
   }
 
-  return <main className={styles.page} style={{ "--home-primary": homepageSettings.theme.primary, "--home-accent": homepageSettings.theme.accent, "--home-background": homepageSettings.theme.background } as any}>
-    <header className={styles.header}>
-      <div className={styles.container + " " + styles.headerInner}>
-        <Link href="/" className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></Link>
-        <nav className={styles.nav}><a href="#services">സേവനങ്ങൾ</a><a href="#status">അപേക്ഷാ സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a><label title="Receipt photo to text" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:34,height:34,borderRadius:10,border:"1px solid #dce7f5",color:"#155eef",cursor:receiptBusy?"wait":"pointer",opacity:receiptBusy?0.55:1}}><Camera size={17}/><input type="file" accept="image/*" capture="environment" disabled={receiptBusy} onChange={e=>{const file=e.target.files?.[0];void handleReceiptCamera(file);e.currentTarget.value="";}} style={{display:"none"}} aria-label="Receipt camera"/></label><Link href="/login" className={styles.loginButton}>Official Login</Link></nav>
-      </div>
+  return <main className={`${styles.page} nhRoot`} style={{ "--home-primary": homepageSettings.theme.primary, "--home-accent": homepageSettings.theme.accent, "--home-background": homepageSettings.theme.background } as any}>
+    <header className="nhHeader">
+      <div className="nhWrap"><nav className="nhNav nhGlass">
+        <Link href="/" className="nhBrand"><img src="/akshaya-logo.png" alt="Akshaya"/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><small>ഡിജിറ്റൽ സേവന കേന്ദ്രം</small></div></Link>
+        <div className="nhLinks">
+          <a href="#services">സേവനങ്ങൾ</a><a href="#status">അപേക്ഷാ സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a>
+          <label className="nhCam" title="Receipt photo to text" style={{ cursor: receiptBusy ? "wait" : "pointer", opacity: receiptBusy ? 0.55 : 1 }}><Camera size={17}/><input type="file" accept="image/*" capture="environment" disabled={receiptBusy} onChange={e => { const file = e.target.files?.[0]; void handleReceiptCamera(file); e.currentTarget.value = ""; }} style={{ display: "none" }} aria-label="Receipt camera"/></label>
+          <Link href="/login" className="nhBtn nhB1">Official Login</Link>
+        </div>
+      </nav></div>
     </header>
+
+    <div className="nhWrap">
+      <section className="nhHero">
+        <div>
+          <span className="nhTag"><Sparkles size={14}/> ഡിജിറ്റൽ സേവന കേന്ദ്രം</span>
+          <h1>സർക്കാർ സേവനങ്ങൾ <em className="nhGrad">എളുപ്പത്തിൽ, വേഗത്തിൽ</em></h1>
+          <p>സേവനം തിരഞ്ഞെടുത്ത് അപേക്ഷിക്കാം, അപേക്ഷ നമ്പർ ഉപയോഗിച്ച് status അറിയാം, ആവശ്യമായ രേഖകൾ WhatsApp വഴി അയയ്ക്കാം.</p>
+          <div className="nhCta">
+            <a href="#services" className="nhBtn nhB1">സേവനം തിരഞ്ഞെടുക്കൂ</a>
+            <a href="#status" className="nhBtn nhB2">അപേക്ഷാ സ്റ്റാറ്റസ്</a>
+            <a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className="nhBtn"><MessageCircle size={18}/> WhatsApp</a>
+          </div>
+        </div>
+        <div className="nhScene" aria-hidden="true">
+          <div className="nhChip nhGlass nhChip1">✅ അപേക്ഷ ലഭിച്ചു</div>
+          <div className="nhChip nhGlass nhChip2">🎟️ അപേക്ഷ നമ്പർ ലഭിക്കും</div>
+          <div className="nhDeck">
+            <div className="nhCard nhC1"><b>ആധാർ</b><i/><i/><i/></div>
+            <div className="nhCard nhC2"><b>PAN</b><i/><i/><i/></div>
+            <div className="nhCard nhC3"><b>Passport</b><i/><i/><i/></div>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <section className={styles.updatesSection}>
       <div className={styles.container}>
