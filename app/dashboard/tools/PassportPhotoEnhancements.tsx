@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { jsPDF } from "jspdf";
-import { Download, FileImage, FileText, Printer, RotateCcw, Scissors, ZoomIn, ZoomOut } from "lucide-react";
+import { Download, FileImage, FileText, Printer, RotateCcw } from "lucide-react";
 
 type Props = { image: string | null; onCropAgain: () => void };
 type Size = { label: string; width: number; height: number };
@@ -54,7 +54,6 @@ function downloadBlob(blob: Blob, name: string) {
 
 export default function PassportPhotoEnhancements({ image, onCropAgain }: Props) {
   const previewRef = useRef<HTMLCanvasElement>(null);
-  const photoRef = useRef<HTMLCanvasElement>(null);
   const [sizeIndex, setSizeIndex] = useState(0);
   const [customW, setCustomW] = useState("35");
   const [customH, setCustomH] = useState("45");
@@ -91,10 +90,9 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
   const rows = Math.max(0, Math.floor((pageH - 2 * margin + border) / (selectedSize.height + border)));
   const maxCopies = Math.max(0, cols * rows);
   const actualCopies = fillSheet ? maxCopies : Math.min(Math.max(1, copies), maxCopies);
-  const previewSize = useMemo(() => ({ width: mmPx(selectedSize.width, 120), height: mmPx(selectedSize.height, 120) }), [selectedSize.width, selectedSize.height]);
 
   const drawPhoto = useCallback(async () => {
-    if (!image || !photoRef.current) return null;
+    if (!image) return null;
     const img = await loadImage(image);
     const canvas = document.createElement("canvas");
     canvas.width = mmPx(selectedSize.width, dpi); canvas.height = mmPx(selectedSize.height, dpi);
