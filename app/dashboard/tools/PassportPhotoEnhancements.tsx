@@ -215,6 +215,11 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
 
   const runExport = async (kind: "photo-png" | "photo-jpg" | "sheet" | "pdf" | "print") => {
     if (!image) return;
+    let printWindow: Window | null = null;
+    if (kind === "print") {
+      printWindow = window.open("about:blank", "_blank");
+      if (!printWindow) { setError("Allow pop-ups to print the sheet."); return; }
+    }
     setBusy(true); setError("");
     try {
       const canvas = kind === "photo-png" || kind === "photo-jpg" ? await drawPhoto() : await drawSheet();
@@ -229,13 +234,18 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
         pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, pageW, pageH, undefined, "FAST");
         if (kind === "pdf") pdf.save(`passport-photo-sheet-${paper}.pdf`);
         else {
-          const blob = pdf.output("blob"), url = URL.createObjectURL(blob), win = window.open(url, "_blank");
-          if (!win) throw new Error("Allow pop-ups to print the sheet.");
-          window.setTimeout(() => { try { win.focus(); win.print(); } catch {} }, 900);
+          const blob = pdf.output("blob"), url = URL.createObjectURL(blob);
+          const target = printWindow;
+          if (!target) throw new Error("Print window could not be opened.");
+          target.location.href = url;
+          target.onload = () => { try { target.focus(); target.print(); } catch {} };
           window.setTimeout(() => URL.revokeObjectURL(url), 60000);
         }
       }
-    } catch (e) { setError(e instanceof Error ? e.message : "Export failed. Please try again."); }
+    } catch (e) {
+      if (printWindow && !printWindow.closed) printWindow.close();
+      setError(e instanceof Error ? e.message : "Export failed. Please try again.");
+    }
     finally { setBusy(false); }
   };
 
