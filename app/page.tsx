@@ -7,6 +7,7 @@ import Tesseract from "tesseract.js";
 import { supabase } from "@/lib/supabase";
 import { SERVICE_CATALOG } from "@/app/dashboard/tools/serviceDocumentCatalog";
 import styles from "./home.module.css";
+import "./home-new.css";
 
 type ServiceItem = {
   id?: string;
@@ -426,13 +427,423 @@ export default function HomePage() {
     setShowApplicationPopup(false);
   }
 
-  return <main className={styles.page} style={{ "--home-primary": homepageSettings.theme.primary, "--home-accent": homepageSettings.theme.accent, "--home-background": homepageSettings.theme.background } as any}>
-    <header className={styles.header}>
-      <div className={styles.container + " " + styles.headerInner}>
-        <Link href="/" className={styles.brand}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo}/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><span>ഡിജിറ്റൽ സേവന കേന്ദ്രം</span></div></Link>
-        <nav className={styles.nav}><a href="#services">സേവനങ്ങൾ</a><a href="#status">അപേക്ഷാ സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a><label title="Receipt photo to text" style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:34,height:34,borderRadius:10,border:"1px solid #dce7f5",color:"#155eef",cursor:receiptBusy?"wait":"pointer",opacity:receiptBusy?0.55:1}}><Camera size={17}/><input type="file" accept="image/*" capture="environment" disabled={receiptBusy} onChange={e=>{const file=e.target.files?.[0];void handleReceiptCamera(file);e.currentTarget.value="";}} style={{display:"none"}} aria-label="Receipt camera"/></label><Link href="/login" className={styles.loginButton}>Official Login</Link></nav>
-      </div>
+  return "📄";
+};
+
+const serviceName = (s: ServiceItem) => String(s.name || s.title || s.serviceName || "").trim();
+
+const serviceCategory = (name: string) => {
+  const n = name.toLowerCase();
+  if (n.includes("aadhaar") || n.includes("aadhar")) return "Aadhaar";
+  if (n.includes("pan")) return "PAN";
+  if (n.includes("passport")) return "Passport";
+  if (n.includes("certificate") || n.includes("birth") || n.includes("death") || n.includes("income") || n.includes("caste") || n.includes("community") || n.includes("residence")) return "Certificates";
+  if (n.includes("ration") || n.includes("food card")) return "Ration";
+  if (n.includes("driving") || n.includes("licence") || n.includes("license") || n.includes("vehicle") || n.includes("rc")) return "Driving / Vehicle";
+  if (n.includes("scholarship") || n.includes("exam") || n.includes("psc") || n.includes("neet") || n.includes("keam") || n.includes("education")) return "Education / Exam";
+  if (n.includes("bill") || n.includes("recharge") || n.includes("utility") || n.includes("electricity")) return "Bill / Recharge";
+  return "Other";
+};
+
+const defaultFeaturedServices = [
+  { id: "demo-aadhaar", title: "Aadhaar Services", subtitle: "Update • Correction • Enrolment", image: "/demo-posters/aadhaar-update.svg", serviceName: "", apply: true },
+  { id: "demo-pan", title: "PAN Card Service", subtitle: "New PAN • Correction • Reprint", image: "/demo-posters/pan-card.svg", serviceName: "", apply: true },
+  { id: "demo-passport", title: "Passport Services", subtitle: "New Passport • Renewal • Support", image: "/demo-posters/passport.svg", serviceName: "", apply: true },
+];
+
+const maskMobile = (mobile: string) => {
+  const digits = String(mobile || "").replace(/\D/g, "");
+  if (!digits) return "—";
+  const local = digits.slice(-10);
+  const lastThree = local.slice(-3);
+  return local.length >= 3 ? `+91 XXX XXX ${lastThree}` : `+91 XXX XXX ${lastThree}`;
+};
+
+function getFlow(name: string): { audiences: string[]; fields: FieldKey[]; docs: string[] } {
+  const n = name.toLowerCase();
+  if (n.includes("aadhaar")) {
+    const child = n.includes("child") || n.includes("minor");
+    return {
+      audiences: child ? ["കുട്ടി"] : ["കുട്ടി", "മുതിർന്നവർ"],
+      fields: ["name", "mobile", "address", "dob", "aadhaar", "parentName"],
+      docs: ["ആധാർ കാർഡ് / ആധാർ എൻറോൾമെന്റ് വിവരങ്ങൾ", "വിലാസം തെളിയിക്കുന്ന രേഖ (ആവശ്യമായാൽ)", "കുട്ടിയാണെങ്കിൽ ജനന സർട്ടിഫിക്കറ്റ് / രക്ഷിതാവിന്റെ ആധാർ", "ബന്ധപ്പെട്ട supporting document"],
+    };
+  }
+  if (n.includes("pan")) return {
+    audiences: ["വ്യക്തി", "കുട്ടി / Minor"],
+    fields: ["name", "mobile", "address", "dob", "aadhaar"],
+    docs: ["ആധാർ കാർഡ്", "ജനന തീയതി തെളിയിക്കുന്ന രേഖ", "ഫോട്ടോ / supporting document (ആവശ്യമായാൽ)"],
+  };
+  if (n.includes("passport")) return {
+    audiences: ["വ്യക്തി", "കുട്ടി / Minor"],
+    fields: ["name", "mobile", "address", "dob"],
+    docs: ["ആധാർ / തിരിച്ചറിയൽ രേഖ", "വിലാസം തെളിയിക്കുന്ന രേഖ", "ജനന തീയതി തെളിയിക്കുന്ന രേഖ", "പഴയ പാസ്‌പോർട്ട് (renewal ആണെങ്കിൽ)"],
+  };
+  if (n.includes("certificate")) return {
+    audiences: ["വ്യക്തി", "കുട്ടി / Minor"],
+    fields: ["name", "mobile", "address", "dob"],
+    docs: ["ആധാർ / തിരിച്ചറിയൽ രേഖ", "വിലാസം തെളിയിക്കുന്ന രേഖ", "സേവനത്തിന് ആവശ്യമായ supporting document"],
+  };
+  if (n.includes("ration")) return {
+    audiences: ["കുടുംബം", "വ്യക്തി"],
+    fields: ["name", "mobile", "address"],
+    docs: ["റേഷൻ കാർഡ്", "ആധാർ രേഖകൾ", "വിലാസം തെളിയിക്കുന്ന രേഖ", "ബന്ധപ്പെട്ട supporting document"],
+  };
+  return {
+    audiences: ["വ്യക്തി", "കുട്ടി / Minor", "മറ്റുള്ളവർ"],
+    fields: ["name", "mobile", "address"],
+    docs: ["ആധാർ / തിരിച്ചറിയൽ രേഖ", "ആവശ്യമായ supporting document", "സേവനത്തിന് ബാധകമായ മറ്റ് രേഖകൾ"],
+  };
+}
+
+export default function HomePage() {
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [showAllServices, setShowAllServices] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<ServiceItem | null>(null);
+  const [audience, setAudience] = useState("");
+  const [form, setForm] = useState<Record<FieldKey, string>>({ name: "", mobile: "", address: "", dob: "", aadhaar: "", parentName: "" });
+  const [applicationNumber, setApplicationNumber] = useState("");
+  const [showApplicationPopup, setShowApplicationPopup] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [statusNumber, setStatusNumber] = useState("");
+  const [statusResult, setStatusResult] = useState<CustomerApplication | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [featuredPaused, setFeaturedPaused] = useState(false);
+  const [receiptBusy, setReceiptBusy] = useState(false);
+  const [receiptMessage, setReceiptMessage] = useState("");
+  const [homepageSettings, setHomepageSettings] = useState<HomepageSettings>({
+    contact: { email: "", mobile: "", mobile2: "", whatsapp: "", address: "" },
+    theme: { primary: "#155eef", accent: "#06b6d4", background: "#f7fbff" },
+    posters: [],
+    serviceConfigs: {},
+  });
+
+  async function handleReceiptCamera(file?: File) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setReceiptMessage("ദയവായി ക്യാമറയിൽ നിന്ന് ഒരു ഫോട്ടോ എടുക്കുക.");
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      setReceiptMessage("ഫോട്ടോ 12 MB-ൽ താഴെയായിരിക്കണം.");
+      return;
+    }
+    setReceiptBusy(true);
+    setReceiptMessage("ഫോട്ടോ പ്രോസസ് ചെയ്യുന്നു...");
+    try {
+      const result = await Tesseract.recognize(file, "eng+mal");
+      const text = String(result.data.text || "").trim();
+      if (text.length < 2) throw new Error("ഫോട്ടോയിൽ നിന്ന് വായിക്കാവുന്ന ടെക്സ്റ്റ് കണ്ടെത്താനായില്ല.");
+      const response = await fetch("/api/receipt-ocr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const saved = await response.json();
+      if (!response.ok || !saved.success) throw new Error(saved.message || "ഫോട്ടോ സൂക്ഷിക്കാൻ കഴിഞ്ഞില്ല.");
+      setReceiptMessage("ഫോട്ടോ ലഭിച്ചു. ടെക്സ്റ്റ് സ്റ്റാഫ് History-യിൽ സൂക്ഷിച്ചു.");
+    } catch (error) {
+      setReceiptMessage(error instanceof Error ? error.message : "പ്രോസസ് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.");
+    } finally {
+      setReceiptBusy(false);
+    }
+  }
+
+  const whatsappNumber = homepageSettings.contact.whatsapp.replace(/\D/g, "") || homepageSettings.contact.mobile.replace(/\D/g, "") || process.env.NEXT_PUBLIC_AKSHAYA_WHATSAPP || "917XXXXXXXXX";
+  const featuredServices = homepageSettings.posters.length ? homepageSettings.posters : defaultFeaturedServices;
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadServices() {
+      setLoading(true);
+      try {
+        const local = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("managedServices") || "[]") : [];
+        const localList = Array.isArray(local) ? local : [];
+        const primary = await supabase.from("feature_permissions").select("permissions").eq("id", HOMEPAGE_SETTINGS_ROW_ID).maybeSingle();
+        const legacy = primary.data?.permissions ? primary.data.permissions : (await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle()).data?.permissions;
+        const payload = legacy;
+        const savedSettings = payload?.data?.homepageSettings;
+        if (savedSettings) {
+          setHomepageSettings(prev => ({
+            ...prev,
+            ...savedSettings,
+            contact: { ...prev.contact, ...(savedSettings.contact || {}) },
+            theme: { ...prev.theme, ...(savedSettings.theme || {}) },
+            posters: Array.isArray(savedSettings.posters) ? savedSettings.posters : [],
+            serviceConfigs: savedSettings.serviceConfigs || {},
+          }));
+        }
+        const serviceRow = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+        const central = serviceRow.data?.permissions?.data?.managedServices;
+        const list = Array.isArray(central) && central.length ? central : localList;
+        if (!cancelled) setServices(list.filter((s: ServiceItem) => serviceName(s)));
+      } catch {
+        if (!cancelled) {
+          try {
+            const local = JSON.parse(localStorage.getItem("managedServices") || "[]");
+            setServices(Array.isArray(local) ? local : []);
+          } catch { setServices([]); }
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadServices();
+    return () => { cancelled = true; };
+  }, []);
+
+  const categories = useMemo(() => Array.from(new Set(services.map(s => serviceCategory(serviceName(s))))), [services]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return services.filter(s => {
+      const matchesCategory = !selectedCategory || serviceCategory(serviceName(s)) === selectedCategory;
+      const matchesSearch = !q || serviceName(s).toLowerCase().includes(q);
+      return matchesCategory && matchesSearch;
+    });
+  }, [services, search, selectedCategory]);
+
+  useEffect(() => {
+    if (featuredPaused || featuredServices.length < 2) return;
+    const timer = window.setInterval(() => {
+      setFeaturedIndex(current => (current + 1) % featuredServices.length);
+    }, 3800);
+    return () => window.clearInterval(timer);
+  }, [featuredPaused]);
+
+  function normalizeServiceKey(value: string) {
+    return value.toLowerCase().replace(/[^a-z0-9\u0D00-\u0D7F]+/g, "");
+  }
+
+  function getCatalogDocuments(name: string): string[] | null {
+    const key = normalizeServiceKey(name);
+    if (!key) return null;
+
+    // Prefer exact English or Malayalam service-name matches to avoid showing
+    // another service's documents when names are similar.
+    const match = SERVICE_CATALOG.find(item =>
+      normalizeServiceKey(item.name) === key ||
+      normalizeServiceKey(item.ml) === key
+    );
+    if (!match) return null;
+    return match.docs.map(doc => doc.ml).filter(Boolean);
+  }
+
+  function applyFeatured(item: HomepagePoster) {
+    // First use the service explicitly linked to the poster. If it was renamed,
+    // match it using a normalized key so "KTET", "K-TET", etc. still connect.
+    const targetName = String(item.serviceName || item.title || "").trim();
+    const targetKey = normalizeServiceKey(targetName);
+
+    if (targetKey) {
+      const service = services.find(s => normalizeServiceKey(serviceName(s)) === targetKey);
+      if (service) {
+        openService(service);
+        return;
+      }
+
+      // A custom service can exist in the poster/settings data before the
+      // service list has refreshed on the homepage. Open the request form
+      // directly instead of only scrolling to the service list.
+      const partial = services.find(s => {
+        const key = normalizeServiceKey(serviceName(s));
+        return key && (key.includes(targetKey) || targetKey.includes(key));
+      });
+      if (partial) {
+        openService(partial);
+        return;
+      }
+
+      const posterService: ServiceItem = {
+        id: "poster-service-" + item.id,
+        name: targetName,
+        title: targetName,
+      };
+      openService(posterService);
+      return;
+    }
+
+    document.getElementById("services")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function getConfiguredFlow(name: string) {
+    const fallback = getFlow(name);
+    const config = homepageSettings.serviceConfigs[name];
+    const catalogDocs = getCatalogDocuments(name);
+
+    // The Service Document Generator catalogue is the single source of truth
+    // for required documents on the customer homepage. Keep the homepage's
+    // existing field/audience configuration, and use its old docs only when
+    // the selected service is not present in the catalogue.
+    const fields = config?.fields?.filter(Boolean) as FieldKey[] | undefined;
+    const docs = catalogDocs && catalogDocs.length
+      ? catalogDocs
+      : (config?.documents?.length ? config.documents : fallback.docs);
+
+    return {
+      audiences: fallback.audiences,
+      fields: fields?.length ? fields : fallback.fields,
+      docs,
+    };
+  }
+
+  const flow = selected ? getConfiguredFlow(serviceName(selected)) : null;
+
+  function openService(s: ServiceItem) {
+    setSelected(s);
+    const f = getFlow(serviceName(s));
+    setAudience(f.audiences[0] || "");
+    setForm({ name: "", mobile: "", address: "", dob: "", aadhaar: "", parentName: "" });
+  }
+
+  function closeService() {
+    setSelected(null);
+  }
+
+  function field(label: string, key: FieldKey, type = "text", placeholder = "") {
+    if (!flow?.fields.includes(key)) return null;
+    return <label className={styles.formField}><span>{label}</span><input type={type} value={form[key]} placeholder={placeholder} onChange={e => setForm(v => ({ ...v, [key]: e.target.value }))}/></label>;
+  }
+
+  async function submitApplication() {
+    if (!selected || !flow) return;
+    setSubmitError("");
+    if (!audience) {
+      setSubmitError("ദയവായി ആർക്കാണ് സേവനം എന്ന് തിരഞ്ഞെടുക്കുക.");
+      return;
+    }
+    const missingFields = flow.fields.filter((key) => !String(form[key] || "").trim());
+    if (missingFields.length > 0) {
+      setSubmitError("ദയവായി ആവശ്യമായ എല്ലാ വിവരങ്ങളും പൂരിപ്പിക്കുക.");
+      return;
+    }
+    try {
+      const { data, error } = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+      if (error) throw error;
+      const permissions = data?.permissions && typeof data.permissions === "object" ? data.permissions : { storageKey: CENTRAL_STORAGE_KEY, data: {} };
+      const stored = Array.isArray(permissions?.data?.customerApplications) ? permissions.data.customerApplications as CustomerApplication[] : [];
+      const used = new Set(stored.map(a => String(a.applicationNumber).padStart(4, "0")));
+      let next = 1;
+      while (next <= 9999 && used.has(String(next).padStart(4, "0"))) next++;
+      if (next > 9999) throw new Error("Application number limit reached.");
+      const generated = String(next).padStart(4, "0");
+      const application: CustomerApplication = {
+        applicationNumber: generated,
+        service: serviceName(selected),
+        audience,
+        customer: { ...form },
+        documentNames: [],
+        submittedAt: new Date().toISOString(),
+        status: "Submitted",
+      };
+      const updatedApplications = [application, ...stored].slice(0, 5000);
+      const updatedPermissions = {
+        storageKey: permissions.storageKey || CENTRAL_STORAGE_KEY,
+        data: { ...(permissions.data || {}), customerApplications: updatedApplications },
+      };
+      const { error: saveError } = await supabase.from("feature_permissions").upsert(
+        { id: CENTRAL_STORAGE_ROW_ID, permissions: updatedPermissions, updated_at: new Date().toISOString() },
+        { onConflict: "id" }
+      );
+      if (saveError) throw saveError;
+      localStorage.setItem("akshaya_customer_applications", JSON.stringify(updatedApplications));
+      setApplicationNumber(generated);
+      setShowApplicationPopup(true);
+    } catch {
+      setSubmitError("അപേക്ഷ നമ്പർ സൃഷ്ടിക്കാൻ കഴിഞ്ഞില്ല. കുറച്ച് കഴിഞ്ഞ് വീണ്ടും Submit ചെയ്യുക.");
+    }
+  }
+
+  async function trackApplication() {
+    const number = statusNumber.replace(/\D/g, "").slice(0, 4);
+    setStatusResult(null);
+    setStatusMessage("");
+    if (number.length !== 4) {
+      setStatusMessage("4 അക്ക അപേക്ഷ നമ്പർ നൽകുക.");
+      return;
+    }
+    setStatusLoading(true);
+    try {
+      const { data, error } = await supabase.from("feature_permissions").select("permissions").eq("id", CENTRAL_STORAGE_ROW_ID).maybeSingle();
+      if (error) throw error;
+      const stored = Array.isArray(data?.permissions?.data?.customerApplications) ? data.permissions.data.customerApplications as CustomerApplication[] : [];
+      const found = stored.find(a => String(a.applicationNumber).padStart(4, "0") === number);
+      if (found) setStatusResult(found);
+      else setStatusMessage("ഈ അപേക്ഷ നമ്പർ കണ്ടെത്താനായില്ല.");
+    } catch {
+      setStatusMessage("Status പരിശോധിക്കാൻ ഇപ്പോൾ സാധിക്കുന്നില്ല. കുറച്ച് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.");
+    } finally {
+      setStatusLoading(false);
+    }
+  }
+
+  function openApplicationWhatsApp() {
+    if (!selected || !flow || !applicationNumber) return;
+    const lines = [
+      "അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്",
+      "പുതിയ സേവന അപേക്ഷ",
+      "--------------------",
+      "അപേക്ഷ നമ്പർ: " + applicationNumber,
+      "സേവനം: " + serviceName(selected),
+      "ആർക്കായി: " + audience,
+      form.name && "പേര്: " + form.name,
+      form.mobile && "മൊബൈൽ: " + form.mobile,
+      form.address && "വിലാസം: " + form.address,
+      form.dob && "ജനന തീയതി: " + form.dob,
+      form.aadhaar && "ആധാർ: " + form.aadhaar,
+      form.parentName && "രക്ഷിതാവിന്റെ പേര്: " + form.parentName,
+      "",
+      "Upload ചെയ്യേണ്ട രേഖകൾ:",
+      ...(flow.docs.length ? flow.docs.map(doc => "• " + doc) : ["ആവശ്യമായ രേഖകൾ കേന്ദ്രം സ്ഥിരീകരിക്കും"]),
+      "",
+      "മുകളിൽ പറഞ്ഞ ആവശ്യമായ രേഖകൾ WhatsApp-ൽ attach ചെയ്ത് അയയ്ക്കുക.",
+    ].filter(Boolean).join("\n");
+    window.open("https://wa.me/" + whatsappNumber + "?text=" + encodeURIComponent(lines), "_blank", "noopener,noreferrer");
+  }
+
+  function closeApplicationPopup() {
+    setShowApplicationPopup(false);
+  }
+
+  return <main className={`${styles.page} nhRoot`} style={{ "--home-primary": homepageSettings.theme.primary, "--home-accent": homepageSettings.theme.accent, "--home-background": homepageSettings.theme.background } as any}>
+    <header className="nhHeader">
+      <div className="nhWrap"><nav className="nhNav nhGlass">
+        <Link href="/" className="nhBrand"><img src="/akshaya-logo.png" alt="Akshaya"/><div><strong>അക്ഷയ സെന്റർ പൂക്കിപ്പറമ്പ്</strong><small>ഡിജിറ്റൽ സേവന കേന്ദ്രം</small></div></Link>
+        <div className="nhLinks">
+          <a href="#services">സേവനങ്ങൾ</a><a href="#status">അപേക്ഷാ സ്റ്റാറ്റസ്</a><a href="#contact">ബന്ധപ്പെടുക</a>
+          <label className="nhCam" title="Receipt photo to text" style={{ cursor: receiptBusy ? "wait" : "pointer", opacity: receiptBusy ? 0.55 : 1 }}><Camera size={17}/><input type="file" accept="image/*" capture="environment" disabled={receiptBusy} onChange={e => { const file = e.target.files?.[0]; void handleReceiptCamera(file); e.currentTarget.value = ""; }} style={{ display: "none" }} aria-label="Receipt camera"/></label>
+          <Link href="/login" className="nhBtn nhB1">Official Login</Link>
+        </div>
+      </nav></div>
     </header>
+
+    <section className="nhHero">
+        <div>
+          <span className="nhTag"><Sparkles size={14}/> ഡിജിറ്റൽ സേവന കേന്ദ്രം</span>
+          <h1>സർക്കാർ സേവനങ്ങൾ <em className="nhGrad">എളുപ്പത്തിൽ, വേഗത്തിൽ</em></h1>
+          <p>സേവനം തിരഞ്ഞെടുത്ത് അപേക്ഷിക്കാം, അപേക്ഷ നമ്പർ ഉപയോഗിച്ച് status അറിയാം, ആവശ്യമായ രേഖകൾ WhatsApp വഴി അയയ്ക്കാം.</p>
+          <div className="nhCta">
+            <a href="#services" className="nhBtn nhB1">സേവനം തിരഞ്ഞെടുക്കൂ</a>
+            <a href="#status" className="nhBtn nhB2">അപേക്ഷാ സ്റ്റാറ്റസ്</a>
+            <a href={"https://wa.me/" + whatsappNumber} target="_blank" rel="noopener noreferrer" className="nhBtn"><MessageCircle size={18}/> WhatsApp</a>
+          </div>
+        </div>
+        <div className="nhScene" aria-hidden="true">
+          <div className="nhChip nhGlass nhChip1">✅ അപേക്ഷ ലഭിച്ചു</div>
+          <div className="nhChip nhGlass nhChip2">🎟️ അപേക്ഷ നമ്പർ ലഭിക്കും</div>
+          <div className="nhDeck">
+            <div className="nhCard nhC1"><b>ആധാർ</b><i/><i/><i/></div>
+            <div className="nhCard nhC2"><b>PAN</b><i/><i/><i/></div>
+            <div className="nhCard nhC3"><b>Passport</b><i/><i/><i/></div>
+          </div>
+        </div>
+      </section>
 
     <section className={styles.updatesSection}>
       <div className={styles.container}>
