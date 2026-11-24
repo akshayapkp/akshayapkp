@@ -167,7 +167,7 @@ if (work) {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-slate-950/70 p-2 backdrop-blur-md sm:p-3">
-      <div className="flex h-[calc(100vh-1rem)] max-h-[760px] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] border border-white/80 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl sm:h-[calc(100vh-1.5rem)] sm:rounded-[28px]">
+      <div className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-full max-w-6xl flex-col overflow-hidden rounded-[24px] border border-white/80 bg-white/95 shadow-[0_24px_80px_rgba(15,23,42,0.28)] backdrop-blur-2xl sm:h-[calc(100dvh-1.5rem)] sm:rounded-[28px]">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 py-3.5 backdrop-blur-xl sm:px-6 sm:py-4">
           <div>
             <h3 className="text-lg font-black tracking-tight text-slate-800 sm:text-xl">Image & PDF To Text</h3>
