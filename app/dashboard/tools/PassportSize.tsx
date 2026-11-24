@@ -60,7 +60,7 @@ export default function PassportSize({ onClose, standalone = false }: { onClose?
       </div>
 
       <RectCropDialog
-        targetAspect={7 / 9}
+        targetAspect={31 / 41}
         open={cropOpen}
         image={cropImage}
         onCancel={() => { setCropOpen(false); setCropImage(null); }}
