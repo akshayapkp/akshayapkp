@@ -123,7 +123,7 @@ export default function CropResizeTool({
               aria-label="Close"
             >
               <X size={20} />
-            </button>
+            </button>}
           </div>
         </div>
 
