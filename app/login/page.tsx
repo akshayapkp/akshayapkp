@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { hashPassword, supabase } from "@/lib/supabase";
 import { getLocalDateKey } from "@/lib/session-date";
-import styles from "./login.module.css";
+import "./login-glass.css";
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -62,15 +62,27 @@ export default function LoginPage() {
     }
   };
 
-  return <main className={styles.page}>
-    <div className={`${styles.orb} ${styles.orbOne}`} /><div className={`${styles.orb} ${styles.orbTwo}`} />
-    <section className={styles.left}>
-      <div className={styles.brandRow}><img src="/akshaya-logo.png" alt="Akshaya" className={styles.logo} /><div className={styles.divider} /><div><h1>Akshaya Centre</h1><h2>Pookiparamba</h2><p>Centre Management System</p><div className={styles.miniNav}>Manage Services <span>|</span> Customers <span>|</span> Payments <span>|</span> Staff</div><div className={styles.miniNav}>All in One Place</div></div></div>
-      <div className={styles.script}>Digital Services<br />for a Better Tomorrow</div>
-      <div className={styles.features}>{features.map(([icon, a, b], i) => <div className={styles.feature} key={i}><div className={`${styles.icon} ${styles[`i${i}`]}`}><Icon name={icon} /></div><strong>{a}</strong>{b && <strong>{b}</strong>}</div>)}</div>
-      <div className={styles.office}><div className={styles.officeWall}><img src="/akshaya-logo.png" alt="" className={styles.officeLogo} /><div className={styles.wallText}>Service<br />Support<br />Empower<br />Grow</div><div className={styles.glassText}>Digital<br />Empowered<br />Communities</div></div><div className={styles.counter} /><div className={`${styles.chair} ${styles.chair1}`} /><div className={`${styles.chair} ${styles.chair2}`} /><div className={`${styles.plant} ${styles.plant1}`}>✦</div><div className={`${styles.plant} ${styles.plant2}`}>✦</div></div>
-      <div className={styles.bottomBar}><div><Icon name="users" /><span><b>Efficient</b><br />Operations</span></div><div><Icon name="shield" /><span><b>Better</b><br />Service Delivery</span></div><div><Icon name="chart" /><span><b>Data Driven</b><br />Decisions</span></div><div><Icon name="heart" /><span><b>Stronger</b><br />Communities</span></div></div>
+  return <main className="lgRoot">
+    <div className="lgAurora" aria-hidden="true"><i /><i /><i /></div>
+    <section className="lgLeft">
+      <div className="lgBrand"><img src="/akshaya-logo.png" alt="Akshaya" /><div><h1>Akshaya Centre</h1><h2>Pookiparamba</h2><p>Centre Management System</p></div></div>
+      <p className="lgScript">Digital Services<br />for a Better Tomorrow</p>
+      <div className="lgFeatures">{features.slice(0, 6).map(([icon, a, b], i) => <div className="lgFeature lgGlass" key={i}><span className="lgIc"><Icon name={icon} /></span><strong>{a} {b}</strong></div>)}</div>
     </section>
-    <section className={styles.right}><div className={styles.loginCard}><div className={styles.staffBadge}><Icon name="shield" /> Staff Access Only</div><img src="/akshaya-logo.png" alt="Akshaya" className={styles.cardLogo} /><h3>Welcome <span>Back!</span></h3><p className={styles.sub}>Sign in to your <b>Akshaya Centre Pookiparamba</b><br />Management System</p><p className={styles.helper}>Access your dashboard and manage your centre with ease.</p><form onSubmit={handleLogin}><label className={styles.input}><Icon name="user" /><input aria-label="Username / Staff ID" placeholder="Username / Staff ID" value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" required disabled={isSigningIn} /></label><label className={styles.input}><Icon name="lock" /><input aria-label="Password" type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required disabled={isSigningIn} /><button type="button" className={styles.eye} aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(value => !value)}><Icon name="eye" /></button></label><label className={styles.remember}><input type="checkbox" /> <span>Remember me</span></label><button className={styles.login} type="submit" disabled={isSigningIn}>{isSigningIn ? "Signing in..." : "Login"} <Icon name="arrow" /></button></form><div className={styles.cardFooter}><span>Akshaya Centre Pookiparamba</span><span>Manage Today for a Smarter Tomorrow</span></div></div><div className={styles.rightQuote}>Digital<br />Services<br />for a Better<br />Tomorrow</div></section>
+    <section className="lgRight">
+      <div className="lgCard lgGlass">
+        <div className="lgBadge"><Icon name="shield" /> Staff Access Only</div>
+        <h3>Welcome <span>Back!</span></h3>
+        <p className="lgSub">Sign in to your <b>Akshaya Centre Pookiparamba</b> Management System</p>
+        <p className="lgHelper">Access your dashboard and manage your centre with ease.</p>
+        <form onSubmit={handleLogin}>
+          <label className="lgInput"><Icon name="user" /><input aria-label="Username / Staff ID" placeholder="Username / Staff ID" value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" required disabled={isSigningIn} /></label>
+          <label className="lgInput"><Icon name="lock" /><input aria-label="Password" type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" required disabled={isSigningIn} /><button type="button" className="lgEye" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(value => !value)}><Icon name="eye" /></button></label>
+          <label className="lgRemember"><input type="checkbox" /> <span>Remember me</span></label>
+          <button className="lgLogin" type="submit" disabled={isSigningIn}>{isSigningIn ? "Signing in..." : "Login"} <Icon name="arrow" /></button>
+        </form>
+        <div className="lgFoot"><span>Akshaya Centre Pookiparamba</span><span>Manage Today for a Smarter Tomorrow</span></div>
+      </div>
+    </section>
   </main>;
 }
