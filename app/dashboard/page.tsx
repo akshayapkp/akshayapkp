@@ -1412,7 +1412,7 @@ const loadDashboardData = () => {
                   normalizedOrder.push({
                     id: "photo-studio",
                     name: "Photo Studio",
-                    url: "photo-studio-modal",
+                    url: "/tools/photo-studio",
                     bgColor: "from-blue-600 to-teal-600",
                     isInternal: true,
                   });
@@ -1447,7 +1447,19 @@ const loadDashboardData = () => {
                 "service-document-generator-modal": "/tools/service-document-generator",
                 "aadhaar-name-check-modal": "/tools/aadhaar-name-check",
               };
-              const legacyToolRoute = standaloneToolRoutes[legacyUrl];
+              const legacyNameRoutes: Record<string, string> = {
+                "sslc percentage": "/tools/sslc-calculator",
+                "photo studio": "/tools/photo-studio",
+                "passport size": "/tools/passport-size",
+                "translator": "/tools/translator",
+                "pdf tool": "/tools/pdf-toolkit",
+                "converter tool": "/tools/land-area-converter",
+                "image to text": "/tools/image-to-text",
+                "aadhaar gazette": "/tools/aadhaar-gazette",
+                "service document generator": "/tools/service-document-generator",
+                "aadhaar name check": "/tools/aadhaar-name-check",
+              };
+              const legacyToolRoute = standaloneToolRoutes[legacyUrl] || legacyNameRoutes[legacyName];
               if (legacyToolRoute && item?.isInternal !== false) {
                 normalizedOrder.push({ ...item, url: legacyToolRoute, isInternal: true });
                 continue;
