@@ -1412,7 +1412,7 @@ const loadDashboardData = () => {
                   normalizedOrder.push({
                     id: "photo-studio",
                     name: "Photo Studio",
-                    url: "/tools/photo-studio",
+                    url: "/dashboard/tools/photo-studio",
                     bgColor: "from-blue-600 to-teal-600",
                     isInternal: true,
                   });
@@ -1438,8 +1438,8 @@ const loadDashboardData = () => {
                 "/tools/sslc-calculator": "sslc-modal",
                 "photo-studio-modal": "/dashboard/tools/photo-studio",
                 "/tools/photo-studio": "/dashboard/tools/photo-studio",
-                "crop-resize-modal": "/tools/photo-studio",
-                "psc-modal": "/tools/photo-studio",
+                "crop-resize-modal": "/dashboard/tools/photo-studio",
+                "psc-modal": "/dashboard/tools/photo-studio",
                 "passport-size-modal": "/dashboard/tools/passport-size",
                 "/tools/passport-size": "/dashboard/tools/passport-size",
                 "translator-modal": "/dashboard/tools/translator",
