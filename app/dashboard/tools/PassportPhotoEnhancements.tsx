@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { jsPDF } from "jspdf";
 import { Download, FileImage, FileText, Printer, RotateCcw } from "lucide-react";
 
-type Props = { image: string | null; onCropAgain: () => void };
+type Props = { image: string | null; onCropAgain: () => void; onChoosePhoto: () => void };
 type Size = { label: string; width: number; height: number };
 type Paper = "A4" | "6x4";
 type Orientation = "portrait" | "landscape" | "best";
@@ -93,9 +93,11 @@ function downloadBlob(blob: Blob, name: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-export default function PassportPhotoEnhancements({ image, onCropAgain }: Props) {
+export default function PassportPhotoEnhancements({ image, onCropAgain, onChoosePhoto }: Props) {
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [sizeIndex, setSizeIndex] = useState(1);
+  const [activePreview, setActivePreview] = useState<"photo" | "sheet">("photo");
+  const [openSections, setOpenSections] = useState({ size: true, light: true, print: true });
   const [customW, setCustomW] = useState("35");
   const [customH, setCustomH] = useState("45");
   const [customSize, setCustomSize] = useState(false);
@@ -201,7 +203,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
     const render = async () => {
       if (!image || !previewRef.current) return;
       try {
-        const sheet = await drawSheet();
+        const sheet = activePreview === "photo" ? await drawPhoto() : await drawSheet();
         if (cancelled || !sheet || !previewRef.current) return;
         const target = previewRef.current, ctx = target.getContext("2d");
         if (!ctx) return;
@@ -211,7 +213,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
     };
     render();
     return () => { cancelled = true; };
-  }, [image, drawSheet]);
+  }, [image, drawSheet, drawPhoto, activePreview]);
 
   const runExport = async (kind: "photo-png" | "photo-jpg" | "sheet" | "pdf" | "print") => {
     if (!image) return;
@@ -255,15 +257,15 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
   const autoAdjust = () => { setBrightness(105); setContrast(108); setShadows(8); setSaturation(103); setWarmth(2); setAutoAdjusted(true); };
 
   return (
-    <section className="mt-5 space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <section className="mt-0 space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="text-lg font-black text-slate-800">Photo Studio – Advanced Tools</h2><p className="mt-1 text-xs text-slate-500">Additional photo sizing, adjustments and print-sheet exports</p></div>
+        <div><h2 className="text-lg font-black text-slate-800">Passport Photo Creator</h2><p className="mt-1 text-xs text-slate-500">Upload, crop, preview and print passport photos</p></div>
         <button type="button" onClick={onCropAgain} disabled={!image} className="rounded-xl border px-3 py-2 text-sm font-bold disabled:opacity-40">Adjust Crop Again</button>
       </div>
-      {!image ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Upload and crop a photo above to use the advanced tools.</p> : <>
+      {!image ? <button type="button" onClick={onChoosePhoto} className="flex min-h-[360px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-blue-300 bg-slate-50 p-8 text-center"><span className="text-4xl">📷</span><strong className="mt-4 text-lg text-slate-800">Choose a photo</strong><span className="mt-2 text-sm text-slate-500">Upload JPG, PNG or WebP</span></button> : <>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,.9fr)]">
           <div className="min-w-0 space-y-3">
-            <div className="rounded-2xl border bg-slate-50 p-3"><div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-600"><span>Live Print Sheet Preview</span><span>{pageW} × {pageH} mm</span></div><div className="flex max-h-[620px] items-center justify-center overflow-auto rounded-xl bg-slate-200 p-2"><canvas ref={previewRef} className="h-auto max-h-[580px] max-w-full border border-slate-300 bg-white shadow-md" /></div><p className="mt-2 text-xs text-slate-500">Estimated fit: {maxCopies} photos · Current sheet: {actualCopies} copies · {dpi} DPI</p></div>
+            <div className="rounded-2xl border bg-slate-50 p-3"><div className="mb-3 flex items-center justify-between gap-2"><div className="flex rounded-xl bg-slate-200 p-1"><button type="button" onClick={()=>setActivePreview("photo")} className={`rounded-lg px-4 py-2 text-xs font-bold ${activePreview==="photo"?"bg-white text-blue-700 shadow":"text-slate-600"}`}>Photo</button><button type="button" onClick={()=>setActivePreview("sheet")} className={`rounded-lg px-4 py-2 text-xs font-bold ${activePreview==="sheet"?"bg-white text-blue-700 shadow":"text-slate-600"}`}>Print sheet</button></div><span className="text-xs font-bold text-slate-600">{activePreview==="photo"?`${selectedSize.width} × ${selectedSize.height} mm`:`${pageW} × ${pageH} mm`}</span></div><div className="flex max-h-[620px] items-center justify-center overflow-auto rounded-xl bg-slate-200 p-2"><canvas ref={previewRef} className="h-auto max-h-[580px] max-w-full border border-slate-300 bg-white shadow-md" /></div><p className="mt-2 text-xs text-slate-500">{activePreview==="sheet"?`Estimated fit: ${maxCopies} photos · Current sheet: ${actualCopies} copies · ${dpi} DPI`:`${mmPx(selectedSize.width,dpi)} × ${mmPx(selectedSize.height,dpi)} px · ${dpi} DPI`}</p></div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               <button disabled={busy} onClick={() => runExport("photo-png")} className="rounded-xl bg-slate-800 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileImage className="mx-auto mb-1" size={17}/>Download PNG</button>
               <button disabled={busy} onClick={() => runExport("photo-jpg")} className="rounded-xl bg-slate-800 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileImage className="mx-auto mb-1" size={17}/>Download JPG</button>
