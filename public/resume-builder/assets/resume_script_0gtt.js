@@ -1560,4 +1560,104 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- JOB TITLE SUGGESTIONS: open on focus/click and allow custom entries ---
+    (function initJobTitleSuggestions() {
+        const inputSelector = 'input.exp-title[list="resumeJobTitleOptions"]';
+        const datalist = document.getElementById('resumeJobTitleOptions');
+        if (!datalist) return;
+
+        const options = Array.from(datalist.querySelectorAll('option'))
+            .map(option => option.value.trim())
+            .filter(Boolean);
+        if (!options.length) return;
+
+        const menu = document.createElement('div');
+        menu.id = 'resumeJobTitleSuggestionMenu';
+        Object.assign(menu.style, {
+            position: 'fixed', display: 'none', zIndex: '99999',
+            maxHeight: '240px', overflowY: 'auto', background: '#fff',
+            border: '1px solid #d1d5db', borderRadius: '8px',
+            boxShadow: '0 8px 24px rgba(0,0,0,.14)', padding: '5px 0',
+            boxSizing: 'border-box'
+        });
+        document.body.appendChild(menu);
+
+        let activeInput = null;
+        let visibleOptions = [];
+
+        function positionMenu() {
+            if (!activeInput || menu.style.display === 'none') return;
+            const rect = activeInput.getBoundingClientRect();
+            menu.style.left = rect.left + 'px';
+            menu.style.top = rect.bottom + 'px';
+            menu.style.width = rect.width + 'px';
+        }
+
+        function closeMenu() {
+            menu.style.display = 'none';
+            activeInput = null;
+            visibleOptions = [];
+        }
+
+        function renderMenu(input, showAll) {
+            activeInput = input;
+            const query = input.value.trim().toLowerCase();
+            visibleOptions = options.filter(value =>
+                showAll || !query || value.toLowerCase().includes(query)
+            );
+            menu.replaceChildren();
+
+            if (!visibleOptions.length) {
+                const empty = document.createElement('div');
+                empty.textContent = 'No matching suggestion — you can type your own job title';
+                Object.assign(empty.style, { padding: '10px 12px', color: '#6b7280', fontSize: '13px' });
+                menu.appendChild(empty);
+            } else {
+                visibleOptions.forEach(value => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.textContent = value;
+                    Object.assign(item.style, {
+                        display: 'block', width: '100%', border: '0',
+                        background: '#fff', color: '#111827', textAlign: 'left',
+                        padding: '9px 12px', fontSize: '14px', cursor: 'pointer'
+                    });
+                    item.addEventListener('mouseenter', () => item.style.background = '#f3f4f6');
+                    item.addEventListener('mouseleave', () => item.style.background = '#fff');
+                    item.addEventListener('pointerdown', event => {
+                        event.preventDefault();
+                        input.value = value;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        closeMenu();
+                    });
+                    menu.appendChild(item);
+                });
+            }
+            menu.style.display = 'block';
+            positionMenu();
+        }
+
+        document.addEventListener('focusin', event => {
+            if (event.target.matches(inputSelector)) renderMenu(event.target, true);
+        });
+        document.addEventListener('click', event => {
+            if (event.target.matches(inputSelector)) {
+                renderMenu(event.target, true);
+            } else if (!menu.contains(event.target)) {
+                closeMenu();
+            }
+        });
+        document.addEventListener('input', event => {
+            if (event.target.matches(inputSelector)) renderMenu(event.target, false);
+        });
+        document.addEventListener('keydown', event => {
+            if (!activeInput) return;
+            if (event.key === 'Escape') closeMenu();
+        });
+        window.addEventListener('resize', positionMenu);
+        window.addEventListener('scroll', positionMenu, true);
+    })();
+
 });
