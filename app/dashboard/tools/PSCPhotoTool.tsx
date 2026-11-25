@@ -494,7 +494,7 @@ export default function PSCPhotoTool({
                     type="file"
                     accept="image/png,image/jpeg,image/jpg"
                     className="hidden"
-                    onChange={psc.uploadPhoto}
+                    onChange={handlePerspectiveUpload}
                   />
 
                   <div className="flex items-center gap-3">
