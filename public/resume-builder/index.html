@@ -278,22 +278,14 @@
                         <!-- Guardian Details -->
                 <div class="form-group" style="grid-column: span 2;">
                   <label>Guardian Details</label>
-                  <div id="guardianList"><div class="dynamic-item rb-guardian-row">
-                    <div class="rb-relation-picker"><input type="hidden" class="g-rel" value="">
-                      <button type="button" class="rb-relation-trigger" aria-label="Choose relationship" aria-expanded="false" onclick="toggleGuardianRelations(this)"><span class="rb-relation-value"></span><i class="fas fa-chevron-down"></i></button>
-                      <div class="rb-relation-menu" hidden><button type="button" onclick="selectGuardianRelation(this,'Father')">Father</button><button type="button" onclick="selectGuardianRelation(this,'Mother')">Mother</button><button type="button" onclick="selectGuardianRelation(this,'Husband')">Husband</button><button type="button" onclick="selectGuardianRelation(this,'Wife')">Wife</button><button type="button" onclick="selectGuardianRelation(this,'Son')">Son</button><button type="button" onclick="selectGuardianRelation(this,'Daughter')">Daughter</button><button type="button" onclick="selectGuardianRelation(this,'Brother')">Brother</button><button type="button" onclick="selectGuardianRelation(this,'Sister')">Sister</button><button type="button" onclick="selectGuardianRelation(this,'Guardian')">Guardian</button><button type="button" onclick="selectGuardianRelation(this,'Grandfather')">Grandfather</button><button type="button" onclick="selectGuardianRelation(this,'Grandmother')">Grandmother</button><button type="button" onclick="selectGuardianRelation(this,'Uncle')">Uncle</button><button type="button" onclick="selectGuardianRelation(this,'Aunt')">Aunt</button><button type="button" onclick="selectGuardianRelation(this,'Other')">Other</button></div>
-                    </div><input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
-                  </div></div>
-                  <button type="button" class="add-btn" onclick="addGuardian()"><i class="fas fa-plus"></i> Add Guardian</button>
+                  <div id="guardianList"></div>
+                   <button type="button" class="add-btn" onclick="addGuardian()"><i class="fas fa-plus"></i> Add Guardian</button>
                 </div>
 
                         <div class="form-group" style="grid-column: span 2;">
                             <label>Contact Numbers (Mobile / WhatsApp)</label>
-                            <div id="contactList"><div class="dynamic-item rb-contact-row">
-<select class="contact-type" aria-label="Contact type" onchange="updateDynamicPreview('contact')"><option value="fas fa-phone" selected>Mobile</option><option value="fab fa-whatsapp">WhatsApp</option></select>
-<div class="phone-input-group"><select class="contact-country" aria-label="Country calling code" onchange="updateDynamicPreview('contact')"><option value="+91" selected>IN +91</option><option value="+971">AE +971</option><option value="+966">SA +966</option><option value="+974">QA +974</option><option value="+968">OM +968</option><option value="+965">KW +965</option><option value="+973">BH +973</option><option value="+1">US/CA +1</option><option value="+44">UK +44</option><option value="+61">AU +61</option><option value="+64">NZ +64</option><option value="+65">SG +65</option><option value="+60">MY +60</option><option value="+94">LK +94</option><option value="+977">NP +977</option><option value="+880">BD +880</option><option value="+92">PK +92</option><option value="+63">PH +63</option><option value="+27">ZA +27</option><option value="+49">DE +49</option><option value="+33">FR +33</option><option value="+39">IT +39</option><option value="+34">ES +34</option><option value="+353">IE +353</option><option value="+81">JP +81</option></select><input type="tel" class="contact-num" maxlength="15" inputmode="tel" placeholder="Mobile number" oninput="validateInternationalMobile(this); updateDynamicPreview('contact')"></div>
-<span class="field-error contact-error" style="display:none;width:100%;"></span></div></div>
-                            <button type="button" class="add-btn" onclick="addContact()"><i class="fas fa-plus"></i> Add Contact</button>
+                            <div id="contactList"></div>
+                             <button type="button" class="add-btn" onclick="addContact()"><i class="fas fa-plus"></i> Add Contact</button>
                         </div>
                     </div>
                 </div>
@@ -422,13 +414,20 @@
                             <span class="toggle-text">Disabled</span>
                         </label>
                     </div>
-                    <div id="educationList">
+                    <datalist id="resumeDegreeOptions">
+<option value="SSLC"></option><option value="S.S.L.C"></option><option value="Plus Two"></option><option value="Higher Secondary"></option><option value="VHSE"></option><option value="ITI"></option><option value="Diploma"></option><option value="Polytechnic Diploma"></option><option value="BA"></option><option value="BSc"></option><option value="BCom"></option><option value="BBA"></option><option value="BCA"></option><option value="BE"></option><option value="BTech"></option><option value="MA"></option><option value="MSc"></option><option value="MCom"></option><option value="MBA"></option><option value="MCA"></option><option value="MTech"></option><option value="PhD"></option>
+</datalist>
+<datalist id="resumeUniversityOptions">
+<option value="University of Calicut"></option><option value="University of Kerala"></option><option value="Mahatma Gandhi University"></option><option value="Kannur University"></option><option value="APJ Abdul Kalam Technological University (KTU)"></option><option value="Kerala University of Health Sciences (KUHS)"></option><option value="Kerala Agricultural University"></option><option value="Sree Sankaracharya University of Sanskrit"></option><option value="Cochin University of Science and Technology (CUSAT)"></option><option value="National University of Advanced Legal Studies (NUALS)"></option><option value="Central University of Kerala"></option><option value="Kerala Kalamandalam"></option><option value="Kerala Board of Public Examinations"></option><option value="Board of Higher Secondary Examinations, Kerala"></option><option value="Kerala Board of Higher Secondary Education"></option><option value="Directorate of Higher Secondary Education (DHSE), Kerala"></option><option value="Vocational Higher Secondary Education (VHSE), Kerala"></option><option value="Directorate of Technical Education (DTE), Kerala"></option><option value="State Board of Technical Education, Kerala"></option><option value="CBSE"></option><option value="CISCE / ICSE"></option><option value="NIOS"></option><option value="AICTE"></option><option value="UGC"></option><option value="IGNOU"></option><option value="Other"></option>
+</datalist>
+<datalist id="resumeSemesterOptions"><option value="Semester 1"></option><option value="Semester 2"></option><option value="Semester 3"></option><option value="Semester 4"></option><option value="Semester 5"></option><option value="Semester 6"></option><option value="Semester 7"></option><option value="Semester 8"></option><option value="Annual"></option><option value="Final Year"></option><option value="Completed"></option><option value="Pursuing"></option></datalist>
+<div id="educationList">
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('edu')"><i class="fas fa-trash"></i></button>
             <div class="form-grid">
-                <input type="text" class="edu-degree" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
-                <input type="text" class="edu-school" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
-                <input type="text" class="edu-date" placeholder="e.g. 2016 - 2020" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-degree" list="resumeDegreeOptions" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-school" list="resumeUniversityOptions" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-date" list="resumeSemesterOptions" placeholder="Year / Semester (e.g. 2016 - 2020)" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
             </div>
         </div></div>
                     <button type="button" class="add-btn" onclick="addEducation()"><i class="fas fa-plus"></i> Add Education</button>
