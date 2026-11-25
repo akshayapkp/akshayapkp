@@ -4,6 +4,7 @@ window.addContact = function() {
     if (!container) return;
     const html = `
         <div class="dynamic-item rb-contact-row">
+            <button class="remove-btn" type="button" aria-label="Remove contact" onclick="this.parentElement.remove(); updateDynamicPreview('contact')"><i class="fas fa-trash"></i></button>
             <select class="contact-type" aria-label="Contact type" onchange="updateDynamicPreview('contact')">
                 <option value="fas fa-phone" selected>Mobile</option>
                 <option value="fab fa-whatsapp">WhatsApp</option>
@@ -53,6 +54,7 @@ window.addGuardian = function() {
     if (!container) return;
     const html = `
         <div class="dynamic-item rb-guardian-row">
+            <button class="remove-btn" type="button" aria-label="Remove guardian" onclick="this.parentElement.remove(); updateDynamicPreview('guardian')"><i class="fas fa-trash"></i></button>
             <div class="rb-relation-picker">
                 <input type="hidden" class="g-rel" value="">
                 <button type="button" class="rb-relation-trigger" aria-label="Choose relationship" aria-expanded="false" onclick="toggleGuardianRelations(this)"><span class="rb-relation-value"></span><i class="fas fa-chevron-down"></i></button>
