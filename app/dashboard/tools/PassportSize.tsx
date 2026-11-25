@@ -38,20 +38,11 @@ export default function PassportSize({ onClose, standalone = false }: { onClose?
           <button type="button" onClick={close} aria-label="Close Passport Photo Creator" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100"><X size={19}/></button>
         </header>}
 
-        {!image && (
-          <section className="mb-4 rounded-2xl border-2 border-dashed border-blue-200 bg-white p-6 text-center shadow-sm sm:p-10">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><Upload size={25}/></span>
-            <h2 className="mt-3 text-base font-black text-slate-800">Upload a Passport Photo</h2>
-            <p className="mt-1 text-sm text-slate-500">Select an image to open the crop and advanced editing tools.</p>
-            <button type="button" onClick={openFilePicker} className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-3 text-sm font-bold text-white shadow-md">Choose Photo</button>
-          </section>
-        )}
-
         <input ref={fileInputRef} hidden type="file" accept="image/*" onChange={handleSelectImage}/>
         {image && (
           <PassportPhotoEnhancements
             image={image}
-            onCropAgain={() => {
+            onChoosePhoto={openFilePicker}\n            onCropAgain={() => {
               setCropImage(image);
               setCropOpen(true);
             }}
@@ -60,7 +51,7 @@ export default function PassportSize({ onClose, standalone = false }: { onClose?
       </div>
 
       <RectCropDialog
-        targetAspect={31 / 41}
+        targetAspect={35 / 45}
         open={cropOpen}
         image={cropImage}
         onCancel={() => { setCropOpen(false); setCropImage(null); }}
