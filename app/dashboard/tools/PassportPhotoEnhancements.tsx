@@ -122,6 +122,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [autoAdjusted, setAutoAdjusted] = useState(false);
+  const [activeTab, setActiveTab] = useState<"photo" | "sheet">("photo");
 
   const selectedSize = customSize
     ? { label: "Custom", width: Math.max(10, Math.min(100, Number(customW) || 35)), height: Math.max(10, Math.min(100, Number(customH) || 45)) }
@@ -201,7 +202,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
     const render = async () => {
       if (!image || !previewRef.current) return;
       try {
-        const sheet = await drawSheet();
+        const sheet = activeTab === "photo" ? await drawPhoto() : await drawSheet();
         if (cancelled || !sheet || !previewRef.current) return;
         const target = previewRef.current, ctx = target.getContext("2d");
         if (!ctx) return;
@@ -211,7 +212,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
     };
     render();
     return () => { cancelled = true; };
-  }, [image, drawSheet]);
+  }, [image, activeTab, drawPhoto, drawSheet]);
 
   const runExport = async (kind: "photo-png" | "photo-jpg" | "sheet" | "pdf" | "print") => {
     if (!image) return;
@@ -255,65 +256,131 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
   const autoAdjust = () => { setBrightness(105); setContrast(108); setShadows(8); setSaturation(103); setWarmth(2); setAutoAdjusted(true); };
 
   return (
-    <section className="mt-5 space-y-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h2 className="text-lg font-black text-slate-800">Photo Studio – Advanced Tools</h2><p className="mt-1 text-xs text-slate-500">Additional photo sizing, adjustments and print-sheet exports</p></div>
-        <button type="button" onClick={onCropAgain} disabled={!image} className="rounded-xl border px-3 py-2 text-sm font-bold disabled:opacity-40">Adjust Crop Again</button>
+    <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-slate-900">Photo Studio – Photo Setter</h2>
+          <p className="mt-1 text-xs text-slate-500">Create passport photos and print-ready photo sheets</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={onChoosePhoto} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-700">Upload / Change Photo</button>
+          <button type="button" onClick={onCropAgain} disabled={!image} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 disabled:opacity-40">Crop Again</button>
+        </div>
       </div>
-      {!image ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Upload and crop a photo above to use the advanced tools.</p> : <>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,.9fr)]">
-          <div className="min-w-0 space-y-3">
-            <div className="rounded-2xl border bg-slate-50 p-3"><div className="mb-2 flex items-center justify-between text-xs font-bold text-slate-600"><span>Live Print Sheet Preview</span><span>{pageW} × {pageH} mm</span></div><div className="flex max-h-[620px] items-center justify-center overflow-auto rounded-xl bg-slate-200 p-2"><canvas ref={previewRef} className="h-auto max-h-[580px] max-w-full border border-slate-300 bg-white shadow-md" /></div><p className="mt-2 text-xs text-slate-500">Estimated fit: {maxCopies} photos · Current sheet: {actualCopies} copies · {dpi} DPI</p></div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              <button disabled={busy} onClick={() => runExport("photo-png")} className="rounded-xl bg-slate-800 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileImage className="mx-auto mb-1" size={17}/>Download PNG</button>
-              <button disabled={busy} onClick={() => runExport("photo-jpg")} className="rounded-xl bg-slate-800 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileImage className="mx-auto mb-1" size={17}/>Download JPG</button>
-              <button disabled={busy} onClick={() => runExport("sheet")} className="rounded-xl bg-slate-800 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><Download className="mx-auto mb-1" size={17}/>Sheet Image</button>
-              <button disabled={busy} onClick={() => runExport("pdf")} className="rounded-xl bg-rose-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileText className="mx-auto mb-1" size={17}/>Export PDF</button>
-              <button disabled={busy} onClick={() => runExport("print")} className="rounded-xl bg-rose-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><Printer className="mx-auto mb-1" size={17}/>Print Sheet</button>
-              <button onClick={resetAdjustments} className="rounded-xl border px-3 py-3 text-xs font-bold text-slate-700"><RotateCcw className="mx-auto mb-1" size={17}/>Reset Adjustments</button>
-            </div>
+
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0">
+          <div className="mb-3 flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+            <button type="button" onClick={() => setActiveTab("photo")} className={\`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition \${activeTab === "photo" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}\`}>Photo</button>
+            <button type="button" onClick={() => setActiveTab("sheet")} className={\`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition \${activeTab === "sheet" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}\`}>Print Sheet</button>
           </div>
-          <div className="min-w-0 space-y-4">
-            <div className="rounded-2xl border p-4">
-              <h3 className="mb-3 text-sm font-black text-slate-800">Photo Size & Resolution</h3>
-              <label className="mb-1 block text-xs font-semibold text-slate-600">Preset size</label>
-              <select value={customSize ? "custom" : String(sizeIndex)} onChange={e => e.target.value === "custom" ? setCustomSize(true) : (setCustomSize(false), setSizeIndex(Number(e.target.value)))} className="h-10 w-full rounded-lg border bg-white px-3 text-sm">
-                {SIZES.map((s,i)=><option key={s.label} value={i}>{s.label}</option>)}<option value="custom">Custom size (mm)</option>
-              </select>
-              {customSize && <div className="mt-2 grid grid-cols-2 gap-2"><label className="text-xs text-slate-600">Width (mm)<input type="number" min="10" max="100" value={customW} onChange={e=>setCustomW(e.target.value)} className="mt-1 h-9 w-full rounded-lg border px-2"/></label><label className="text-xs text-slate-600">Height (mm)<input type="number" min="10" max="100" value={customH} onChange={e=>setCustomH(e.target.value)} className="mt-1 h-9 w-full rounded-lg border px-2"/></label></div>}
-              <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-xs text-slate-600">Export DPI<select value={dpi} onChange={e=>setDpi(Number(e.target.value))} className="mt-1 h-9 w-full rounded-lg border px-2"><option value={300}>300 DPI</option><option value={600}>600 DPI</option></select></label><div className="rounded-lg bg-slate-50 p-2 text-xs text-slate-600"><b>Output pixels</b><p className="mt-1 font-mono">{mmPx(selectedSize.width,dpi)} × {mmPx(selectedSize.height,dpi)} px</p></div></div>
+          <div className="flex min-h-[520px] flex-col rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-black text-slate-800">{activeTab === "photo" ? "Photo Preview" : "Print Sheet Preview"}</h3>
+                <p className="mt-1 text-xs text-slate-500">{activeTab === "photo" ? \`\${selectedSize.width} × \${selectedSize.height} mm · \${dpi} DPI\` : \`\${paper} · \${pageW.toFixed(1)} × \${pageH.toFixed(1)} mm · \${actualCopies} copies\`}</p>
+              </div>
+              {image && <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-600">{activeTab === "photo" ? "Single photo" : \`Fits up to \${maxCopies} photos\`}</span>}
             </div>
-            <div className="rounded-2xl border p-4">
-              <h3 className="mb-3 text-sm font-black text-slate-800">Backdrop & Colour</h3>
-              <div className="grid grid-cols-4 gap-2">{BACKGROUNDS.map(([label,value])=><button key={value} onClick={()=>setBg(value)} className={`rounded-lg border p-2 text-[10px] font-semibold ${bg===value?"border-rose-500 ring-2 ring-rose-100":"border-slate-200"}`}><span className="mx-auto mb-1 block h-6 w-6 rounded-full border" style={{background:value==="transparent"?"repeating-conic-gradient(#ddd 0% 25%, white 0% 50%) 50% / 8px 8px":value==="original"?"linear-gradient(135deg,#d1d5db,#fff)":value}}/>{label}</button>)}</div>
-              <div className="mt-3 flex items-center gap-2 text-xs"><input type="color" value={customHex} onChange={e=>{setCustomHex(e.target.value);setBg("custom")}}/><span>Custom HEX colour</span><code>{customHex}</code></div>
-              <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[11px] leading-4 text-amber-800">These colours fill the canvas around the photo if the selected photo aspect ratio leaves space. They do not remove or replace the original background pixels. Transparent mode exports a transparent canvas around the photo, not a cut-out subject. AI background removal is not used.</p>
-            </div>
-            <div className="rounded-2xl border p-4">
-              <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-black text-slate-800">Colour & Light</h3><button onClick={autoAdjust} className="text-xs font-bold text-rose-600">Auto Adjust (Basic)</button></div>
-              {([["Brightness",brightness,setBrightness,0,200],["Contrast",contrast,setContrast,0,200],["Shadows",shadows,setShadows,-50,50],["Saturation",saturation,setSaturation,0,200],["Warmth",warmth,setWarmth,-100,100],["Zoom",zoom,setZoom,0.5,2],["Horizontal position",offsetX,setOffsetX,-50,50],["Vertical position",offsetY,setOffsetY,-50,50]] as const).map(([label,value,setter,min,max])=><label key={label} className="mb-3 block text-xs text-slate-600">{label}<input type="range" min={min} max={max} step={label==="Zoom"?0.05:1} value={value} onChange={e=>setter(Number(e.target.value))} className="mt-1 w-full accent-rose-600"/><span className="float-right text-[10px]">{value}</span></label>)}
-              <button onClick={resetAdjustments} className="mt-1 rounded-lg border px-3 py-2 text-xs font-bold">Reset to Original</button>{autoAdjusted&&<span className="ml-2 text-[10px] text-emerald-700">Basic adjustment applied</span>}
-            </div>
-            <div className="rounded-2xl border p-4">
-              <h3 className="mb-2 text-sm font-black text-slate-800">Dress Recolour – Not Available</h3>
-              <p className="text-xs leading-5 text-slate-500">Accurate clothing-only selection cannot be guaranteed with the current non-AI tools. To protect the face, skin, hair and background, this control is intentionally not provided rather than recolouring the whole photograph incorrectly.</p>
-            </div>
+            {image ? (
+              <div className="flex flex-1 items-center justify-center overflow-auto rounded-xl bg-slate-200 p-3">
+                <canvas ref={previewRef} className="h-auto max-h-[650px] max-w-full border border-slate-300 bg-white shadow-lg" />
+              </div>
+            ) : (
+              <button type="button" onClick={onChoosePhoto} className="flex min-h-[430px] flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white px-6 text-center hover:border-slate-500">
+                <FileImage size={48} className="mb-4 text-slate-400" />
+                <span className="text-base font-bold text-slate-800">Upload your photo</span>
+                <span className="mt-2 max-w-sm text-sm text-slate-500">Choose a photo to open the crop tool and start creating your passport photo.</span>
+                <span className="mt-4 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-bold text-white">Choose Photo</span>
+              </button>
+            )}
+            {image && <p className="mt-3 text-xs text-slate-500">{activeTab === "photo" ? "The preview updates when you change photo size, crop and light settings." : "The sheet preview updates automatically when you change paper, copies, margin or border."}</p>}
           </div>
+          {busy && <p className="mt-3 rounded-lg bg-slate-100 p-3 text-xs font-semibold text-slate-600">Preparing high-resolution output…</p>}
+          {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-xs text-red-700">{error}</p>}
         </div>
-        <div className="grid gap-4 rounded-2xl border p-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div><label className="text-xs font-bold text-slate-600">Paper<select value={paper} onChange={e=>{setPaper(e.target.value as Paper);setCopies(1)}} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="A4">A4 (210 × 297 mm)</option><option value="6x4">6 × 4 inch (152.4 × 101.6 mm)</option></select></label></div>
-          <div><label className="text-xs font-bold text-slate-600">Orientation<select value={orientation} onChange={e=>setOrientation(e.target.value as Orientation)} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="best">Best Fit</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label></div>
-          <div><label className="text-xs font-bold text-slate-600">Placement<select value={placement} onChange={e=>setPlacement(e.target.value as "top-left"|"center")} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="top-left">Top-left</option><option value="center">Centred</option></select></label></div>
-          <div><label className="text-xs font-bold text-slate-600">Cutting Guidelines<select value={guides} onChange={e=>setGuides(e.target.value as Guides)} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="dashed">Dashed outline</option><option value="corners">Corner crop marks</option><option value="none">None</option></select></label></div>
-          <label className="text-xs font-bold text-slate-600">Number of Copies<div className="mt-1 flex h-10 items-center gap-2"><button onClick={()=>setCopies(v=>Math.max(1,v-1))} className="h-9 w-9 rounded-lg border">−</button><input type="number" min="1" max={maxCopies} value={fillSheet?maxCopies:copies} onChange={e=>{setFillSheet(false);setCopies(Math.max(1,Math.min(maxCopies,Number(e.target.value)||1)))}} className="h-9 min-w-0 w-full rounded-lg border text-center"/><button onClick={()=>setCopies(v=>Math.min(maxCopies,v+1))} className="h-9 w-9 rounded-lg border">+</button></div></label>
-          <label className="text-xs font-bold text-slate-600">Sheet Margin (mm)<input type="number" min="0" max="30" value={margin} onChange={e=>setMargin(Math.max(0,Math.min(30,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-2"/></label>
-          <label className="text-xs font-bold text-slate-600">Spacing / Border (mm)<input type="number" min="0" max="10" step="0.5" value={border} onChange={e=>setBorder(Math.max(0,Math.min(10,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-2"/></label>
-          <div className="flex flex-col justify-end gap-2"><label className="flex items-center gap-2 text-xs font-semibold"><input type="checkbox" checked={fillSheet} onChange={e=>setFillSheet(e.target.checked)}/> Fill One Whole Sheet</label><label className="flex items-center gap-2 text-xs font-semibold"><input type="checkbox" checked={outline} onChange={e=>setOutline(e.target.checked)}/> Thin photo outline</label></div>
-          <p className="text-xs text-slate-500 sm:col-span-2 lg:col-span-4">Maximum fit: {maxCopies} photos ({cols} columns × {rows} rows). Photos are placed without stretching; sheet layout is calculated from the selected physical dimensions, margin and spacing.</p>
-        </div>
-        {busy&&<p className="rounded-lg bg-slate-50 p-3 text-xs font-semibold text-slate-600">Preparing high-resolution export…</p>}
-        {error&&<p role="alert" className="rounded-lg bg-red-50 p-3 text-xs text-red-700">{error}</p>}
-      </>}
+
+        <aside className="min-w-0 space-y-3">
+          <details open className="group rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-800">Photo Size <span className="text-slate-400 transition group-open:rotate-180">⌄</span></summary>
+            <div className="space-y-3 border-t border-slate-100 p-4">
+              <label className="block text-xs font-semibold text-slate-600">Photo size preset
+                <select value={customSize ? "custom" : String(sizeIndex)} onChange={e => e.target.value === "custom" ? setCustomSize(true) : (setCustomSize(false), setSizeIndex(Number(e.target.value)))} className="mt-1.5 h-10 w-full rounded-lg border bg-white px-3 text-sm">
+                  {SIZES.map((s,i)=><option key={s.label} value={i}>{s.label}</option>)}<option value="custom">Custom size (mm)</option>
+                </select>
+              </label>
+              {customSize && <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs text-slate-600">Width (mm)<input type="number" min="10" max="100" value={customW} onChange={e=>setCustomW(e.target.value)} className="mt-1 h-9 w-full rounded-lg border px-2"/></label>
+                <label className="text-xs text-slate-600">Height (mm)<input type="number" min="10" max="100" value={customH} onChange={e=>setCustomH(e.target.value)} className="mt-1 h-9 w-full rounded-lg border px-2"/></label>
+              </div>}
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs text-slate-600">Resolution
+                  <select value={dpi} onChange={e=>setDpi(Number(e.target.value))} className="mt-1 h-9 w-full rounded-lg border px-2"><option value={300}>300 DPI</option><option value={600}>600 DPI</option></select>
+                </label>
+                <div className="rounded-lg bg-slate-50 p-2 text-xs text-slate-600"><b>Pixels</b><p className="mt-1 font-mono">{mmPx(selectedSize.width,dpi)} × {mmPx(selectedSize.height,dpi)}</p></div>
+              </div>
+            </div>
+          </details>
+
+          <details className="group rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-800">Crop <span className="text-slate-400 transition group-open:rotate-180">⌄</span></summary>
+            <div className="space-y-3 border-t border-slate-100 p-4">
+              <p className="text-xs leading-5 text-slate-500">Open the crop editor to adjust the face position and framing. The current crop is retained for photo and print exports.</p>
+              <button type="button" onClick={onCropAgain} disabled={!image} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-bold text-slate-700 disabled:opacity-40">Adjust Crop Again</button>
+              <label className="block text-xs text-slate-600">Zoom <input type="range" min="0.5" max="2" step="0.05" value={zoom} onChange={e=>setZoom(Number(e.target.value))} className="mt-2 w-full accent-slate-800"/><span className="float-right">{zoom.toFixed(2)}×</span></label>
+              <label className="block text-xs text-slate-600">Horizontal position <input type="range" min="-50" max="50" value={offsetX} onChange={e=>setOffsetX(Number(e.target.value))} className="mt-2 w-full accent-slate-800"/></label>
+              <label className="block text-xs text-slate-600">Vertical position <input type="range" min="-50" max="50" value={offsetY} onChange={e=>setOffsetY(Number(e.target.value))} className="mt-2 w-full accent-slate-800"/></label>
+            </div>
+          </details>
+
+          <details className="group rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-800">Colour & Light <span className="text-slate-400 transition group-open:rotate-180">⌄</span></summary>
+            <div className="space-y-3 border-t border-slate-100 p-4">
+              <div className="grid grid-cols-4 gap-2">{BACKGROUNDS.map(([label,value])=><button type="button" key={value} onClick={()=>setBg(value)} className={\`rounded-lg border p-2 text-[10px] font-semibold \${bg===value?"border-slate-800 ring-2 ring-slate-200":"border-slate-200"}\`}><span className="mx-auto mb-1 block h-6 w-6 rounded-full border" style={{background:value==="transparent"?"repeating-conic-gradient(#ddd 0% 25%, white 0% 50%) 50% / 8px 8px":value==="original"?"linear-gradient(135deg,#d1d5db,#fff)":value}}/>{label}</button>)}</div>
+              <div className="flex items-center gap-2 text-xs"><input type="color" value={customHex} onChange={e=>{setCustomHex(e.target.value);setBg("custom")}}/><span>Custom background</span><code>{customHex}</code></div>
+              <div className="flex items-center justify-between"><span className="text-xs font-bold text-slate-700">Basic auto adjust</span><button type="button" onClick={autoAdjust} className="text-xs font-bold text-blue-700">Auto Adjust</button></div>
+              {([[ "Brightness",brightness,setBrightness,0,200 ],[ "Contrast",contrast,setContrast,0,200 ],[ "Shadows",shadows,setShadows,-50,50 ],[ "Saturation",saturation,setSaturation,0,200 ],[ "Warmth",warmth,setWarmth,-100,100 ]] as const).map(([label,value,setter,min,max])=><label key={label} className="block text-xs text-slate-600">{label}<input type="range" min={min} max={max} value={value} onChange={e=>setter(Number(e.target.value))} className="mt-1.5 w-full accent-slate-800"/><span className="float-right text-[10px]">{value}</span></label>)}
+              <button type="button" onClick={resetAdjustments} className="w-full rounded-lg border px-3 py-2 text-xs font-bold text-slate-700">Reset Colour & Light</button>
+              <p className="rounded-lg bg-amber-50 p-2 text-[11px] leading-4 text-amber-800">Background colour fills the photo canvas; it does not remove the original background pixels.</p>
+            </div>
+          </details>
+
+          <details className="group rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-800">Download <span className="text-slate-400 transition group-open:rotate-180">⌄</span></summary>
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 p-4">
+              <button disabled={!image||busy} onClick={() => runExport("photo-png")} className="rounded-lg bg-slate-900 px-3 py-3 text-xs font-bold text-white disabled:opacity-40"><FileImage className="mx-auto mb-1" size={17}/>PNG Photo</button>
+              <button disabled={!image||busy} onClick={() => runExport("photo-jpg")} className="rounded-lg bg-slate-900 px-3 py-3 text-xs font-bold text-white disabled:opacity-40"><FileImage className="mx-auto mb-1" size={17}/>JPG Photo</button>
+              <button disabled={!image||busy} onClick={() => runExport("sheet")} className="col-span-2 rounded-lg border px-3 py-3 text-xs font-bold text-slate-700 disabled:opacity-40"><Download className="mr-2 inline" size={16}/>Download Print Sheet Image</button>
+            </div>
+          </details>
+
+          <details open className="group rounded-2xl border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-800">Print Settings <span className="text-slate-400 transition group-open:rotate-180">⌄</span></summary>
+            <div className="space-y-3 border-t border-slate-100 p-4">
+              <label className="block text-xs font-semibold text-slate-600">Paper size
+                <select value={paper} onChange={e=>{setPaper(e.target.value as Paper);setCopies(1)}} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="A4">A4 (210 × 297 mm)</option><option value="6x4">6 × 4 inch (152.4 × 101.6 mm)</option></select>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs text-slate-600">Orientation<select value={orientation} onChange={e=>setOrientation(e.target.value as Orientation)} className="mt-1 h-9 w-full rounded-lg border px-2"><option value="best">Best Fit</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
+                <label className="text-xs text-slate-600">Placement<select value={placement} onChange={e=>setPlacement(e.target.value as "top-left"|"center")} className="mt-1 h-9 w-full rounded-lg border px-2"><option value="top-left">Top-left</option><option value="center">Centred</option></select></label>
+              </div>
+              <label className="block text-xs text-slate-600">Copies
+                <input type="number" min="1" max={maxCopies} value={fillSheet?maxCopies:copies} onChange={e=>{setFillSheet(false);setCopies(Math.max(1,Math.min(maxCopies,Number(e.target.value)||1)))}} className="mt-1 h-10 w-full rounded-lg border px-3"/>
+              </label>
+              <label className="block text-xs text-slate-600">Sheet margin (mm)<input type="number" min="0" max="30" value={margin} onChange={e=>setMargin(Math.max(0,Math.min(30,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-3"/></label>
+              <label className="block text-xs text-slate-600">Border / spacing (mm)<input type="number" min="0" max="10" step="0.5" value={border} onChange={e=>setBorder(Math.max(0,Math.min(10,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-3"/></label>
+              <label className="block text-xs text-slate-600">Cutting guidelines<select value={guides} onChange={e=>setGuides(e.target.value as Guides)} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="dashed">Dashed outline</option><option value="corners">Corner crop marks</option><option value="none">None</option></select></label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={fillSheet} onChange={e=>setFillSheet(e.target.checked)}/> Fill the whole sheet ({maxCopies} photos)</label>
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={outline} onChange={e=>setOutline(e.target.checked)}/> Photo border outline</label>
+              <p className="rounded-lg bg-slate-50 p-2 text-xs text-slate-600">Preview capacity: {maxCopies} photos · {cols} columns × {rows} rows</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button disabled={!image||busy} onClick={() => runExport("pdf")} className="rounded-lg bg-blue-700 px-3 py-3 text-xs font-bold text-white disabled:opacity-40"><FileText className="mx-auto mb-1" size={17}/>Save PDF</button>
+                <button disabled={!image||busy} onClick={() => runExport("print")} className="rounded-lg bg-rose-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-40"><Printer className="mx-auto mb-1" size={17}/>Print</button>
+              </div>
+            </div>
+          </details>
+        </aside>
+      </div>
     </section>
   );
 }
