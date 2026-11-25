@@ -120,8 +120,21 @@ export default function PDFToolkitTool({ onClose, standalone = false }: PDFToolk
           qpdf.dispose();
         }
       } else if(active==="split"||active==="organize"||active==="crop"){
-        const pdf=await PDFDocument.load(await files[0].file.arrayBuffer());
-        const total=pdf.getPageCount();
+        if(active==="crop" && files[0].file.type.startsWith("image/")) {
+          const bitmap=await createImageBitmap(files[0].file);
+          const sx=Math.round(cropRect.x*bitmap.width), sy=Math.round(cropRect.y*bitmap.height), sw=Math.max(1,Math.round(cropRect.width*bitmap.width)), sh=Math.max(1,Math.round(cropRect.height*bitmap.height));
+          const canvas=document.createElement("canvas");canvas.width=sw;canvas.height=sh;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Image canvas unavailable.");ctx.drawImage(bitmap,sx,sy,sw,sh,0,0,sw,sh);bitmap.close();
+          if(cropOutputFormat==="jpg"){const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/jpeg",.94));if(!blob)throw new Error("Could not create JPG.");download(blob,(files[0].file.name.replace(/\\.[^.]+$/,"")||"cropped-image")+".jpg");setMessage("Done. Cropped JPG downloaded.");return;}
+          const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/jpeg",.94));if(!blob)throw new Error("Could not create image.");const out=await PDFDocument.create();const img=await out.embedJpg(await blob.arrayBuffer());const page=out.addPage([sw,sh]);page.drawImage(img,{x:0,y:0,width:sw,height:sh});bytes=await out.save({useObjectStreams:true});
+        } else if(active==="crop" && cropOutputFormat==="jpg") {
+          const pdfjs=await import("pdfjs-dist/legacy/build/pdf.mjs");pdfjs.GlobalWorkerOptions.workerSrc=new URL("pdfjs-dist/legacy/build/pdf.worker.mjs",import.meta.url).toString();
+          const task=pdfjs.getDocument({data:new Uint8Array(await files[0].file.arrayBuffer())});const doc=await task.promise;const zipModule=await import("jszip");const zip=new zipModule.default();
+          for(let i=1;i<=doc.numPages;i++){const pg=await doc.getPage(i);const viewport=pg.getViewport({scale:2});const source=document.createElement("canvas");source.width=viewport.width;source.height=viewport.height;const sctx=source.getContext("2d");if(!sctx)throw new Error("Canvas unavailable.");await pg.render({canvas:source,canvasContext:sctx,viewport}).promise;const x=Math.round(cropRect.x*source.width),y=Math.round(cropRect.y*source.height),w=Math.max(1,Math.round(cropRect.width*source.width)),h=Math.max(1,Math.round(cropRect.height*source.height));const outCanvas=document.createElement("canvas");outCanvas.width=w;outCanvas.height=h;const octx=outCanvas.getContext("2d");if(!octx)throw new Error("Canvas unavailable.");octx.drawImage(source,x,y,w,h,0,0,w,h);const blob=await new Promise<Blob|null>(resolve=>outCanvas.toBlob(resolve,"image/jpeg",.94));if(!blob)throw new Error("Could not create JPG page.");zip.file("page-"+i+".jpg",blob);source.width=source.height=outCanvas.width=outCanvas.height=0;}
+          const zipped=await zip.generateAsync({type:"blob"});download(zipped,(files[0].file.name.replace(/\\.pdf$/i,"")||"cropped-pages")+"-jpg.zip");setMessage("Done. Cropped JPG pages downloaded in a ZIP file.");return;
+        }
+        const pdf=active==="crop" && files[0].file.type.startsWith("image/")?null:await PDFDocument.load(await files[0].file.arrayBuffer());
+        if(!pdf){ /* image crop output PDF is ready in bytes */ } else {
+        const total=pdf!.getPageCount();
         if(active==="split"){
           const start=Math.max(1,Math.min(fromPage,total))-1; const end=Math.max(start+1,Math.min(toPage,total));
           const out=await PDFDocument.create(); const pages=await out.copyPages(pdf,Array.from({length:end-start},(_,i)=>start+i)); pages.forEach(p=>out.addPage(p)); bytes=await out.save({useObjectStreams:true});
@@ -131,9 +144,10 @@ export default function PDFToolkitTool({ onClose, standalone = false }: PDFToolk
           if(order.length){ const out=await PDFDocument.create(); const copied=await out.copyPages(pdf,order); copied.forEach(p=>out.addPage(p)); bytes=await out.save({useObjectStreams:true}); }
           else bytes=await pdf.save({useObjectStreams:true});
         } else {
-          const pages=pdf.getPages(); const targets=cropApplyAll?pages:[pages[0]];
+          const pages=pdf!.getPages(); const targets=cropApplyAll?pages:[pages[0]];
           targets.forEach(p=>{const {width,height}=p.getSize();const x=cropRect.x*width;const w=cropRect.width*width;const h=cropRect.height*height;const y=height-(cropRect.y+cropRect.height)*height;p.setCropBox(x,y,w,h);});
-          bytes=await pdf.save({useObjectStreams:true});
+          bytes=await pdf!.save({useObjectStreams:true});
+        }
         }
       } else if(active==="pdf-image") {
         const pdfjs=await import("pdfjs-dist/legacy/build/pdf.mjs");
