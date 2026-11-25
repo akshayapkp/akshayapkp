@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import {
   FileText, Upload, X, Trash2, ChevronLeft, ChevronRight, Merge,
   Scissors, Minimize2, Image as ImageIcon, FileImage, Unlock, Lock,
-  Grid2X2, Crop, Download, Loader2, Plus, RotateCw, ArrowUp, ArrowDown,
+  Grid2X2, Crop, Download, Loader2, Plus,
 } from "lucide-react";
 import { PDFDocument, degrees } from "pdf-lib";
 
@@ -67,13 +67,13 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
   const imageBytes = async (file:File) => { const bitmap=await createImageBitmap(file); const canvas=document.createElement("canvas"); canvas.width=bitmap.width; canvas.height=bitmap.height; const ctx=canvas.getContext("2d"); if(!ctx)throw new Error("Image canvas is unavailable."); ctx.drawImage(bitmap,0,0); bitmap.close(); const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/png")); if(!blob)throw new Error("Could not read image."); return new Uint8Array(await blob.arrayBuffer()); };
   const createFromImages = async () => {
     const pdf=await PDFDocument.create();
-    for(const item of files){ const bytes=await imageBytes(item.file); const image=await pdf.embedPng(bytes); const page=pdf.addPage([595.28,841.89]); const scale=Math.min(555/image.width,801/image.height); const w=image.width*scale,h=image.height*scale; page.drawImage(image,{x:(595.28-w)/2,y:(841.89-h)/2,width:w,height:h}); }
+    for(const item of files){ const bytes=await imageBytes(item.file); const image=await pdf.embedPng(bytes); const pageSize=sameSize?[image.width,image.height] as [number,number]:[595.28,841.89] as [number,number]; const page=pdf.addPage(pageSize); const scale=sameSize?1:Math.min(555/image.width,801/image.height); const w=image.width*scale,h=image.height*scale; page.drawImage(image,{x:(pageSize[0]-w)/2,y:(pageSize[1]-h)/2,width:w,height:h}); }
     return pdf.save({useObjectStreams:true});
   };
   const mergePdfs = async () => {
     const out=await PDFDocument.create();
     for(const item of files){
-      if(item.file.type.startsWith("image/")){ const bytes=await imageBytes(item.file); const img=await out.embedPng(bytes); const page=out.addPage([595.28,841.89]); const scale=Math.min(555/img.width,801/img.height); const w=img.width*scale,h=img.height*scale; page.drawImage(img,{x:(595.28-w)/2,y:(841.89-h)/2,width:w,height:h}); }
+      if(item.file.type.startsWith("image/")){ const bytes=await imageBytes(item.file); const img=await out.embedPng(bytes); const pageSize=sameSize?[img.width,img.height] as [number,number]:[595.28,841.89] as [number,number]; const page=out.addPage(pageSize); const scale=sameSize?1:Math.min(555/img.width,801/img.height); const w=img.width*scale,h=img.height*scale; page.drawImage(img,{x:(pageSize[0]-w)/2,y:(pageSize[1]-h)/2,width:w,height:h}); }
       else { const src=await PDFDocument.load(await item.file.arrayBuffer()); const pages=await out.copyPages(src,src.getPageIndices()); pages.forEach(p=>out.addPage(p)); }
     }
     return out.save({useObjectStreams:true});
@@ -123,7 +123,6 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
   };
 
   const current=tools.find(t=>t.id===active)!;
-  const requiresPdf=active!=="image-pdf";
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 p-2 backdrop-blur-sm sm:p-4">
       <section className="flex h-[96vh] w-full max-w-[1500px] flex-col overflow-hidden rounded-[24px] border border-indigo-100 bg-[#f4f3ff] shadow-2xl">
