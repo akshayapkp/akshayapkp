@@ -87,7 +87,7 @@ export default function PDFToolkitTool({ onClose, standalone = false }: PDFToolk
     if(!files.length){setMessage("Please add at least one file.");return;}
     setBusy(true);setMessage("");
     try {
-      let bytes:Uint8Array;
+      let bytes:Uint8Array = new Uint8Array(0);
       if(active==="merge") bytes=await mergePdfs();
       else if(active==="image-pdf") bytes=await createFromImages();
       else if(active==="protect"||active==="unlock"||active==="compress") {
