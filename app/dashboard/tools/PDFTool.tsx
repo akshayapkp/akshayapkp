@@ -36,14 +36,12 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
   const [pageOrder, setPageOrder] = useState("");
   const [rotation, setRotation] = useState(90);
   const [cropInset, setCropInset] = useState(24);
-  const [limitSize, setLimitSize] = useState(false);
   const [userPassword, setUserPassword] = useState("");
   const [ownerPassword, setOwnerPassword] = useState("");
   const [unlockPassword, setUnlockPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [sameSize, setSameSize] = useState(false);
 
-  const isImageMode = active === "image-pdf" || active === "merge";
   const accept = active === "image-pdf" ? "image/jpeg,image/png,image/webp" : active === "merge" ? "application/pdf,image/jpeg,image/png,image/webp" : "application/pdf";
 
   const clear = () => {
@@ -89,25 +87,38 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
       let bytes:Uint8Array;
       if(active==="merge") bytes=await mergePdfs();
       else if(active==="image-pdf") bytes=await createFromImages();
-      else if(active==="split"||active==="compress"||active==="organize"||active==="crop"){
+      else if(active==="protect"||active==="unlock"||active==="compress") {
+        const qpdf = await import("@arshad-shah/qpdf-wasm");
+        qpdf.configure({ wasmUrl: new URL("/qpdf.wasm", window.location.origin) });
+        const input = new Uint8Array(await files[0].file.arrayBuffer());
+        if(active==="protect") {
+          if(!userPassword.trim() || !ownerPassword.trim()) throw new Error("Enter both a reader password and an owner password.");
+          if(userPassword!==confirmPassword) throw new Error("Password confirmation does not match.");
+          if(userPassword.length<6 || ownerPassword.length<6) throw new Error("Use passwords with at least 6 characters.");
+          const secured=await qpdf.encrypt(input,{userPassword,ownerPassword,permissions:{print:"full",extract:false,modify:"none"}});
+          bytes=secured.bytes;
+        } else if(active==="unlock") {
+          if(!unlockPassword) throw new Error("Enter the existing PDF password.");
+          const plain=await qpdf.decrypt(input,unlockPassword);
+          bytes=plain.bytes;
+        } else {
+          const optimized=await qpdf.optimize(input,{objectStreams:"generate",compressStreams:true,recompressFlate:true,removeUnreferenced:true,linearize:false});
+          bytes=optimized.bytes;
+        }
+      } else if(active==="split"||active==="organize"||active==="crop"){
         const pdf=await PDFDocument.load(await files[0].file.arrayBuffer());
         const total=pdf.getPageCount();
         if(active==="split"){
           const start=Math.max(1,Math.min(fromPage,total))-1; const end=Math.max(start+1,Math.min(toPage,total));
           const out=await PDFDocument.create(); const pages=await out.copyPages(pdf,Array.from({length:end-start},(_,i)=>start+i)); pages.forEach(p=>out.addPage(p)); bytes=await out.save({useObjectStreams:true});
+        } else if(active==="organize"){
+          pdf.getPages().forEach(p=>p.setRotation(degrees(p.getRotation().angle+rotation)));
+          const order=pageOrder.split(",").map(x=>Number(x.trim())-1).filter(x=>Number.isInteger(x)&&x>=0&&x<total);
+          if(order.length){ const out=await PDFDocument.create(); const copied=await out.copyPages(pdf,order); copied.forEach(p=>out.addPage(p)); bytes=await out.save({useObjectStreams:true}); }
+          else bytes=await pdf.save({useObjectStreams:true});
         } else {
-          if(active==="organize"){
-            const pages=pdf.getPages(); pages.forEach(p=>p.setRotation(degrees(p.getRotation().angle+rotation)));
-            const order=pageOrder.split(",").map(x=>Number(x.trim())-1).filter(x=>Number.isInteger(x)&&x>=0&&x<total);
-            if(order.length){ const out=await PDFDocument.create(); const copied=await out.copyPages(pdf,order); copied.forEach(p=>out.addPage(p)); bytes=await out.save({useObjectStreams:true}); }
-            else bytes=await pdf.save({useObjectStreams:true});
-          } else if(active==="crop"){
-            pdf.getPages().forEach(p=>{const {width,height}=p.getSize();const inset=Math.min(cropInset,Math.max(0,Math.min(width,height)/3));p.setCropBox(inset,inset,Math.max(1,width-inset*2),Math.max(1,height-inset*2));});
-            bytes=await pdf.save({useObjectStreams:true});
-          } else {
-            // pdf-lib preserves vector/text content; re-saving is not a guaranteed size-reduction algorithm.
-            bytes=await pdf.save({useObjectStreams:true,objectsPerTick:50});
-          }
+          pdf.getPages().forEach(p=>{const {width,height}=p.getSize();const inset=Math.min(cropInset,Math.max(0,Math.min(width,height)/3));p.setCropBox(inset,inset,Math.max(1,width-inset*2),Math.max(1,height-inset*2));});
+          bytes=await pdf.save({useObjectStreams:true});
         }
       } else if(active==="pdf-image") {
         const pdfjs=await import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -115,13 +126,11 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
         const doc=await task.promise;
         const zipModule=await import("jszip"); const zip=new zipModule.default();
         for(let i=1;i<=doc.numPages;i++){const page=await doc.getPage(i);const viewport=page.getViewport({scale:1.7});const canvas=document.createElement("canvas");canvas.width=viewport.width;canvas.height=viewport.height;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas unavailable.");await page.render({canvas,canvasContext:ctx,viewport}).promise;const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/png"));if(!blob)throw new Error("Could not render PDF page.");zip.file(`page-${i}.png`,blob);canvas.width=0;canvas.height=0;}
-        const zipped=await zip.generateAsync({type:"blob"});download(zipped, (files[0].file.name.replace(/\.pdf$/i,"")||"pdf-pages")+".zip");setMessage("PDF pages exported as PNG images in a ZIP file.");return;
-      } else if(active==="unlock"||active==="protect") {
-        throw new Error(active==="unlock" ? "Password removal is not available in this browser build. Use a PDF library with qpdf/WASM support." : "Password encryption is not available in the current PDF library. This tool needs a qpdf/WASM encryption module.");
+        const zipped=await zip.generateAsync({type:"blob"});download(zipped, (files[0].file.name.replace(/\\.pdf$/i,"")||"pdf-pages")+".zip");setMessage("PDF pages exported as PNG images in a ZIP file.");return;
       } else throw new Error("This operation is not available.");
       const safeName=(outputName.trim()||"processed-document").replace(/\.pdf$/i,"")+".pdf";
       const buffer=new ArrayBuffer(bytes.byteLength);new Uint8Array(buffer).set(bytes);download(new Blob([buffer],{type:"application/pdf"}),safeName);
-      setMessage(active==="compress" ? "PDF re-saved successfully. The file may not become smaller because lossless compression depends on the source PDF." : "Done. Your file has been created and downloaded.");
+      setMessage(active==="compress" ? "Compression completed. File size: "+(files[0].file.size/1024).toFixed(1)+" KB → "+(bytes.byteLength/1024).toFixed(1)+" KB." : "Done. Your file has been created and downloaded.");
     } catch(error) { console.error("PDF Manager:",error);setMessage(error instanceof Error?error.message:"PDF processing failed. Please check the selected file."); }
     finally {setBusy(false);}
   };
@@ -148,7 +157,7 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
             {active==="split"&&<div className="mb-4 grid grid-cols-2 gap-3 rounded-2xl border border-indigo-100 bg-white/70 p-4"><label className="text-xs font-bold text-slate-700">From page<input type="number" min={1} value={fromPage} onChange={e=>setFromPage(Number(e.target.value))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2"/></label><label className="text-xs font-bold text-slate-700">To page<input type="number" min={1} value={toPage} onChange={e=>setToPage(Number(e.target.value))} className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2"/></label></div>}
             {active==="organize"&&<div className="mb-4 space-y-3 rounded-2xl border border-indigo-100 bg-white/70 p-4"><div><label className="text-xs font-bold text-slate-700">Rotate all pages</label><div className="mt-2 flex gap-2">{[90,180,270].map(v=><button key={v} onClick={()=>setRotation(v)} className={`rounded-lg border px-4 py-2 text-xs font-bold ${rotation===v?"border-indigo-500 bg-indigo-600 text-white":"border-slate-200 bg-white text-slate-600"}`}>{v}°</button>)}</div></div><label className="block text-xs font-bold text-slate-700">Custom page order (comma separated, e.g. 3,1,2)<input value={pageOrder} onChange={e=>setPageOrder(e.target.value)} placeholder="Leave empty to keep original order" className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2"/></label><p className="text-[11px] text-slate-500">To remove pages, specify only the page numbers you want to keep in the custom order.</p></div>}
             {active==="crop"&&<div className="mb-4 rounded-2xl border border-indigo-100 bg-white/70 p-4"><label className="text-xs font-bold text-slate-700">Crop inset (points): {cropInset}<input type="range" min={0} max={100} value={cropInset} onChange={e=>setCropInset(Number(e.target.value))} className="mt-2 w-full accent-indigo-600"/></label></div>}
-            {active==="compress"&&<div className="mb-4 rounded-2xl border border-indigo-100 bg-white/70 p-4 text-xs text-slate-600"><label className="flex items-center gap-2 font-bold"><input type="checkbox" checked={limitSize} onChange={e=>setLimitSize(e.target.checked)}/> Optimize PDF streams and remove unused objects</label><p className="mt-1 pl-5">Powered by qpdf WebAssembly. Recompresses streams and cleans unused objects without rasterizing text or downsampling images. Actual size reduction depends on the PDF.</p></div>}
+            {active==="compress"&&<div className="mb-4 rounded-2xl border border-indigo-100 bg-white/70 p-4 text-xs text-slate-600"><p className="font-bold">Optimize PDF streams and remove unused objects</p><p className="mt-1 pl-5">Powered by qpdf WebAssembly. Recompresses streams and cleans unused objects without rasterizing text or downsampling images. Actual size reduction depends on the PDF.</p></div>}
             {active==="pdf-image"&&<div className="mb-4 rounded-2xl border border-indigo-100 bg-white/70 p-4 text-xs text-slate-600">Each page is rendered to PNG and downloaded together as a ZIP archive.</div>}
             {active==="protect"&&<div className="mb-4 grid gap-3 rounded-2xl border border-indigo-100 bg-white/70 p-4 sm:grid-cols-2"><label className="text-xs font-bold text-slate-700">Open / user password<input type="password" autoComplete="new-password" value={userPassword} onChange={e=>setUserPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2" placeholder="Password required to open PDF"/></label><label className="text-xs font-bold text-slate-700">Confirm password<input type="password" autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2" placeholder="Re-enter password"/></label><label className="text-xs font-bold text-slate-700 sm:col-span-2">Owner password (required)<input type="password" autoComplete="new-password" value={ownerPassword} onChange={e=>setOwnerPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2" placeholder="Set a separate owner password"/></label><p className="text-[11px] text-slate-500 sm:col-span-2">AES-256 encryption. Reader password opens the file; owner password controls PDF permissions.</p></div>}{active==="unlock"&&<div className="mb-4 rounded-2xl border border-indigo-100 bg-white/70 p-4"><label className="text-xs font-bold text-slate-700">Current PDF password<input type="password" autoComplete="current-password" value={unlockPassword} onChange={e=>setUnlockPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2" placeholder="Enter existing PDF password"/></label><p className="mt-2 text-[11px] text-slate-500">Only unlock PDFs you own or are authorized to modify.</p></div>}
             <div className="mb-4 rounded-2xl border border-indigo-100 bg-white/70 p-3"><label className="text-xs font-bold text-slate-700">Filename after processing</label><div className="mt-1 flex items-center gap-2"><input value={outputName} onChange={e=>setOutputName(e.target.value)} className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"/><span className="text-xs text-slate-500">.pdf</span></div></div>
