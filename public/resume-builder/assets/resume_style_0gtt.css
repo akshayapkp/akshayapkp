@@ -692,3 +692,130 @@ body {
         break-inside: avoid;
     }
 }
+
+
+/* --- NEW DISTINCT CV MODELS (13–15) --- */
+/* 13: Executive Burgundy — slim accent rail, refined serif headings */
+.resume-document.template-13 {
+    --cv-accent: #8b1e3f;
+    --cv-ink: #29232a;
+    background: #fff;
+    border-top: 9px solid var(--cv-accent);
+}
+.resume-document.template-13 .resume-sidebar {
+    background: #f8f1f3 !important;
+    border-right: 1px solid #ead8de;
+    color: #3f2932;
+    padding: 2.1rem 1.35rem;
+}
+.resume-document.template-13 .resume-main { padding: 2.4rem 2rem; }
+.resume-document.template-13 .header-section h1,
+.resume-document.template-13 .content-section h4 {
+    font-family: Georgia, 'Times New Roman', serif !important;
+}
+.resume-document.template-13 .header-section h1 { color: var(--cv-accent); font-size: 2.45rem; letter-spacing: -.04em; }
+.resume-document.template-13 .content-section h4 {
+    color: var(--cv-accent) !important;
+    border-bottom: 0 !important;
+    border-left: 4px solid var(--cv-accent);
+    padding: 3px 0 3px 10px;
+    letter-spacing: .08em;
+}
+.resume-document.template-13 .tag-list span { background:#f3e5e9; color:#70203a; border-radius:3px; }
+.resume-document.template-13 .profile-pic-container img { border-radius:12px; border:3px solid #ead8de; }
+
+/* 14: Creative Indigo — centered identity header, full-width top band */
+.resume-document.template-14 {
+    display:flex !important;
+    flex-direction:column !important;
+    background:#fff;
+    border:1px solid #e0e7ff;
+    border-top:12px solid #4338ca;
+}
+.resume-document.template-14::before { display:none !important; }
+.resume-document.template-14 > .resume-sidebar {
+    order:2;
+    width:100% !important;
+    flex:0 0 100% !important;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:1rem 1.5rem;
+    padding:1.25rem 2rem;
+    background:#eef2ff !important;
+    color:#312e81;
+    border-top:1px solid #c7d2fe;
+}
+.resume-document.template-14 > .resume-main {
+    order:1;
+    width:100% !important;
+    flex:0 0 100% !important;
+    padding:2rem 2.25rem 1rem;
+}
+.resume-document.template-14 .header-section {
+    text-align:center;
+    padding:1.3rem 1rem 1.5rem;
+    margin-bottom:1.4rem;
+    background:linear-gradient(135deg,#eef2ff,#faf5ff);
+    border-radius:18px;
+}
+.resume-document.template-14 .header-section h1 {
+    color:#3730a3;
+    font-family:'Trebuchet MS',Arial,sans-serif !important;
+    font-size:2.55rem;
+    letter-spacing:.015em;
+}
+.resume-document.template-14 .header-section h2 { color:#6d28d9; font-weight:600; }
+.resume-document.template-14 .content-section h4 {
+    color:#4338ca !important;
+    border-bottom:2px solid #c7d2fe !important;
+    letter-spacing:.04em;
+}
+.resume-document.template-14 .profile-pic-container { text-align:center; }
+.resume-document.template-14 .profile-pic-container img { width:112px; height:112px; border:4px solid #fff; box-shadow:0 0 0 3px #a5b4fc; }
+.resume-document.template-14 .tag-list span { background:#e0e7ff; color:#3730a3; border-radius:999px; }
+
+/* 15: Modern Card Forest — structured cards, green timeline headings */
+.resume-document.template-15 {
+    background:#fbfdfb;
+    border:1px solid #dce9df;
+    border-radius:10px;
+}
+.resume-document.template-15 > .resume-sidebar {
+    background:#123c32 !important;
+    color:#f0fdf4;
+    border-right:7px solid #a3c9a8;
+    padding:2rem 1.3rem;
+}
+.resume-document.template-15 > .resume-main { padding:2.2rem 1.7rem; }
+.resume-document.template-15 .header-section {
+    padding:1.35rem 1.4rem;
+    background:#e8f3eb;
+    border-left:6px solid #28745b;
+    border-radius:0 16px 16px 0;
+}
+.resume-document.template-15 .header-section h1 {
+    color:#164e3b;
+    font-family:'Trebuchet MS',Arial,sans-serif !important;
+    font-size:2.35rem;
+}
+.resume-document.template-15 .content-section {
+    padding:1rem 1.1rem;
+    margin-bottom:1rem;
+    background:#fff;
+    border:1px solid #e0ebe3;
+    border-radius:12px;
+    box-shadow:0 3px 10px rgba(22,78,59,.045);
+}
+.resume-document.template-15 .content-section h4 {
+    color:#176348 !important;
+    border-bottom:0 !important;
+    border-left:4px solid #65a987;
+    padding-left:10px;
+    letter-spacing:.04em;
+}
+.resume-document.template-15 .tag-list span { background:#e5f3e9; color:#176348; border-radius:7px; }
+.resume-document.template-15 .profile-pic-container img { border-radius:16px; border:3px solid #a3c9a8; }
+
+@media(max-width:600px) {
+    .resume-document.template-14 > .resume-sidebar { grid-template-columns:1fr; }
+}

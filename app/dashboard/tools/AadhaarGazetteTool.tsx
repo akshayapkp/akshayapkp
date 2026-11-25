@@ -5,7 +5,7 @@ import { FileText, Printer, RotateCcw, X } from "lucide-react";
 
 const PDF_URL = "/aadhaar-template.pdf";
 
-export default function AadhaarGazetteTool({ onClose }: { onClose?: () => void }) {
+export default function AadhaarGazetteTool({ onClose, standalone = false }: { onClose?: () => void; standalone?: boolean }) {
   const [reloadKey, setReloadKey] = useState(0);
 
   const reset = () => setReloadKey((v) => v + 1);
@@ -16,8 +16,8 @@ export default function AadhaarGazetteTool({ onClose }: { onClose?: () => void }
   };
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/70 p-2 backdrop-blur-sm">
-      <div className="flex h-[96vh] w-full max-w-[1120px] flex-col overflow-hidden rounded-2xl bg-slate-100 shadow-2xl">
+    <div className={standalone ? "flex h-full min-h-0 w-full overflow-hidden bg-white" : "fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/70 p-2 backdrop-blur-sm"}>
+      <div className={standalone ? "flex h-full min-h-0 w-full flex-col overflow-hidden bg-slate-100" : "flex h-[96vh] w-full max-w-[1120px] flex-col overflow-hidden rounded-2xl bg-slate-100 shadow-2xl"}>
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white">
@@ -46,7 +46,7 @@ export default function AadhaarGazetteTool({ onClose }: { onClose?: () => void }
               <Printer size={14} /> Print
             </button>
 
-            {onClose && (
+            {onClose && !standalone && (
               <button
                 type="button"
                 onClick={onClose}

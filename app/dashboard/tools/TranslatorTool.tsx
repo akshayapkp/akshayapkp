@@ -7,7 +7,7 @@ type Language = "English" | "Malayalam";
 type Action = "translate" | "grammar" | "improve" | "formal" | "simple" | "explain" | "summarize";
 const HISTORY_KEY = "smart_text_assistant_history";
 
-export default function TranslatorTool({ onClose }: { onClose: () => void }) {
+export default function TranslatorTool({ onClose, standalone = false }: { onClose: () => void; standalone?: boolean }) {
   const [source, setSource] = useState<Language>("English");
   const [target, setTarget] = useState<Language>("Malayalam");
   const [input, setInput] = useState("");
@@ -66,14 +66,14 @@ export default function TranslatorTool({ onClose }: { onClose: () => void }) {
   ];
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm">
-      <div className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+    <div className={standalone ? "flex h-full min-h-0 w-full justify-center overflow-hidden bg-white" : "fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm"}>
+      <div className={standalone ? "flex h-full min-h-0 w-full flex-col overflow-hidden bg-white" : "flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"}>
         <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
           <div>
             <h2 className="text-lg font-black text-slate-900">🌐 Smart Text Assistant</h2>
             <p className="text-xs text-slate-500">English ↔ Malayalam • Free Translation • No API Key</p>
           </div>
-          <button onClick={onClose} className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200">Close</button>
+          {!standalone && <button onClick={onClose} className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200">Close</button>}
         </div>
 
         <div className="min-h-0 overflow-y-auto bg-slate-50 p-4 sm:p-5">

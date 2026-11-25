@@ -20,6 +20,7 @@ import { PDFDocument, degrees } from "pdf-lib";
 
 interface PDFToolkitProps {
   onClose: () => void;
+  standalone?: boolean;
 }
 
 type ToolMode = "convert" | "merge" | "split" | "rotate";
@@ -32,7 +33,7 @@ interface SelectedFile {
 
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
+export default function PDFToolkitTool({ onClose, standalone = false }: PDFToolkitProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<SelectedFile[]>([]);
   const [mode, setMode] = useState<ToolMode>("convert");
@@ -290,8 +291,8 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 p-2 backdrop-blur-sm sm:p-4">
-      <div className="flex h-[96vh] w-full max-w-[1250px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+    <div className={standalone ? "flex h-full min-h-0 w-full items-stretch justify-center overflow-hidden bg-white" : "fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 p-2 backdrop-blur-sm sm:p-4"}>
+      <div className={standalone ? "flex h-full min-h-0 w-full flex-col overflow-hidden bg-white" : "flex h-[96vh] w-full max-w-[1250px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"}>
         {/* Header */}
         <header className="shrink-0 border-b border-slate-300 bg-white">
           <div className="flex items-center justify-between px-4 py-3 sm:px-6">
@@ -310,6 +311,7 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
               </div>
             </div>
 
+            {!standalone && (
             <button
               type="button"
               onClick={onClose}
@@ -317,7 +319,7 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
               title="Close"
             >
               <X size={19} />
-            </button>
+            </button>)}
           </div>
 
           <nav className="flex flex-wrap items-center gap-1 overflow-x-auto border-t border-slate-200 bg-slate-50 px-3 py-2">

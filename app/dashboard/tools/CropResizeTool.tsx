@@ -12,17 +12,19 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCropResize } from "../hooks/useCropResize";
-import PerspectiveCropDialog from "../components/PerspectiveCropDialog";
+import RectCropDialog from "../components/RectCropDialog";
 
 interface CropResizeToolProps {
   onClose: () => void;
   isActive?: boolean;
+  standalone?: boolean;
   onSwitchMode?: (mode: "crop" | "psc") => void;
 }
 
 export default function CropResizeTool({
   onClose,
   isActive = true,
+  standalone = false,
   onSwitchMode,
 }: CropResizeToolProps) {
   const crop = useCropResize();
@@ -94,8 +96,8 @@ export default function CropResizeTool({
 
   return (
     <>
-    <div className={`fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5 ${isActive ? "" : "hidden"}`} style={{ display: isActive ? "flex" : "none" }}>
-      <div className="my-4 flex max-h-[95vh] w-full max-w-6xl flex-col overflow-y-auto rounded-[30px] border border-white/80 bg-white/95 shadow-[0_30px_100px_rgba(15,23,42,0.28)] backdrop-blur-2xl">
+    <div className={`${standalone ? "relative h-full min-h-0 w-full overflow-hidden bg-white" : "fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-md sm:p-5"} ${isActive ? "" : "hidden"}`} style={{ display: isActive ? "flex" : "none" }}>
+      <div className={standalone ? "flex h-full min-h-0 w-full flex-col overflow-y-auto bg-white" : "my-4 flex max-h-[95vh] w-full max-w-6xl flex-col overflow-y-auto rounded-[30px] border border-white/80 bg-white/95 shadow-[0_30px_100px_rgba(15,23,42,0.28)] backdrop-blur-2xl"}>
 
         <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-500 px-5 py-5 text-white shadow-lg sm:px-7 sm:py-6">
           <div>
@@ -114,6 +116,7 @@ export default function CropResizeTool({
                 <button type="button" onClick={() => onSwitchMode("psc")} className="rounded-lg px-3 py-2 text-xs font-black text-white/90 transition hover:bg-white/15">PSC Creator</button>
               </div>
             )}
+            {!standalone && (
             <button
               type="button"
               onClick={onClose}
@@ -121,7 +124,7 @@ export default function CropResizeTool({
               aria-label="Close"
             >
               <X size={20} />
-            </button>
+            </button>)}
           </div>
         </div>
 
@@ -510,7 +513,7 @@ export default function CropResizeTool({
         </div>
       </div>
     </div>
-    <PerspectiveCropDialog
+    <RectCropDialog
       open={isActive && Boolean(crop.pendingUpload)}
       image={crop.pendingUpload?.dataUrl ?? null}
       onCancel={crop.cancelUploadedImage}

@@ -4,6 +4,7 @@ window.addContact = function() {
     if (!container) return;
     const html = `
         <div class="dynamic-item rb-contact-row">
+            <button class="remove-btn" type="button" aria-label="Remove contact" onclick="this.parentElement.remove(); updateDynamicPreview('contact')"><i class="fas fa-trash"></i></button>
             <select class="contact-type" aria-label="Contact type" onchange="updateDynamicPreview('contact')">
                 <option value="fas fa-phone" selected>Mobile</option>
                 <option value="fab fa-whatsapp">WhatsApp</option>
@@ -18,14 +19,45 @@ window.addContact = function() {
     updateDynamicPreview('contact');
 };
 
+// Guardian relationship dropdown handlers.
+window.toggleGuardianRelations = function(trigger) {
+    const picker = trigger?.closest('.rb-relation-picker');
+    const menu = picker?.querySelector('.rb-relation-menu');
+    if (!picker || !menu) return;
+    const willOpen = menu.hidden;
+    document.querySelectorAll('.rb-relation-menu').forEach(item => { item.hidden = true; });
+    document.querySelectorAll('.rb-relation-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
+    menu.hidden = !willOpen;
+    trigger.setAttribute('aria-expanded', String(willOpen));
+};
+window.selectGuardianRelation = function(option, value) {
+    const picker = option?.closest('.rb-relation-picker');
+    if (!picker) return;
+    const hidden = picker.querySelector('.g-rel');
+    const label = picker.querySelector('.rb-relation-value');
+    const menu = picker.querySelector('.rb-relation-menu');
+    const trigger = picker.querySelector('.rb-relation-trigger');
+    if (hidden) hidden.value = value;
+    if (label) label.textContent = value;
+    if (menu) menu.hidden = true;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    updateDynamicPreview('guardian');
+};
+document.addEventListener('click', event => {
+    if (event.target.closest('.rb-relation-picker')) return;
+    document.querySelectorAll('.rb-relation-menu').forEach(item => { item.hidden = true; });
+    document.querySelectorAll('.rb-relation-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
+});
+
 window.addGuardian = function() {
     const container = document.getElementById('guardianList');
     if (!container) return;
     const html = `
         <div class="dynamic-item rb-guardian-row">
+            <button class="remove-btn" type="button" aria-label="Remove guardian" onclick="this.parentElement.remove(); updateDynamicPreview('guardian')"><i class="fas fa-trash"></i></button>
             <div class="rb-relation-picker">
                 <input type="hidden" class="g-rel" value="">
-                <button type="button" class="rb-relation-trigger" aria-label="Choose relationship" aria-expanded="false" onclick="toggleGuardianRelations(this)"><span class="rb-relation-value"></span><i class="fas fa-chevron-down"></i></button>
+                <button type="button" class="rb-relation-trigger" aria-label="Choose relationship" aria-expanded="false" onclick="toggleGuardianRelations(this)"><span class="rb-relation-value">Select</span><i class="fas fa-chevron-down"></i></button>
                 <div class="rb-relation-menu" hidden><button type="button" onclick="selectGuardianRelation(this,'Father')">Father</button><button type="button" onclick="selectGuardianRelation(this,'Mother')">Mother</button><button type="button" onclick="selectGuardianRelation(this,'Husband')">Husband</button><button type="button" onclick="selectGuardianRelation(this,'Wife')">Wife</button><button type="button" onclick="selectGuardianRelation(this,'Son')">Son</button><button type="button" onclick="selectGuardianRelation(this,'Daughter')">Daughter</button><button type="button" onclick="selectGuardianRelation(this,'Brother')">Brother</button><button type="button" onclick="selectGuardianRelation(this,'Sister')">Sister</button><button type="button" onclick="selectGuardianRelation(this,'Guardian')">Guardian</button><button type="button" onclick="selectGuardianRelation(this,'Grandfather')">Grandfather</button><button type="button" onclick="selectGuardianRelation(this,'Grandmother')">Grandmother</button><button type="button" onclick="selectGuardianRelation(this,'Uncle')">Uncle</button><button type="button" onclick="selectGuardianRelation(this,'Aunt')">Aunt</button><button type="button" onclick="selectGuardianRelation(this,'Other')">Other</button></div>
             </div>
             <input type="text" class="g-name" placeholder="Name" oninput="updateDynamicPreview('guardian')">
@@ -57,9 +89,9 @@ window.addEducation = function() {
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('edu')"><i class="fas fa-trash"></i></button>
             <div class="form-grid">
-                <input type="text" class="edu-degree" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
-                <input type="text" class="edu-school" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
-                <input type="text" class="edu-date" placeholder="e.g. 2016 - 2020" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-degree" list="resumeDegreeOptions" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-school" list="resumeUniversityOptions" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-date" list="resumeSemesterOptions" placeholder="Year / Semester (e.g. 2016 - 2020)" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
             </div>
         </div>`;
     container.insertAdjacentHTML('beforeend', html);
@@ -73,7 +105,7 @@ window.addExperience = function() {
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('exp')"><i class="fas fa-trash"></i></button>
             <div class="form-grid">
-                <input type="text" class="exp-title" placeholder="Job Title" oninput="updateDynamicPreview('exp')">
+                <input type="text" class="exp-title" list="resumeJobTitleOptions" placeholder="Job Title" oninput="updateDynamicPreview('exp')">
                 <input type="text" class="exp-company" placeholder="Company Name" oninput="updateDynamicPreview('exp')">
                 <input type="text" class="exp-date" placeholder="e.g. 2020 - Present" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')">
                 <textarea class="exp-desc" placeholder="Responsibilities & Achievements..." rows="3" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')"></textarea>
@@ -518,7 +550,7 @@ function applyCategoryDetailPreset(category) {
     const experience = document.getElementById('experienceList');
     const projects = document.getElementById('projectsList');
     if (education) education.innerHTML = preset.education.map(item => `<div class="dynamic-item"><button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('edu')"><i class="fas fa-trash"></i></button><div class="form-grid"><input type="text" class="edu-degree" value="${item.degree}" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')"><input type="text" class="edu-school" value="${item.school}" placeholder="University / Board" oninput="updateDynamicPreview('edu')"><input type="text" class="edu-date" value="${item.date}" placeholder="e.g. 2016 - 2020" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')"></div></div>`).join('');
-    if (experience) experience.innerHTML = preset.experience.map(item => `<div class="dynamic-item"><button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('exp')"><i class="fas fa-trash"></i></button><div class="form-grid"><input type="text" class="exp-title" value="${item.title}" placeholder="Job Title" oninput="updateDynamicPreview('exp')"><input type="text" class="exp-company" value="${item.company}" placeholder="Company Name" oninput="updateDynamicPreview('exp')"><input type="text" class="exp-date" value="${item.date}" placeholder="e.g. 2020 - Present" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')"><textarea class="exp-desc" placeholder="Responsibilities & Achievements..." rows="3" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')">${item.desc}</textarea></div></div>`).join('');
+    if (experience) experience.innerHTML = preset.experience.map(item => `<div class="dynamic-item"><button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('exp')"><i class="fas fa-trash"></i></button><div class="form-grid"><input type="text" class="exp-title" list="resumeJobTitleOptions" value="${item.title}" placeholder="Job Title" oninput="updateDynamicPreview('exp')"><input type="text" class="exp-company" value="${item.company}" placeholder="Company Name" oninput="updateDynamicPreview('exp')"><input type="text" class="exp-date" value="${item.date}" placeholder="e.g. 2020 - Present" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')"><textarea class="exp-desc" placeholder="Responsibilities & Achievements..." rows="3" style="grid-column: span 2;" oninput="updateDynamicPreview('exp')">${item.desc}</textarea></div></div>`).join('');
     if (projects) projects.innerHTML = (preset.projects || []).map(item => `<div class="dynamic-item"><button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('proj')"><i class="fas fa-trash"></i></button><div class="form-grid"><input type="text" class="proj-name" value="${item.name}" placeholder="Project Name" oninput="updateDynamicPreview('proj')"><input type="text" class="proj-tech" value="${item.tech}" placeholder="Tech Used" oninput="updateDynamicPreview('proj')"><textarea class="proj-desc" placeholder="Project Description..." rows="2" style="grid-column: span 2;" oninput="updateDynamicPreview('proj')">${item.desc}</textarea></div></div>`).join('');
     updateDynamicPreview('edu');
     updateDynamicPreview('exp');
@@ -1528,4 +1560,104 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- JOB TITLE SUGGESTIONS: open on focus/click and allow custom entries ---
+    (function initJobTitleSuggestions() {
+        const inputSelector = 'input.exp-title, input[data-preview="prev-title"]';
+        const datalist = document.getElementById('resumeJobTitleOptions');
+        if (!datalist) return;
+
+        const options = Array.from(datalist.querySelectorAll('option'))
+            .map(option => option.value.trim())
+            .filter(Boolean);
+        if (!options.length) return;
+
+        const menu = document.createElement('div');
+        menu.id = 'resumeJobTitleSuggestionMenu';
+        Object.assign(menu.style, {
+            position: 'fixed', display: 'none', zIndex: '99999',
+            maxHeight: '240px', overflowY: 'auto', background: '#fff',
+            border: '1px solid #d1d5db', borderRadius: '8px',
+            boxShadow: '0 8px 24px rgba(0,0,0,.14)', padding: '5px 0',
+            boxSizing: 'border-box'
+        });
+        document.body.appendChild(menu);
+
+        let activeInput = null;
+        let visibleOptions = [];
+
+        function positionMenu() {
+            if (!activeInput || menu.style.display === 'none') return;
+            const rect = activeInput.getBoundingClientRect();
+            menu.style.left = rect.left + 'px';
+            menu.style.top = rect.bottom + 'px';
+            menu.style.width = rect.width + 'px';
+        }
+
+        function closeMenu() {
+            menu.style.display = 'none';
+            activeInput = null;
+            visibleOptions = [];
+        }
+
+        function renderMenu(input, showAll) {
+            activeInput = input;
+            const query = input.value.trim().toLowerCase();
+            visibleOptions = options.filter(value =>
+                showAll || !query || value.toLowerCase().includes(query)
+            );
+            menu.replaceChildren();
+
+            if (!visibleOptions.length) {
+                const empty = document.createElement('div');
+                empty.textContent = 'No matching suggestion — you can type your own job title';
+                Object.assign(empty.style, { padding: '10px 12px', color: '#6b7280', fontSize: '13px' });
+                menu.appendChild(empty);
+            } else {
+                visibleOptions.forEach(value => {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.textContent = value;
+                    Object.assign(item.style, {
+                        display: 'block', width: '100%', border: '0',
+                        background: '#fff', color: '#111827', textAlign: 'left',
+                        padding: '9px 12px', fontSize: '14px', cursor: 'pointer'
+                    });
+                    item.addEventListener('mouseenter', () => item.style.background = '#f3f4f6');
+                    item.addEventListener('mouseleave', () => item.style.background = '#fff');
+                    item.addEventListener('pointerdown', event => {
+                        event.preventDefault();
+                        input.value = value;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        closeMenu();
+                    });
+                    menu.appendChild(item);
+                });
+            }
+            menu.style.display = 'block';
+            positionMenu();
+        }
+
+        document.addEventListener('focusin', event => {
+            if (event.target.matches(inputSelector)) renderMenu(event.target, true);
+        });
+        document.addEventListener('click', event => {
+            if (event.target.matches(inputSelector)) {
+                renderMenu(event.target, true);
+            } else if (!menu.contains(event.target)) {
+                closeMenu();
+            }
+        });
+        document.addEventListener('input', event => {
+            if (event.target.matches(inputSelector)) renderMenu(event.target, false);
+        });
+        document.addEventListener('keydown', event => {
+            if (!activeInput) return;
+            if (event.key === 'Escape') closeMenu();
+        });
+        window.addEventListener('resize', positionMenu);
+        window.addEventListener('scroll', positionMenu, true);
+    })();
+
 });

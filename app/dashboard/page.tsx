@@ -1247,7 +1247,7 @@ export default function DashboardPage() {
     {
       id: 1,
       name: "SSLC Percentage",
-      url: "/tools/sslc-calculator",
+      url: "sslc-modal",
       bgColor: "from-purple-500 to-purple-600",
       isInternal: true,
     },
@@ -1282,7 +1282,7 @@ export default function DashboardPage() {
     {
       id: 9,
       name: "Converter Tool",
-      url: "/tools/land-area-converter",
+      url: "converter-modal",
       bgColor: "from-emerald-500 to-green-700",
       isInternal: true,
     },
@@ -1331,7 +1331,7 @@ export default function DashboardPage() {
     {
       id: "aadhaar-name-change-check",
       name: "Aadhaar Name Check",
-      url: "/tools/aadhaar-name-check",
+      url: "/tools/aadhaar-name-change",
       bgColor: "from-blue-600 to-violet-700",
       isInternal: true,
     },
@@ -1434,30 +1434,39 @@ const loadDashboardData = () => {
                 continue;
               }
               const standaloneToolRoutes: Record<string, string> = {
-                "sslc-modal": "/tools/sslc-calculator",
+                "sslc-modal": "sslc-modal",
+                "/tools/sslc-calculator": "sslc-modal",
                 "photo-studio-modal": "/tools/photo-studio",
+                "/tools/photo-studio": "/tools/photo-studio",
                 "crop-resize-modal": "/tools/photo-studio",
                 "psc-modal": "/tools/photo-studio",
                 "passport-size-modal": "/tools/passport-size",
+                "/tools/passport-size": "/tools/passport-size",
                 "translator-modal": "/tools/translator",
+                "/tools/translator": "/tools/translator",
                 "pdf-toolkit-modal": "/tools/pdf-toolkit",
-                "converter-modal": "/tools/land-area-converter",
+                "/tools/pdf-toolkit": "/tools/pdf-toolkit",
+                "converter-modal": "converter-modal",
+                "/tools/land-area-converter": "converter-modal",
                 "image-to-text-modal": "/tools/image-to-text",
+                "/tools/image-to-text": "/tools/image-to-text",
                 "aadhaar-gazette-modal": "/tools/aadhaar-gazette",
+                "/tools/aadhaar-gazette": "/tools/aadhaar-gazette",
                 "service-document-generator-modal": "/tools/service-document-generator",
-                "aadhaar-name-check-modal": "/tools/aadhaar-name-check",
+                "/tools/service-document-generator": "/tools/service-document-generator",
+                "aadhaar-name-check-modal": "/tools/aadhaar-name-change",
               };
               const legacyNameRoutes: Record<string, string> = {
-                "sslc percentage": "/tools/sslc-calculator",
+                "sslc percentage": "sslc-modal",
                 "photo studio": "/tools/photo-studio",
                 "passport size": "/tools/passport-size",
                 "translator": "/tools/translator",
                 "pdf tool": "/tools/pdf-toolkit",
-                "converter tool": "/tools/land-area-converter",
+                "converter tool": "converter-modal",
                 "image to text": "/tools/image-to-text",
                 "aadhaar gazette": "/tools/aadhaar-gazette",
                 "service document generator": "/tools/service-document-generator",
-                "aadhaar name check": "/tools/aadhaar-name-check",
+                "aadhaar name check": "/tools/aadhaar-name-change",
               };
               const legacyToolRoute = standaloneToolRoutes[legacyUrl] || legacyNameRoutes[legacyName];
               if (legacyToolRoute && item?.isInternal !== false) {
@@ -2483,10 +2492,20 @@ setServiceDirectory(filteredWithUrls);
                   className={`relative flex flex-col transition-transform ${isCustomizing ? "cursor-grab active:cursor-grabbing" : ""}`}
                 >
                   <a
-                    href={isCustomizing || isStatusCenter ? undefined : tool.url}
+                    href={isCustomizing || isStatusCenter || isSslc || isConverterTool ? undefined : tool.url}
                     onClick={(e) => {
                       if (isCustomizing) {
                         e.preventDefault();
+                        return;
+                      }
+                      if (isSslc) {
+                        e.preventDefault();
+                        setShowSslcModal(true);
+                        return;
+                      }
+                      if (isConverterTool) {
+                        e.preventDefault();
+                        setShowConverterModal(true);
                         return;
                       }
                       if (isStatusCenter) {
