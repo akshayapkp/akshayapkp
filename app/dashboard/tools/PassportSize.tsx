@@ -39,15 +39,18 @@ export default function PassportSize({ onClose, standalone = false }: { onClose?
         </header>}
 
         <input ref={fileInputRef} hidden type="file" accept="image/*" onChange={handleSelectImage}/>
-        {image && (
-          <PassportPhotoEnhancements
-            image={image}
-            onChoosePhoto={openFilePicker}\n            onCropAgain={() => {
+        <PassportPhotoEnhancements
+          image={image}
+          onChoosePhoto={openFilePicker}
+          onCropAgain={() => {
+            if (image) {
               setCropImage(image);
               setCropOpen(true);
-            }}
-          />
-        )}
+            } else {
+              openFilePicker();
+            }
+          }}
+        />
       </div>
 
       <RectCropDialog
