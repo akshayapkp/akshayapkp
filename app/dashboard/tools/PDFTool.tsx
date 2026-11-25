@@ -107,7 +107,7 @@ export default function PDFToolkitTool({ onClose }: PDFToolkitProps) {
         }
       } else if(active==="pdf-image") {
         const pdfjs=await import("pdfjs-dist/legacy/build/pdf.mjs");
-        const task=pdfjs.getDocument({data:new Uint8Array(await files[0].file.arrayBuffer()),disableWorker:true});
+        const task=pdfjs.getDocument({data:new Uint8Array(await files[0].file.arrayBuffer())});
         const doc=await task.promise;
         const zipModule=await import("jszip"); const zip=new zipModule.default();
         for(let i=1;i<=doc.numPages;i++){const page=await doc.getPage(i);const viewport=page.getViewport({scale:1.7});const canvas=document.createElement("canvas");canvas.width=viewport.width;canvas.height=viewport.height;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas unavailable.");await page.render({canvas,canvasContext:ctx,viewport}).promise;const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/png"));if(!blob)throw new Error("Could not render PDF page.");zip.file(`page-${i}.png`,blob);canvas.width=0;canvas.height=0;}
