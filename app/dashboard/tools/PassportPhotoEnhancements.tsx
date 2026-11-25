@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { jsPDF } from "jspdf";
 import { Download, FileImage, FileText, Printer, RotateCcw, ChevronDown, ChevronUp, Camera, Image as ImageIcon } from "lucide-react";
 
@@ -97,11 +97,12 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [sizeIndex, setSizeIndex] = useState(1);
   const [activePreview, setActivePreview] = useState<"photo" | "sheet">("photo");
-  const [openSections, setOpenSections] = useState({ size: true, light: true, print: true });
+  const [openSections, setOpenSections] = useState({ size: true, crop: true, light: true, download: true, print: true });
   const [customW, setCustomW] = useState("35");
   const [customH, setCustomH] = useState("45");
   const [customSize, setCustomSize] = useState(false);
   const [dpi, setDpi] = useState(300);
+  const [photoFormat, setPhotoFormat] = useState<"PNG" | "JPG">("PNG");
   const [paper, setPaper] = useState<Paper>("A4");
   const [orientation, setOrientation] = useState<Orientation>("best");
   const [copies, setCopies] = useState(8);
@@ -257,7 +258,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
   const autoAdjust = () => { setBrightness(105); setContrast(108); setShadows(8); setSaturation(103); setWarmth(2); setAutoAdjusted(true); };
 
   const toggleSection = (key: keyof typeof openSections) => setOpenSections(current => ({ ...current, [key]: !current[key] }));
-  const SectionTitle = ({ number, title, section, children }: { number: string; title: string; section: keyof typeof openSections; children: React.ReactNode }) => (
+  const SectionTitle = ({ number, title, section, children }: { number: string; title: string; section: keyof typeof openSections; children: ReactNode }) => (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <button type="button" onClick={() => toggleSection(section)} aria-expanded={openSections[section]} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
         <span className="flex min-w-0 items-center gap-2"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-600 text-xs font-black text-white">{number}</span><span className="text-sm font-extrabold text-slate-800">{title}</span></span>
@@ -326,8 +327,8 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
           </SectionTitle>
 
           <SectionTitle number="7" title="Download one photo" section="download">
-            <div className="grid grid-cols-2 gap-2"><select aria-label="Image format" defaultValue="PNG" className="h-10 rounded-xl border border-slate-200 bg-white px-2 text-xs"><option>PNG</option><option>JPG</option></select><select aria-label="DPI" value={dpi} onChange={e=>setDpi(Number(e.target.value))} className="h-10 rounded-xl border border-slate-200 bg-white px-2 text-xs"><option value={300}>300 DPI</option><option value={600}>600 DPI</option></select></div>
-            <button disabled={!image || busy} onClick={() => runExport("photo-png")} className="w-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 px-3 py-3 text-xs font-bold text-white shadow disabled:opacity-40"><Download className="mr-2 inline" size={14}/>Download photo</button>
+            <div className="grid grid-cols-2 gap-2"><select aria-label="Image format" value={photoFormat} onChange={e=>setPhotoFormat(e.target.value as "PNG"|"JPG")} className="h-10 rounded-xl border border-slate-200 bg-white px-2 text-xs"><option>PNG</option><option>JPG</option></select><select aria-label="DPI" value={dpi} onChange={e=>setDpi(Number(e.target.value))} className="h-10 rounded-xl border border-slate-200 bg-white px-2 text-xs"><option value={300}>300 DPI</option><option value={600}>600 DPI</option></select></div>
+            <button disabled={!image || busy} onClick={() => runExport(photoFormat === "PNG" ? "photo-png" : "photo-jpg")} className="w-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 px-3 py-3 text-xs font-bold text-white shadow disabled:opacity-40"><Download className="mr-2 inline" size={14}/>Download photo</button>
           </SectionTitle>
 
           <SectionTitle number="8" title="Print as multiple photos" section="print">
