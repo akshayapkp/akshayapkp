@@ -18,6 +18,36 @@ window.addContact = function() {
     updateDynamicPreview('contact');
 };
 
+// Guardian relationship dropdown handlers.
+window.toggleGuardianRelations = function(trigger) {
+    const picker = trigger?.closest('.rb-relation-picker');
+    const menu = picker?.querySelector('.rb-relation-menu');
+    if (!picker || !menu) return;
+    const willOpen = menu.hidden;
+    document.querySelectorAll('.rb-relation-menu').forEach(item => { item.hidden = true; });
+    document.querySelectorAll('.rb-relation-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
+    menu.hidden = !willOpen;
+    trigger.setAttribute('aria-expanded', String(willOpen));
+};
+window.selectGuardianRelation = function(option, value) {
+    const picker = option?.closest('.rb-relation-picker');
+    if (!picker) return;
+    const hidden = picker.querySelector('.g-rel');
+    const label = picker.querySelector('.rb-relation-value');
+    const menu = picker.querySelector('.rb-relation-menu');
+    const trigger = picker.querySelector('.rb-relation-trigger');
+    if (hidden) hidden.value = value;
+    if (label) label.textContent = value;
+    if (menu) menu.hidden = true;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    updateDynamicPreview('guardian');
+};
+document.addEventListener('click', event => {
+    if (event.target.closest('.rb-relation-picker')) return;
+    document.querySelectorAll('.rb-relation-menu').forEach(item => { item.hidden = true; });
+    document.querySelectorAll('.rb-relation-trigger').forEach(item => item.setAttribute('aria-expanded', 'false'));
+});
+
 window.addGuardian = function() {
     const container = document.getElementById('guardianList');
     if (!container) return;
