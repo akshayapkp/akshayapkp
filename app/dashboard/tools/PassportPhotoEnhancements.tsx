@@ -95,7 +95,7 @@ function downloadBlob(blob: Blob, name: string) {
 
 export default function PassportPhotoEnhancements({ image, onCropAgain }: Props) {
   const previewRef = useRef<HTMLCanvasElement>(null);
-  const [sizeIndex, setSizeIndex] = useState(0);
+  const [sizeIndex, setSizeIndex] = useState(1);
   const [customW, setCustomW] = useState("35");
   const [customH, setCustomH] = useState("45");
   const [customSize, setCustomSize] = useState(false);
@@ -268,8 +268,8 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
               <button disabled={busy} onClick={() => runExport("photo-png")} className="rounded-xl bg-slate-800 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileImage className="mx-auto mb-1" size={17}/>Download PNG</button>
               <button disabled={busy} onClick={() => runExport("photo-jpg")} className="rounded-xl bg-slate-800 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileImage className="mx-auto mb-1" size={17}/>Download JPG</button>
               <button disabled={busy} onClick={() => runExport("sheet")} className="rounded-xl bg-slate-800 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><Download className="mx-auto mb-1" size={17}/>Sheet Image</button>
-              <button disabled={busy} onClick={() => runExport("pdf")} className="rounded-xl bg-rose-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileText className="mx-auto mb-1" size={17}/>Export PDF</button>
-              <button disabled={busy} onClick={() => runExport("print")} className="rounded-xl bg-rose-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><Printer className="mx-auto mb-1" size={17}/>Print Sheet</button>
+              <button disabled={busy} onClick={() => runExport("pdf")} className="rounded-xl bg-blue-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><FileText className="mx-auto mb-1" size={17}/>Export PDF</button>
+              <button disabled={busy} onClick={() => runExport("print")} className="rounded-xl bg-blue-600 px-3 py-3 text-xs font-bold text-white disabled:opacity-50"><Printer className="mx-auto mb-1" size={17}/>Print Sheet</button>
               <button onClick={resetAdjustments} className="rounded-xl border px-3 py-3 text-xs font-bold text-slate-700"><RotateCcw className="mx-auto mb-1" size={17}/>Reset Adjustments</button>
             </div>
           </div>
@@ -284,20 +284,11 @@ export default function PassportPhotoEnhancements({ image, onCropAgain }: Props)
               <div className="mt-3 grid grid-cols-2 gap-2"><label className="text-xs text-slate-600">Export DPI<select value={dpi} onChange={e=>setDpi(Number(e.target.value))} className="mt-1 h-9 w-full rounded-lg border px-2"><option value={300}>300 DPI</option><option value={600}>600 DPI</option></select></label><div className="rounded-lg bg-slate-50 p-2 text-xs text-slate-600"><b>Output pixels</b><p className="mt-1 font-mono">{mmPx(selectedSize.width,dpi)} × {mmPx(selectedSize.height,dpi)} px</p></div></div>
             </div>
             <div className="rounded-2xl border p-4">
-              <h3 className="mb-3 text-sm font-black text-slate-800">Backdrop & Colour</h3>
-              <div className="grid grid-cols-4 gap-2">{BACKGROUNDS.map(([label,value])=><button key={value} onClick={()=>setBg(value)} className={`rounded-lg border p-2 text-[10px] font-semibold ${bg===value?"border-rose-500 ring-2 ring-rose-100":"border-slate-200"}`}><span className="mx-auto mb-1 block h-6 w-6 rounded-full border" style={{background:value==="transparent"?"repeating-conic-gradient(#ddd 0% 25%, white 0% 50%) 50% / 8px 8px":value==="original"?"linear-gradient(135deg,#d1d5db,#fff)":value}}/>{label}</button>)}</div>
-              <div className="mt-3 flex items-center gap-2 text-xs"><input type="color" value={customHex} onChange={e=>{setCustomHex(e.target.value);setBg("custom")}}/><span>Custom HEX colour</span><code>{customHex}</code></div>
-              <p className="mt-2 rounded-lg bg-amber-50 p-2 text-[11px] leading-4 text-amber-800">These colours fill the canvas around the photo if the selected photo aspect ratio leaves space. They do not remove or replace the original background pixels. Transparent mode exports a transparent canvas around the photo, not a cut-out subject. AI background removal is not used.</p>
-            </div>
-            <div className="rounded-2xl border p-4">
-              <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-black text-slate-800">Colour & Light</h3><button onClick={autoAdjust} className="text-xs font-bold text-rose-600">Auto Adjust (Basic)</button></div>
-              {([["Brightness",brightness,setBrightness,0,200],["Contrast",contrast,setContrast,0,200],["Shadows",shadows,setShadows,-50,50],["Saturation",saturation,setSaturation,0,200],["Warmth",warmth,setWarmth,-100,100],["Zoom",zoom,setZoom,0.5,2],["Horizontal position",offsetX,setOffsetX,-50,50],["Vertical position",offsetY,setOffsetY,-50,50]] as const).map(([label,value,setter,min,max])=><label key={label} className="mb-3 block text-xs text-slate-600">{label}<input type="range" min={min} max={max} step={label==="Zoom"?0.05:1} value={value} onChange={e=>setter(Number(e.target.value))} className="mt-1 w-full accent-rose-600"/><span className="float-right text-[10px]">{value}</span></label>)}
+              <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-black text-slate-800">Colour & Light</h3><button onClick={autoAdjust} className="text-xs font-bold text-blue-600">Auto Adjust (Basic)</button></div>
+              {([["Brightness",brightness,setBrightness,0,200],["Contrast",contrast,setContrast,0,200],["Shadows",shadows,setShadows,-50,50],["Saturation",saturation,setSaturation,0,200],["Warmth",warmth,setWarmth,-100,100],["Zoom",zoom,setZoom,0.5,2],["Horizontal position",offsetX,setOffsetX,-50,50],["Vertical position",offsetY,setOffsetY,-50,50]] as const).map(([label,value,setter,min,max])=><label key={label} className="mb-3 block text-xs text-slate-600">{label}<input type="range" min={min} max={max} step={label==="Zoom"?0.05:1} value={value} onChange={e=>setter(Number(e.target.value))} className="mt-1 w-full accent-blue-600"/><span className="float-right text-[10px]">{value}</span></label>)}
               <button onClick={resetAdjustments} className="mt-1 rounded-lg border px-3 py-2 text-xs font-bold">Reset to Original</button>{autoAdjusted&&<span className="ml-2 text-[10px] text-emerald-700">Basic adjustment applied</span>}
             </div>
-            <div className="rounded-2xl border p-4">
-              <h3 className="mb-2 text-sm font-black text-slate-800">Dress Recolour – Not Available</h3>
-              <p className="text-xs leading-5 text-slate-500">Accurate clothing-only selection cannot be guaranteed with the current non-AI tools. To protect the face, skin, hair and background, this control is intentionally not provided rather than recolouring the whole photograph incorrectly.</p>
-            </div>
+
           </div>
         </div>
         <div className="grid gap-4 rounded-2xl border p-4 sm:grid-cols-2 lg:grid-cols-4">
