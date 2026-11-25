@@ -6,8 +6,7 @@
     "dev": "next dev --hostname 0.0.0.0 --port 3000",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0 --port 3000",
-    "lint": "eslint",
-    "postinstall": "node scripts/copy-qpdf-wasm.mjs"
+    "lint": "eslint"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
