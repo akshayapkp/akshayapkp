@@ -57,9 +57,9 @@ window.addEducation = function() {
         <div class="dynamic-item">
             <button class="remove-btn" type="button" onclick="this.parentElement.remove(); updateDynamicPreview('edu')"><i class="fas fa-trash"></i></button>
             <div class="form-grid">
-                <input type="text" class="edu-degree" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
-                <input type="text" class="edu-school" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
-                <input type="text" class="edu-date" placeholder="e.g. 2016 - 2020" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-degree" list="resumeDegreeOptions" placeholder="Degree / Qualification" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-school" list="resumeUniversityOptions" placeholder="University / Board" oninput="updateDynamicPreview('edu')">
+                <input type="text" class="edu-date" list="resumeSemesterOptions" placeholder="Year / Semester (e.g. 2016 - 2020)" style="grid-column: span 2;" oninput="updateDynamicPreview('edu')">
             </div>
         </div>`;
     container.insertAdjacentHTML('beforeend', html);
