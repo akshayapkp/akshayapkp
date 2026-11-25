@@ -1563,7 +1563,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- JOB TITLE SUGGESTIONS: open on focus/click and allow custom entries ---
     (function initJobTitleSuggestions() {
-        const inputSelector = 'input.exp-title[list="resumeJobTitleOptions"]';
+        const inputSelector = 'input.exp-title';
         const datalist = document.getElementById('resumeJobTitleOptions');
         if (!datalist) return;
 
