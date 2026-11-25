@@ -22,113 +22,7 @@ const PAPER_MM: Record<Paper, { width: number; height: number }> = {
   A4: { width: 210, height: 297 },
   "6x4": { width: 152.4, height: 101.6 },
 };
-const BACKGROUNDS = [
-  ["Original", "original"], ["White", "#ffffff"], ["Light Grey", "#e5e7eb"],
-  ["Light Blue", "#dbeafe"], ["Blue", "#2563eb"], ["Cream", "#fff7e6"],
-  ["Red", "#dc2626"], ["Transparent canvas", "transparent"],
-] as const;
 
-function mmPx(mm: number, dpi: number) { return Math.max(1, Math.round((mm / 25.4) * dpi)); }
-function loadImage(src: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("The selected photo could not be opened."));
-    img.src = src;
-  });
-}
-function fitDraw(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, zoom: number, offsetX: number, offsetY: number) {
-  const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight) * zoom;
-  const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
-  ctx.save();
-  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-  ctx.drawImage(img, x + (w - dw) / 2 + (offsetX / 100) * w, y + (h - dh) / 2 + (offsetY / 100) * h, dw, dh);
-  ctx.restore();
-}
-function crc32(bytes: Uint8Array) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-async function embedDpiMetadata(blob: Blob, dpi: number, mime: string) {
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  if (mime === "image/jpeg") {
-    if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return blob;
-    let app0 = -1;
-    for (let i = 2; i < Math.min(bytes.length - 10, 64); i++) {
-      if (bytes[i] === 0xff && bytes[i + 1] === 0xe0 && String.fromCharCode(...bytes.slice(i + 4, i + 9)) === "JFIF\0") { app0 = i; break; }
-    }
-    if (app0 >= 0) {
-      bytes[app0 + 11] = 1;
-      bytes[app0 + 12] = (dpi >> 8) & 255; bytes[app0 + 13] = dpi & 255;
-      bytes[app0 + 14] = (dpi >> 8) & 255; bytes[app0 + 15] = dpi & 255;
-      return new Blob([bytes], { type: mime });
-    }
-    const segment = new Uint8Array([0xff,0xe0,0x00,0x10,0x4a,0x46,0x49,0x46,0x00,0x01,0x01,0x01,(dpi>>8)&255,dpi&255,(dpi>>8)&255,dpi&255,0,0]);
-    const out = new Uint8Array(bytes.length + segment.length); out.set(bytes.slice(0,2)); out.set(segment,2); out.set(bytes.slice(2),2+segment.length);
-    return new Blob([out], { type: mime });
-  }
-  if (mime === "image/png" && bytes.length > 33) {
-    const ppm = Math.round(dpi / 0.0254);
-    const data = new Uint8Array(9);
-    const view = new DataView(data.buffer);
-    view.setUint32(0, ppm); view.setUint32(4, ppm); data[8] = 1;
-    const type = new Uint8Array([0x70,0x48,0x59,0x73]);
-    const crcInput = new Uint8Array(type.length + data.length); crcInput.set(type); crcInput.set(data,4);
-    const chunk = new Uint8Array(21); const chunkView = new DataView(chunk.buffer);
-    chunkView.setUint32(0,9); chunk.set(type,4); chunk.set(data,8); chunkView.setUint32(17,crc32(crcInput));
-    const insertAt = 33;
-    const out = new Uint8Array(bytes.length + chunk.length); out.set(bytes.slice(0,insertAt)); out.set(chunk,insertAt); out.set(bytes.slice(insertAt),insertAt+chunk.length);
-    return new Blob([out], { type: mime });
-  }
-  return blob;
-}
-function downloadBlob(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = name; a.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
-}
-
-export default function PassportPhotoEnhancements({ image, onCropAgain, onChoosePhoto }: Props) {
-  const previewRef = useRef<HTMLCanvasElement>(null);
-  const [sizeIndex, setSizeIndex] = useState(1);
-  const [activePreview, setActivePreview] = useState<"photo" | "sheet">("photo");
-  const [openSections, setOpenSections] = useState({ size: true, crop: true, light: true, download: true, print: true });
-  const [customW, setCustomW] = useState("35");
-  const [customH, setCustomH] = useState("45");
-  const [customSize, setCustomSize] = useState(false);
-  const [dpi, setDpi] = useState(300);
-  const [photoFormat, setPhotoFormat] = useState<"PNG" | "JPG">("PNG");
-  const [paper, setPaper] = useState<Paper>("A4");
-  const [orientation, setOrientation] = useState<Orientation>("best");
-  const [copies, setCopies] = useState(8);
-  const [fillSheet, setFillSheet] = useState(false);
-  const [placement, setPlacement] = useState<"top-left" | "center">("top-left");
-  const [margin, setMargin] = useState(3);
-  const [border, setBorder] = useState(2);
-  const [guides, setGuides] = useState<Guides>("dashed");
-  const [outline, setOutline] = useState(true);
-  const [bg, setBg] = useState("original");
-  const [customHex, setCustomHex] = useState("#ffffff");
-  const [brightness, setBrightness] = useState(100);
-  const [contrast, setContrast] = useState(100);
-  const [shadows, setShadows] = useState(0);
-  const [saturation, setSaturation] = useState(100);
-  const [warmth, setWarmth] = useState(0);
-  const [zoom, setZoom] = useState(1);
-  const [offsetX, setOffsetX] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [autoAdjusted, setAutoAdjusted] = useState(false);
-
-  const selectedSize = customSize
-    ? { label: "Custom", width: Math.max(10, Math.min(100, Number(customW) || 35)), height: Math.max(10, Math.min(100, Number(customH) || 45)) }
-    : SIZES[sizeIndex];
   const page = PAPER_MM[paper];
   const portraitFit = Math.floor((page.width - 2 * margin + border) / (selectedSize.width + border)) *
     Math.floor((page.height - 2 * margin + border) / (selectedSize.height + border));
@@ -253,9 +147,9 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
   };
 
   const resetAdjustments = () => {
-    setBrightness(100); setContrast(100); setShadows(0); setSaturation(100); setWarmth(0); setZoom(1); setOffsetX(0); setOffsetY(0); setBg("original"); setCustomHex("#ffffff"); setAutoAdjusted(false);
+    setBrightness(100); setContrast(100); setShadows(0); setSaturation(100); setWarmth(0); setZoom(1); setOffsetX(0); setOffsetY(0); setBg("original"); setCustomHex("#ffffff");
   };
-  const autoAdjust = () => { setBrightness(105); setContrast(108); setShadows(8); setSaturation(103); setWarmth(2); setAutoAdjusted(true); };
+  const autoAdjust = () => { setBrightness(105); setContrast(108); setShadows(8); setSaturation(103); setWarmth(2); };
 
   const toggleSection = (key: keyof typeof openSections) => setOpenSections(current => ({ ...current, [key]: !current[key] }));
   const SectionTitle = ({ number, title, section, children }: { number: string; title: string; section: keyof typeof openSections; children: ReactNode }) => (
