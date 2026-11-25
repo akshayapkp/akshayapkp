@@ -88,22 +88,33 @@ export default function PDFToolkitTool({ onClose, standalone = false }: PDFToolk
       if(active==="merge") bytes=await mergePdfs();
       else if(active==="image-pdf") bytes=await createFromImages();
       else if(active==="protect"||active==="unlock"||active==="compress") {
-        const qpdf = await import("@arshad-shah/qpdf-wasm");
-        qpdf.configure({ wasmUrl: new URL("/qpdf.wasm", window.location.origin) });
-        const input = new Uint8Array(await files[0].file.arrayBuffer());
-        if(active==="protect") {
-          if(!userPassword.trim() || !ownerPassword.trim()) throw new Error("Enter both a reader password and an owner password.");
-          if(userPassword!==confirmPassword) throw new Error("Password confirmation does not match.");
-          if(userPassword.length<6 || ownerPassword.length<6) throw new Error("Use passwords with at least 6 characters.");
-          const secured=await qpdf.encrypt(input,{userPassword,ownerPassword,permissions:{print:"full",extract:false,modify:"none"}});
-          bytes=secured.bytes;
-        } else if(active==="unlock") {
-          if(!unlockPassword) throw new Error("Enter the existing PDF password.");
-          const plain=await qpdf.decrypt(input,unlockPassword);
-          bytes=plain.bytes;
-        } else {
-          const optimized=await qpdf.optimize(input,{objectStreams:"generate",compressStreams:true,recompressFlate:true,removeUnreferenced:true,linearize:false});
-          bytes=optimized.bytes;
+        const { load } = await import("@wasm-zoo/qpdf");
+        const qpdf = await load();
+        try {
+          const input = new Uint8Array(await files[0].file.arrayBuffer());
+          const inputPath = "/input.pdf";
+          const outputPath = "/output.pdf";
+          let args: string[];
+          if(active==="protect") {
+            if(!userPassword.trim() || !ownerPassword.trim()) throw new Error("Enter both a reader password and an owner password.");
+            if(userPassword!==confirmPassword) throw new Error("Password confirmation does not match.");
+            if(userPassword.length<6 || ownerPassword.length<6) throw new Error("Use passwords with at least 6 characters.");
+            args = ["--encrypt", userPassword, ownerPassword, "256", "--", inputPath, outputPath];
+          } else if(active==="unlock") {
+            if(!unlockPassword) throw new Error("Enter the existing PDF password.");
+            args = [`--password=${unlockPassword}`, "--decrypt", inputPath, outputPath];
+          } else {
+            args = ["--object-streams=generate", "--recompress-flate", "--compression-level=9", inputPath, outputPath];
+          }
+          const result = await qpdf.exec(args, {
+            files: [{ name: inputPath, data: input }],
+            outputs: [outputPath],
+          });
+          const outputFile = result.files.find((file: { name: string }) => file.name === outputPath);
+          if (!outputFile) throw new Error(result.stderr || "qpdf did not return a processed PDF.");
+          bytes = new Uint8Array(outputFile.data);
+        } finally {
+          qpdf.dispose();
         }
       } else if(active==="split"||active==="organize"||active==="crop"){
         const pdf=await PDFDocument.load(await files[0].file.arrayBuffer());
