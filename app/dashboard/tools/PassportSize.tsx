@@ -32,18 +32,18 @@ export default function PassportSize({ onClose, standalone = false }: { onClose?
       <div className={standalone ? "mx-auto w-full max-w-none" : "mx-auto w-full max-w-7xl"}>
         {!standalone && <header className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white"><Camera size={20}/></span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white"><Camera size={20}/></span>
             <div className="min-w-0"><h1 className="truncate text-lg font-black text-slate-800 sm:text-xl">Passport Photo Creator</h1><p className="text-xs text-slate-500">Advanced photo editing and print studio</p></div>
           </div>
           <button type="button" onClick={close} aria-label="Close Passport Photo Creator" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100"><X size={19}/></button>
         </header>}
 
         {!image && (
-          <section className="mb-4 rounded-2xl border-2 border-dashed border-rose-200 bg-white p-6 text-center shadow-sm sm:p-10">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600"><Upload size={25}/></span>
+          <section className="mb-4 rounded-2xl border-2 border-dashed border-blue-200 bg-white p-6 text-center shadow-sm sm:p-10">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><Upload size={25}/></span>
             <h2 className="mt-3 text-base font-black text-slate-800">Upload a Passport Photo</h2>
             <p className="mt-1 text-sm text-slate-500">Select an image to open the crop and advanced editing tools.</p>
-            <button type="button" onClick={openFilePicker} className="mt-4 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 px-5 py-3 text-sm font-bold text-white shadow-md">Choose Photo</button>
+            <button type="button" onClick={openFilePicker} className="mt-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-3 text-sm font-bold text-white shadow-md">Choose Photo</button>
           </section>
         )}
 
