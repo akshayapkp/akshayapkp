@@ -24,13 +24,16 @@ const PAPER_MM: Record<Paper, { width: number; height: number }> = {
 };
 
   const page = PAPER_MM[paper];
-  const portraitFit = Math.floor((page.width - 2 * margin + border) / (selectedSize.width + border)) *
-    Math.floor((page.height - 2 * margin + border) / (selectedSize.height + border));
-  const landscapeFit = Math.floor((page.height - 2 * margin + border) / (selectedSize.width + border)) *
-    Math.floor((page.width - 2 * margin + border) / (selectedSize.height + border));
+  const shortSide = Math.min(page.width, page.height);
+  const longSide = Math.max(page.width, page.height);
+  const portraitFit = Math.floor((shortSide - 2 * margin + border) / (selectedSize.width + border)) *
+    Math.floor((longSide - 2 * margin + border) / (selectedSize.height + border));
+  const landscapeFit = Math.floor((longSide - 2 * margin + border) / (selectedSize.width + border)) *
+    Math.floor((shortSide - 2 * margin + border) / (selectedSize.height + border));
   const bestLandscape = landscapeFit > portraitFit;
-  const pageW = orientation === "portrait" ? page.width : orientation === "landscape" || bestLandscape ? page.height : page.width;
-  const pageH = orientation === "portrait" ? page.height : orientation === "landscape" || bestLandscape ? page.width : page.height;
+  const useLandscape = orientation === "landscape" || (orientation === "best" && bestLandscape);
+  const pageW = useLandscape ? longSide : shortSide;
+  const pageH = useLandscape ? shortSide : longSide;
   const cols = Math.max(0, Math.floor((pageW - 2 * margin + border) / (selectedSize.width + border)));
   const rows = Math.max(0, Math.floor((pageH - 2 * margin + border) / (selectedSize.height + border)));
   const maxCopies = Math.max(0, cols * rows);
