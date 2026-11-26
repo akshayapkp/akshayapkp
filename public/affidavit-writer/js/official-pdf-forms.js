@@ -7,21 +7,72 @@ window.AFF_HTML_CSS=(window.AFF_HTML_CSS||"")+
 var nclFields=[
 F("ncl_taluk","താലൂക്ക്"),F("ncl_village","വില്ലേജ്"),F("ncl_address","മേൽവിലാസം","textarea",{rows:2}),
 F("ncl_applicant","സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ പേര്"),F("ncl_age","വയസ്സ്","text",{ml:false}),
-F("ncl_birth","ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്"),F("ncl_parent","മാതാപിതാക്കളുടെ പേര്"),F("ncl_parent_birth","മാതാപിതാക്കൾ ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്"),
-F("ncl_caste","മതം, ജാതി"),F("ncl_death","മരണപ്പെട്ടയാളാണോ (അച്ഛൻ / അമ്മ)"),F("ncl_pension","പെൻഷണറാണോ (അച്ഛൻ / അമ്മ)"),
-F("ncl_job","തൊഴിൽ"),F("ncl_job_place","തൊഴിൽ സ്വദേശത്തോ വിദേശത്തോ"),F("ncl_service","സർവീസിൽ പ്രവേശിച്ച തസ്തിക, വകുപ്പ്"),
-F("ncl_retired","റിട്ടയർ ചെയ്യുമ്പോൾ വഹിച്ച തസ്തിക, വകുപ്പ്"),F("ncl_income","തൊഴിലിൽ നിന്നുള്ള മാസവരുമാനം (രൂപ)","text",{ml:false}),
-F("ncl_tax","ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ"),F("ncl_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ ഭൂമിയുടെ വിസ്തീർണ്ണം")
+F("ncl_purpose","സർട്ടിഫിക്കറ്റിന് എന്ത് ആവശ്യത്തിന്"),F("ncl_birth","സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാൾ ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്"),
+F("ncl_caste","സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ മതം, ജാതി"),F("ncl_occupation","സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ തൊഴിൽ"),
+F("ncl_f_name","പിതാവിന്റെ പേര്"),F("ncl_m_name","മാതാവിന്റെ പേര്"),
+F("ncl_f_birth","പിതാവ് ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്"),F("ncl_m_birth","മാതാവ് ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്"),
+F("ncl_f_caste","പിതാവിന്റെ മതം, ജാതി"),F("ncl_m_caste","മാതാവിന്റെ മതം, ജാതി"),
+F("ncl_f_deceased","മരണപ്പെട്ടയാളാണോ (അച്ഛൻ)"),F("ncl_m_deceased","മരണപ്പെട്ടയാളാണോ (അമ്മ)"),
+F("ncl_f_pension","പെൻഷണറാണോ (അച്ഛൻ)"),F("ncl_m_pension","പെൻഷണറാണോ (അമ്മ)"),
+F("ncl_f_job","തൊഴിൽ (പിതാവ്)"),F("ncl_m_job","തൊഴിൽ (മാതാവ്)"),
+F("ncl_f_location","തൊഴിൽ ചെയ്യുന്നത് സ്വദേശത്തോ വിദേശത്തോ (പിതാവ്)"),F("ncl_m_location","തൊഴിൽ ചെയ്യുന്നത് സ്വദേശത്തോ വിദേശത്തോ (മാതാവ്)"),
+F("ncl_f_service","സർവീസിൽ പ്രവേശിച്ച തസ്തിക, വകുപ്പ് (പിതാവ്)"),F("ncl_m_service","സർവീസിൽ പ്രവേശിച്ച തസ്തിക, വകുപ്പ് (മാതാവ്)"),
+F("ncl_f_retired","റിട്ടയർ ചെയ്യുമ്പോൾ വഹിച്ച തസ്തിക, വകുപ്പ് (പിതാവ്)"),F("ncl_m_retired","റിട്ടയർ ചെയ്യുമ്പോൾ വഹിച്ച തസ്തിക, വകുപ്പ് (മാതാവ്)"),
+F("ncl_f_income","തൊഴിലിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (പിതാവ്)","text",{ml:false}),F("ncl_m_income","തൊഴിലിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (മാതാവ്)","text",{ml:false}),
+F("ncl_f_tax","ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ (അച്ഛൻ)"),F("ncl_m_tax","ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ (അമ്മ)"),
+F("ncl_f_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം (പിതാവ്)"),F("ncl_m_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം (മാതാവ്)"),
+F("ncl_place","സ്ഥലം"),F("ncl_date","തീയതി","date",{ml:false}),F("ncl_declarant","പേര്"),F("ncl_signature","ഒപ്പ്")
 ];
-var ncl={id:"nc",title:"Non-Creamy Layer Affidavit",sub:"നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം",pages:[A],
-sections:[{title:"Applicant details",fields:nclFields.slice(0,6)},{title:"Parents / guardian details",fields:nclFields.slice(6)},{title:"Declaration",fields:[F("ncl_date","തീയതി","date",{ml:false}),F("ncl_place","സ്ഥലം")]}],
+var ncl={
+id:"nc",
+title:"Non-Creamy Layer Affidavit (2023)",
+sub:"നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം",
+pages:[A],
+sections:[
+{title:"അപേക്ഷകന്റെ വിവരങ്ങൾ",fields:nclFields.slice(0,9)},
+{title:"പിതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return /^ncl_f_/.test(f.id);})},
+{title:"മാതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return /^ncl_m_/.test(f.id);})},
+{title:"സ്ഥലം, തീയതി, ഒപ്പ്",fields:nclFields.slice(-4)}
+],
 render:function(_,v){
-var rows=[
-[1,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ പേര്","ncl_applicant",25],[2,"മാതാപിതാക്കളുടെ പേര്","ncl_parent",25],[3,"ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്","ncl_birth",30],[4,"മതം, ജാതി","ncl_caste",25],[5,"തൊഴിൽ","ncl_job",25],
-[6,"പേര്","ncl_parent",25],[7,"ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്","ncl_parent_birth",30],[8,"മതം, ജാതി","ncl_caste",25],[9,"മരണപ്പെട്ടയാളാണോ (അച്ഛൻ / അമ്മ)","ncl_death",25],[10,"പെൻഷണറാണോ (അച്ഛൻ / അമ്മ)","ncl_pension",25],[11,"തൊഴിൽ","ncl_job",34],[12,"തൊഴിൽ ചെയ്യുന്നത് സ്വദേശത്തോ വിദേശത്തോ","ncl_job_place",25],[13,"സർവീസിൽ പ്രവേശിച്ച തസ്തിക, വകുപ്പ്","ncl_service",28],[14,"റിട്ടയർ ചെയ്യുമ്പോൾ വഹിച്ച തസ്തിക, വകുപ്പ്","ncl_retired",28],[15,"തൊഴിലിൽ നിന്നുള്ള മാസവരുമാനം (രൂപ)","ncl_income",25],[16,"ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ","ncl_tax",25],[17,"എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ ഭൂമിയുടെ വിസ്തീർണ്ണം","ncl_land",28]
-].map(function(r){return '<tr style="height:'+r[3]+'px"><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+V(v,r[2])+'</td></tr>'}).join("");
-return '<div class="official"><h1>നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന അപേക്ഷയിൽ</h1><h2>വില്ലേജ് ഓഫീസർ മുമ്പാകെ സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം</h2><p class="note">(എല്ലാ കോളങ്ങളും പൂരിപ്പിക്കുക. വിവരങ്ങൾ ഇല്ലാത്ത കോളങ്ങളിൽ ഇല്ല എന്ന് രേഖപ്പെടുത്തുക. 18 വയസ്സ് പൂർത്തിയാകാത്ത അപേക്ഷകരാണെങ്കിൽ രക്ഷാകർത്താവ് സത്യവാങ്മൂലം സമർപ്പിക്കുക)</p><p>'+B(v,"ncl_taluk",100)+' താലൂക്കിൽ '+B(v,"ncl_village",100)+' വില്ലേജിൽ '+B(v,"ncl_address",135)+' എന്ന മേൽവിലാസത്തിൽ താമസിക്കുന്ന '+B(v,"ncl_applicant",130)+' എന്ന ഞാൻ ('+B(v,"ncl_age",45)+' വയസ്സ്) വില്ലേജ് ഓഫീസർ മുമ്പാകെ സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം.</p><table><tbody>'+rows+'</tbody></table><p class="small">മേൽ പ്രസ്താവിച്ച വിവരങ്ങൾ എന്റെ അറിവിലും ഉത്തമവിശ്വാസത്തിലും ശരിയാണെന്ന് ഇതിനാൽ സത്യവാങ്മൂലം ചെയ്യുന്നു. വസ്തുതാവിരുദ്ധമായ വിവരങ്ങൾ നൽകിയതായി കണ്ടെത്തിയാൽ നിയമാനുസൃത നടപടി സ്വീകരിക്കുന്നതിന് ഞാൻ വിധേയനാണ്.</p><div class="signs"><div class="sign">തീയതി: '+V(v,"ncl_date")+'</div><div class="sign">പേര്: '+V(v,"ncl_applicant")+'</div><div class="sign">ഒപ്പ്</div></div><b>ആവശ്യമായ രേഖകൾ</b><p class="small">1. സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ ആധാർ കാർഡ്. 2. അപേക്ഷകന്റെയും മാതാപിതാക്കളുടെയും സ്കൂൾ സർട്ടിഫിക്കറ്റുകൾ. 3. റേഷൻ കാർഡ്. 4. മാതാപിതാക്കളുടെ എല്ലാ വില്ലേജിലെയും ഭൂനികുതി രസീതികൾ. 5. ബിസിനസ് / പ്രൊഫഷണൽ വരുമാനമെങ്കിൽ കഴിഞ്ഞ മൂന്ന് വർഷത്തെ ഇൻകം ടാക്സ് റിട്ടേൺ. 6. സർക്കാർ / പൊതുമേഖല / ഡിഫൻസ് ജീവനക്കാരാണെങ്കിൽ ശമ്പള രേഖ. 7. പെൻഷണറാണെങ്കിൽ അവസാനമായി വഹിച്ച തസ്തിക തെളിയിക്കുന്ന രേഖ. 8. ആവശ്യമായ സർവീസ് സർട്ടിഫിക്കറ്റ്.</p><p class="small" style="text-align:right">VOMPM OCT 2022</p></div>';
-}};
+var topRows=[
+[1,"സർട്ടിഫിക്കറ്റിന് എന്ത് ആവശ്യത്തിന്","ncl_purpose"],
+[2,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ പേര്","ncl_applicant"],
+[3,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാൾ ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്","ncl_birth"],
+[4,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ മതം, ജാതി","ncl_caste"],
+[5,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ തൊഴിൽ","ncl_occupation"]
+].map(function(r){return '<tr><td class="nnum">'+r[0]+'</td><td>'+r[1]+'</td><td class="nanswer">'+V(v,r[2])+'</td></tr>';}).join("");
+var parentRows=[
+[6,"പേര്","ncl_f_name","ncl_m_name"],
+[7,"ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്","ncl_f_birth","ncl_m_birth"],
+[8,"മതം, ജാതി","ncl_f_caste","ncl_m_caste"],
+[9,"മരണപ്പെട്ടയാളാണോ (അച്ഛൻ / അമ്മ)","ncl_f_deceased","ncl_m_deceased"],
+[10,"പെൻഷണറാണോ (അച്ഛൻ / അമ്മ)","ncl_f_pension","ncl_m_pension"],
+[11,"തൊഴിൽ (സർക്കാർ - പൊതുമേഖല - ഡിഫൻസ് ജീവനക്കാരാണെങ്കിൽ വകുപ്പും തസ്തികയും രേഖപ്പെടുത്തുക. മരണപ്പെട്ടയാളാണെങ്കിൽ അവസാനമായി വഹിച്ച തസ്തിക, വകുപ്പ് രേഖപ്പെടുത്തുക.)","ncl_f_job","ncl_m_job"],
+[12,"തൊഴിൽ ചെയ്യുന്നത് സ്വദേശത്തോ വിദേശത്തോ","ncl_f_location","ncl_m_location"],
+[13,"ജീവനക്കാരൻ / പെൻഷണറാണെങ്കിൽ സർവീസിൽ പ്രവേശിച്ച തസ്തിക, വകുപ്പ്","ncl_f_service","ncl_m_service"],
+[14,"പെൻഷണറാണെങ്കിൽ റിട്ടയർ ചെയ്യുമ്പോൾ വഹിച്ച തസ്തിക, വകുപ്പ്","ncl_f_retired","ncl_m_retired"],
+[15,"തൊഴിലിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (രൂപ)","ncl_f_income","ncl_m_income"],
+[16,"ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ (അച്ഛൻ / അമ്മ)","ncl_f_tax","ncl_m_tax"],
+[17,"എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം","ncl_f_land","ncl_m_land"]
+].map(function(r){return '<tr class="nr'+r[0]+'"><td class="nnum">'+r[0]+'</td><td>'+r[1]+'</td><td class="nanswer">'+V(v,r[2])+'</td><td class="nanswer">'+V(v,r[3])+'</td></tr>';}).join("");
+return '<div class="official ncl2023">'+
+'<h1>നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന അപേക്ഷയിൽ</h1>'+
+'<h2>വില്ലേജ് ഓഫീസർ മുമ്പാകെ സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം</h2>'+
+'<p class="note">(എല്ലാ കോളങ്ങളും പൂരിപ്പിക്കുക. വിവരങ്ങൾ ഇല്ലാത്ത കോളങ്ങളിൽ ഇല്ല എന്ന് രേഖപ്പെടുത്തുക. 18 വയസ്സ് പൂർത്തിയാകാത്ത അപേക്ഷകരാണെങ്കിൽ രക്ഷാകർത്താവ് സത്യവാങ്മൂലം സമർപ്പിക്കുക)</p>'+
+'<div class="nintro">'+B(v,"ncl_taluk",75)+' താലൂക്കിൽ '+B(v,"ncl_village",75)+' വില്ലേജിൽ '+B(v,"ncl_address",125)+' എന്ന മേൽവിലാസത്തിൽ താമസിക്കുന്ന '+B(v,"ncl_applicant",105)+' എന്ന ഞാൻ ('+B(v,"ncl_age",32)+' വയസ്സ്) വില്ലേജ് ഓഫീസർ മുമ്പാകെ സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം.</div>'+
+'<table class="ntop"><tbody>'+topRows+'</tbody></table>'+
+'<div class="nheading">സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ മാതാപിതാക്കളുടെ വിവരങ്ങൾ</div>'+
+'<table class="nparents"><thead><tr><th class="nnum"></th><th></th><th>പിതാവ്</th><th>മാതാവ്</th></tr></thead><tbody>'+parentRows+'</tbody></table>'+
+'<p class="ndecl">മേൽ പ്രസ്താവിച്ച വിവരങ്ങൾ എന്റെ അറിവിലും ഉത്തമവിശ്വാസത്തിലും ശരിയാണെന്ന് സത്യവാങ്മൂലം ചെയ്യുന്നു. വസ്തുതാവിരുദ്ധമായ വിവരങ്ങൾ കണ്ടെത്തിയാൽ നിയമാനുസൃതമായ നടപടി സ്വീകരിക്കുന്നതിന് ഞാൻ വിധേയനാണെന്ന് ഇതിനാൽ ബോധ്യപ്പെടുത്തുന്നു.</p>'+
+'<div class="nsign"><span>സ്ഥലം: '+V(v,"ncl_place")+'</span><span>തീയതി: '+V(v,"ncl_date")+'</span><span>പേര്: '+V(v,"ncl_declarant")+'</span><span>ഒപ്പ്: '+V(v,"ncl_signature")+'</span></div>'+
+'<b class="ndocs-title">ആവശ്യമായ രേഖകൾ</b>'+
+'<div class="ndocs">1. സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ ആധാർ കാർഡ്. 2. സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെയും മാതാപിതാക്കളുടെയും സ്കൂൾ സർട്ടിഫിക്കറ്റുകൾ. 3. റേഷൻ കാർഡ്. 4. മാതാപിതാക്കളുടെ എല്ലാ വില്ലേജിലെയും ഭൂനികുതി രസീതികൾ. 5. മാതാപിതാക്കൾ ബിസിനസ്സ് / പ്രൊഫഷണൽ വരുമാനക്കാരാണെങ്കിൽ കഴിഞ്ഞ മൂന്ന് വർഷത്തെ ഇൻകം ടാക്സ് റിട്ടേൺ. 6. മാതാപിതാക്കൾ സർക്കാർ / പൊതുമേഖല / ഡിഫൻസ് ജീവനക്കാരാണെങ്കിൽ ശമ്പള സർട്ടിഫിക്കറ്റ്. 7. മാതാപിതാക്കൾ പെൻഷണറാണെങ്കിൽ അവസാനമായി വഹിച്ച തസ്തിക തെളിയിക്കുന്ന രേഖ. 8. മാതാപിതാക്കൾ എ, ബി ക്ലാസ്സിൽപ്പെട്ട ജീവനക്കാരാണെങ്കിൽ ഓഫീസ് മേധാവിയിൽ നിന്ന് ലഭ്യമായ സർവീസ് സർട്ടിഫിക്കറ്റ്.</div>'+
+'<div class="nfoot">VOMPM OCT 2022</div></div>';
+}
+};
+window.AFF_HTML_CSS=(window.AFF_HTML_CSS||"")+
+'.ncl2023{font-family:"Noto Sans Malayalam","Noto Sans",Arial,sans-serif;font-size:9px;line-height:1.25;padding:22px 24px!important;color:#111}.ncl2023 h1{font-size:14px!important;line-height:1.35;margin:0 0 2px!important}.ncl2023 h2{font-size:11px!important;margin:0 0 4px!important}.ncl2023 .note{font-size:7.2px;line-height:1.25;margin:0 0 7px!important}.ncl2023 .ofline{display:inline-block;border-bottom:1px solid #222;min-width:35px;min-height:13px;padding:0 2px;color:#092b69;font-weight:600;vertical-align:baseline;overflow-wrap:anywhere}.ncl2023 .nintro{font-size:8.2px;line-height:1.65;text-align:justify;margin:3px 0 7px}.ncl2023 table{width:100%;border-collapse:collapse;table-layout:fixed;margin:3px 0}.ncl2023 td,.ncl2023 th{border:1px solid #333;padding:2px 3px;vertical-align:middle;font-size:7.2px;line-height:1.2}.ncl2023 th{text-align:center;font-weight:700}.ncl2023 .nnum{width:4%;text-align:center}.ncl2023 .ntop td:nth-child(2){width:49%}.ncl2023 .ntop td:nth-child(3){width:47%}.ncl2023 .nparents td:nth-child(2){width:42%}.ncl2023 .nparents td:nth-child(3),.ncl2023 .nparents td:nth-child(4){width:27%}.ncl2023 .nanswer{color:#092b69;font-weight:600;overflow-wrap:anywhere}.ncl2023 .nr11 td{height:47px}.ncl2023 .nheading{font-weight:800;font-size:8.3px;margin:4px 0 2px}.ncl2023 .ndecl{font-size:7.3px;line-height:1.25;text-align:justify;margin:4px 0!important}.ncl2023 .nsign{display:flex;justify-content:space-between;gap:5px;border-bottom:1px solid #222;padding:3px 0 5px;font-size:7.3px;min-height:20px}.ncl2023 .ndocs-title{display:block;font-size:8px;margin:4px 0 2px}.ncl2023 .ndocs{font-size:7px;line-height:1.25;text-align:justify}.ncl2023 .nfoot{text-align:right;font-size:6.5px;margin-top:3px}';
 
 var osFields=[
 F("os_applicant","സത്യപ്രസ്താവന സമർപ്പിക്കുന്ന വ്യക്തിയുടെ പേര്"),F("os_district","ജില്ല"),F("os_taluk","താലൂക്ക്"),F("os_village","വില്ലേജ്"),F("os_panchayat","പഞ്ചായത്ത്"),
