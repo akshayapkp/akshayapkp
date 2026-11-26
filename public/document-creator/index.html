@@ -48,6 +48,28 @@ textarea{resize:vertical;min-height:76px;line-height:1.55}
 #extraContent{min-height:86px}
 @media(max-width:850px){body{overflow:auto;height:auto}.app{height:auto;min-height:100vh;grid-template-columns:1fr}.sidebar{height:auto;max-height:46vh;border-right:0;border-bottom:1px solid var(--line)}.main{height:80vh;min-height:650px}.workspace{padding:12px}.paper{min-height:780px}.topbar{height:auto;min-height:58px;padding:10px 12px;align-items:flex-start;flex-direction:column}.actions{width:100%}.btn{padding:8px 10px}}
 @media print{@page{size:A4;margin:0}html,body{width:210mm;height:297mm;background:#fff!important;overflow:visible!important}.app{display:block;height:auto}.sidebar,.topbar{display:none!important}.main,.workspace,.paper-wrap{display:block!important;height:auto!important;overflow:visible!important;padding:0!important;margin:0!important;background:#fff!important;width:210mm!important}.paper{width:210mm!important;height:297mm!important;min-height:297mm!important;aspect-ratio:auto!important;padding:24mm 18mm!important;box-shadow:none!important;margin:0!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.footer-line{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+
+/* Certificate builder additions, scoped to this standalone tool */
+.certificate-panel{border-top:1px solid #e2e8f0;margin-top:18px;padding-top:12px}
+.segment{display:flex;border:1px solid #dbe1e9;border-radius:9px;overflow:hidden;margin:7px 0 12px}
+.segment button{flex:1;border:0;padding:10px 5px;background:#fff;font-size:11px;font-weight:700;color:#64748b;cursor:pointer}
+.segment button.active{background:#2563eb;color:#fff}
+.ai-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:12px}
+.ai-box .btn{margin:7px 0}
+.rich-toolbar{display:flex;gap:3px;background:#f8fafc;border:1px solid #dbe1e9;border-radius:10px 10px 0 0;padding:7px}
+.rich-toolbar button{background:transparent;border:0;border-radius:5px;padding:5px 9px;font-size:16px;font-weight:700;cursor:pointer;color:#334155}
+.rich-toolbar button:hover{background:#e2e8f0}
+.rich-body{border:1px solid #dbe1e9;border-top:0;border-radius:0 0 10px 10px;min-height:180px;padding:12px;font-size:13px;line-height:1.7;background:#fff;white-space:pre-wrap;overflow-wrap:anywhere;outline:none}
+.rich-body:focus{border-color:#93c5fd}
+.rich-body:empty:before{content:attr(data-placeholder);color:#94a3b8}
+.rich-body b,.rich-body strong{font-weight:700}
+.status-error{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px;font-size:11px;margin-top:8px}
+.status-success{color:#166534;font-size:11px;margin-top:8px}
+#previewBody.rich-preview{white-space:normal}
+#previewBody.rich-preview p{margin:0 0 12px}
+#previewBody.rich-preview div{margin:0 0 7px}
+#previewBody.rich-preview ul,#previewBody.rich-preview ol{padding-left:22px}
+
 </style>
 </head>
 <body>
@@ -67,6 +89,30 @@ textarea{resize:vertical;min-height:76px;line-height:1.55}
  <div class="field"><label for="docHeading">Document heading</label><input id="docHeading" value="INTERNSHIP / TRAINING CERTIFICATE"></div>
  <div class="field"><label for="introText">Main paragraph</label><textarea id="introText"></textarea></div>
  <div class="field"><label for="extraContent">Additional content</label><textarea id="extraContent"></textarea><div class="help">Use separate paragraphs. Text appears in the A4 preview.</div></div>
+
+ <section class="certificate-panel" id="certificatePanel">
+  <div class="group-title">Certificate content</div>
+  <div class="field"><label for="certificateNo">Certificate No. (optional)</label><input id="certificateNo" placeholder="e.g. AKS/EXP/2026/012"></div>
+  <div class="field"><label for="gender">Gender</label><select id="gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+  <div class="field"><label for="staffId">Staff ID (optional)</label><input id="staffId" placeholder="Staff ID"></div>
+  <div class="row"><div class="field"><label for="joinDate">Date of joining</label><input id="joinDate" type="date"></div><div class="field"><label for="leaveDate">Date of leaving</label><input id="leaveDate" type="date"></div></div>
+  <label class="toggle-row"><input id="stillWorking" type="checkbox"> Still working here (show "till date")</label>
+  <div class="segment"><button type="button" class="active" id="defaultMode">Default Template</button><button type="button" id="aiMode">AI Generated</button></div>
+  <div class="field"><label for="remarks">Additional remarks (optional)</label><textarea id="remarks" placeholder="Any extra line to add to the certificate"></textarea></div>
+  <div class="ai-box" id="aiBox" hidden>
+    <div class="field"><label for="aiContext">Extra context for AI (optional)</label><textarea id="aiContext" placeholder="Additional factual information for the certificate"></textarea></div>
+    <button class="btn" type="button" id="generateBtn">✦ Generate with AI</button>
+    <div class="help">Generates a draft using the details above. Review and edit before printing.</div>
+  </div>
+  <div class="field"><label for="richBody">Certificate body (editable)</label>
+   <div class="rich-toolbar"><button type="button" data-cmd="bold" title="Bold"><b>B</b></button><button type="button" data-cmd="italic" title="Italic"><i>I</i></button><button type="button" data-cmd="underline" title="Underline"><u>U</u></button><button type="button" data-cmd="removeFormat" title="Clear formatting">Tₓ</button></div>
+   <div id="richBody" class="rich-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Enter certificate text, or click Generate with AI"></div>
+  </div>
+  <div class="group-title">Signatory</div>
+  <div class="field"><label for="signatoryName">Signatory name</label><input id="signatoryName" placeholder="e.g. Centre Manager"></div>
+  <div class="field"><label for="signatoryRole">Signatory designation</label><input id="signatoryRole" placeholder="e.g. Akshaya Centre Manager"></div>
+  <div id="certificateStatus" role="status" aria-live="polite"></div>
+ </section>
  <div class="group-title">Centre details</div>
  <div class="field"><label for="centreName">Centre name</label><input id="centreName" value="AKSHAYA E CENTRE"></div>
  <div class="field"><label for="centrePlace">Place / Code</label><input id="centrePlace" value="POOKIPARAMB (Code: MPM250)"></div>
@@ -134,6 +180,142 @@ $("pdfBtn").addEventListener("click",async()=>{const btn=$("pdfBtn");if(!window.
 function loadDraft(){try{const d=JSON.parse(localStorage.getItem("akshaya_document_creator_draft")||"null");if(!d)return;$("docType").value=d.type||"training";activePreset=$("docType").value;$("docDate").value=d.date||todayISO();$("docHeading").value=d.heading||"";$("introText").value=d.intro||"";$("extraContent").value=d.extra||"";$("centreName").value=d.centre||$("centreName").value;$("centrePlace").value=d.place||$("centrePlace").value;$("centreContact").value=d.contact||$("centreContact").value;values=d.values||{}}catch(e){}}
 loadDraft();renderFields();updatePreview();
 })();
+</script>
+<script>
+
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const body=$("richBody");
+let mode="default", manual=false, generation=false;
+const certificateTypes=new Set(["training","experience","character"]);
+function values(){
+ const fields={};
+ document.querySelectorAll("[data-field]").forEach(el=>fields[el.dataset.field]=el.value);
+ return {
+  ...fields, certificateNumber:$("certificateNo").value, gender:$("gender").value,
+  staffId:$("staffId").value, joiningDate:$("joinDate").value,
+  leavingDate:$("stillWorking").checked?"till date":$("leaveDate").value,
+  remarks:$("remarks").value, centre:$("centreName").value,
+ };
+}
+function plain(text){return String(text||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function safeRich(node){
+ const allowed=new Set(["B","STRONG","I","EM","U","P","DIV","BR","UL","OL","LI"]);
+ const output=document.createElement("div");
+ function append(parent,source){
+  source.childNodes.forEach(child=>{
+   if(child.nodeType===Node.TEXT_NODE){parent.append(document.createTextNode(child.textContent||""));return}
+   if(child.nodeType!==Node.ELEMENT_NODE)return;
+   const tag=child.tagName.toUpperCase();
+   if(["SCRIPT","STYLE","IFRAME","SVG","IMG","OBJECT","FORM"].includes(tag))return;
+   const dest=allowed.has(tag)?document.createElement(tag.toLowerCase()):document.createDocumentFragment();
+   append(dest,child);parent.append(dest);
+  });
+ }
+ append(output,node);
+ return output.innerHTML;
+}
+function setBody(text){body.innerHTML=plain(text).replace(/\n/g,"<br>");manual=false;renderPreview()}
+function defaultText(){
+ const f=values(),name=f.name||"[Name]",role=f.role||f.department||"[Designation]";
+ const from=f.joiningDate||f.from||"[Date of joining]";
+ const to=f.leavingDate||f.to||"[Date of leaving]";
+ const centre=f.centre||"AKSHAYA E CENTRE";
+ const type=$("docType").value;
+ if(type==="experience")return "This is to certify that "+name+" has worked as "+role+" at "+centre+" from "+from+" to "+to+".\n\nDuring the period of association with us, we found the employee to be sincere, hardworking and disciplined.\n\nWe wish them success in future endeavours.";
+ if(type==="training")return "This is to certify that "+name+" has successfully completed internship/training in "+role+" at "+centre+" from "+from+" to "+to+".\n\nThe trainee demonstrated sincerity, dedication and interest in learning throughout the training period.\n\nWe wish them success in future endeavours.";
+ return $("introText").value;
+}
+function renderPreview(){
+ const preview=$("previewBody");
+ if(!certificateTypes.has($("docType").value))return;
+ preview.classList.add("rich-preview");
+ const clean=safeRich(body);
+ preview.innerHTML=clean+(($("remarks").value||"").trim()?"<p>"+plain($("remarks").value)+"</p>":"");
+ $("previewSignLeft").textContent="";
+ $("previewSignRight").textContent=[$("signatoryName").value,$("signatoryRole").value].filter(Boolean).join(" — ")||"Authorised Signatory";
+}
+function update(){
+ const enabled=certificateTypes.has($("docType").value);
+ $("certificatePanel").hidden=!enabled;
+ if(!enabled){$("previewBody").classList.remove("rich-preview");return}
+ $("leaveDate").disabled=$("stillWorking").checked;
+ if(mode==="default"&&!manual&&!generation)setBody(defaultText());
+ else renderPreview();
+}
+function setMode(next){
+ mode=next;
+ $("defaultMode").classList.toggle("active",mode==="default");
+ $("aiMode").classList.toggle("active",mode==="ai");
+ $("aiBox").hidden=mode!=="ai";
+ if(mode==="default"){manual=false;setBody(defaultText())}
+ else renderPreview();
+}
+$("defaultMode").addEventListener("click",()=>setMode("default"));
+$("aiMode").addEventListener("click",()=>setMode("ai"));
+["certificateNo","gender","staffId","joinDate","leaveDate","stillWorking","remarks","signatoryName","signatoryRole"].forEach(id=>{
+ $(id).addEventListener("input",update);$(id).addEventListener("change",update);
+});
+document.querySelectorAll("[data-cmd]").forEach(btn=>btn.addEventListener("click",()=>{
+ body.focus();document.execCommand(btn.dataset.cmd,false,null);manual=true;renderPreview();
+}));
+body.addEventListener("input",()=>{manual=true;renderPreview()});
+body.addEventListener("paste",event=>{
+ event.preventDefault();
+ const text=event.clipboardData?.getData("text/plain")||"";
+ document.execCommand("insertText",false,text);
+});
+$("generateBtn").addEventListener("click",async()=>{
+ if(generation)return;
+ const f=values();
+ if(!f.name?.trim()){show("Please enter the name first.",true);return}
+ generation=true;$("generateBtn").disabled=true;$("generateBtn").textContent="Generating…";show("");
+ try{
+  const response=await fetch("/api/document-creator/generate",{
+   method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({type:$("docType").selectedOptions[0].text,language:$("malayalamBtn").classList.contains("active")?"ml":"en",fields:f,context:$("aiContext").value,remarks:$("remarks").value})
+  });
+  const result=await response.json();
+  if(!response.ok||!result.success)throw new Error(result.message||"AI generation failed");
+  setBody(result.content);manual=true;show("AI draft ready. Please review all details before printing.");
+ }catch(error){show(error instanceof Error?error.message:"AI generation failed",true)}
+ finally{generation=false;$("generateBtn").disabled=false;$("generateBtn").textContent="✦ Generate with AI"}
+});
+function show(message,error=false){const el=$("certificateStatus");el.className=message?(error?"status-error":"status-success"):"";el.textContent=message}
+const observer=new MutationObserver(()=>{});
+const type=$("docType");
+type.addEventListener("change",()=>{manual=false;setMode("default");setTimeout(update,0)});
+document.querySelectorAll("[data-field]").forEach(el=>el.addEventListener("input",()=>setTimeout(update,0)));
+const dynamic=$("dynamicFields");
+dynamic.addEventListener("input",()=>setTimeout(update,0));
+$("centreName").addEventListener("input",()=>setTimeout(update,0));
+$("englishBtn").addEventListener("click",()=>update());
+$("malayalamBtn").addEventListener("click",()=>update());
+const save=$("saveBtn");
+save.addEventListener("click",()=>{try{
+ localStorage.setItem("akshaya_document_creator_certificate",JSON.stringify({
+  type:type.value,mode,html:safeRich(body),manual,
+  certificateNo:$("certificateNo").value,gender:$("gender").value,staffId:$("staffId").value,
+  joinDate:$("joinDate").value,leaveDate:$("leaveDate").value,stillWorking:$("stillWorking").checked,
+  remarks:$("remarks").value,signatoryName:$("signatoryName").value,signatoryRole:$("signatoryRole").value
+ }));
+}catch(e){console.error("Certificate draft save failed",e)}});
+try{
+ const draft=JSON.parse(localStorage.getItem("akshaya_document_creator_certificate")||"null");
+ if(draft&&draft.type===type.value){
+  ["certificateNo","gender","staffId","joinDate","leaveDate","remarks","signatoryName","signatoryRole"].forEach(k=>{if(draft[k]!=null)$(k).value=draft[k]});
+  $("stillWorking").checked=!!draft.stillWorking;
+  if(draft.html){const temp=document.createElement("div");temp.innerHTML=draft.html;body.innerHTML=safeRich(temp);manual=!!draft.manual;mode=draft.mode==="ai"?"ai":"default"}
+ }
+}catch(e){console.error("Certificate draft load failed",e)}
+$("defaultMode").classList.toggle("active",mode==="default");
+$("aiMode").classList.toggle("active",mode==="ai");
+$("aiBox").hidden=mode!=="ai";
+if(!body.textContent?.trim())setBody(defaultText());
+update();
+})();
+
 </script>
 </body>
 </html>
