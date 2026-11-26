@@ -389,8 +389,10 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
               <label className="block text-xs text-slate-600">Copies
                 <input type="number" min="1" max={maxCopies} value={fillSheet?maxCopies:copies} onChange={e=>{setFillSheet(false);setCopies(Math.max(1,Math.min(maxCopies,Number(e.target.value)||1)))}} className="mt-1 h-10 w-full rounded-lg border px-3"/>
               </label>
-              <label className="block text-xs text-slate-600">Sheet margin (mm)<input type="number" min="0" max="30" value={margin} onChange={e=>setMargin(Math.max(0,Math.min(30,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-3"/></label>
-              <label className="block text-xs text-slate-600">Border / spacing (mm)<input type="number" min="0" max="10" step="0.5" value={border} onChange={e=>setBorder(Math.max(0,Math.min(10,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-3"/></label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block text-xs text-slate-600">Border / spacing (mm)<input type="number" min="0" max="10" step="0.5" value={border} onChange={e=>setBorder(Math.max(0,Math.min(10,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-3"/></label>
+                <label className="block text-xs text-slate-600">Sheet margin (mm)<input type="number" min="0" max="30" value={margin} onChange={e=>setMargin(Math.max(0,Math.min(30,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-3"/></label>
+              </div>
               <label className="block text-xs text-slate-600">Cutting guidelines<select value={guides} onChange={e=>setGuides(e.target.value as Guides)} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="dashed">Dashed outline</option><option value="corners">Corner crop marks</option><option value="none">None</option></select></label>
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={fillSheet} onChange={e=>setFillSheet(e.target.checked)}/> Fill the whole sheet ({maxCopies} photos)</label>
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={outline} onChange={e=>setOutline(e.target.checked)}/> Photo border outline</label>
