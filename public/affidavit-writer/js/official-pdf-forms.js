@@ -31,7 +31,7 @@ var ncl={
 id:"nc",
 title:"Non-Creamy Layer Affidavit (2023)",
 sub:"ഒറിജിനൽ 2023 സത്യവാങ്മൂലം · PDF background with editable fields",
-pages:[{img:"/affidavit-writer/ncl-affidavit-2023.png",w:595.3,h:841.9}],
+pages:[{img:"/affidavit-writer/ncl-affidavit-2023.png",w:612,h:792}],
 sections:[
 {title:"അപേക്ഷകന്റെ വിവരങ്ങൾ",fields:nclFields.slice(0,9)},
 {title:"പിതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return /^ncl_f_/.test(f.id);})},
@@ -40,9 +40,12 @@ sections:[
 ],
 place:(function(){
 var P=[];
-var d=function(f,x0,x1,y,o){P.push(dot(f,0,x0,x1,y,o));};
-var c=function(f,x0,x1,y0,y1,o){P.push(cell(f,0,x0,x1,y0,y1,o));};
-var ct=function(f,x0,x1,y0,y1,o){P.push(cellTop(f,0,x0,x1,y0,y1,o));};
+// Original uploaded PDF is US Letter ratio (612 × 792 pt), not A4.
+// Scale the previously measured overlay coordinates to the exact source-page dimensions.
+var sx=612/595.3, sy=792/841.9;
+var d=function(f,x0,x1,y,o){P.push(dot(f,0,x0*sx,x1*sx,y*sy,o));};
+var c=function(f,x0,x1,y0,y1,o){P.push(cell(f,0,x0*sx,x1*sx,y0*sy,y1*sy,o));};
+var ct=function(f,x0,x1,y0,y1,o){P.push(cellTop(f,0,x0*sx,x1*sx,y0*sy,y1*sy,o));};
 // Introductory dotted lines on the original scanned PDF.
 d("ncl_taluk",90.7,213.2,136.4,{size:9});
 d("ncl_village",255.9,378.8,136.4,{size:9});
