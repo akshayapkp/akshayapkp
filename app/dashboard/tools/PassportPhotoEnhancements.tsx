@@ -106,7 +106,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
   const [customSize, setCustomSize] = useState(false);
   const [dpi, setDpi] = useState(300);
   const [paper, setPaper] = useState<Paper>("A4");
-  const [orientation, setOrientation] = useState<Orientation>("best");
+  const [orientation, setOrientation] = useState<Orientation>("landscape");
   const [copies, setCopies] = useState(1);
   const [fillSheet, setFillSheet] = useState(false);
   const [placement, setPlacement] = useState<"top-left" | "center">("top-left");
@@ -131,7 +131,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
 
   const resetPrintSettings = useCallback(() => {
     setPaper("A4");
-    setOrientation("best");
+    setOrientation("landscape");
     setCopies(1);
     setFillSheet(false);
     setPlacement("top-left");
@@ -147,7 +147,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
       if (saved) {
         const value = JSON.parse(saved) as Record<string, unknown>;
         if (value.paper === "A4" || value.paper === "6x4") setPaper(value.paper);
-        if (value.orientation === "best" || value.orientation === "portrait" || value.orientation === "landscape") setOrientation(value.orientation);
+        if (value.orientation === "best" || value.orientation === "portrait" || value.orientation === "landscape") setOrientation(value.paper === "A4" ? "landscape" : value.orientation);
         if (typeof value.copies === "number" && Number.isFinite(value.copies)) setCopies(Math.max(1, Math.min(100, Math.floor(value.copies))));
         if (typeof value.fillSheet === "boolean") setFillSheet(value.fillSheet);
         if (value.placement === "top-left" || value.placement === "center") setPlacement(value.placement);
@@ -441,21 +441,30 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
                 <button type="button" onClick={resetPrintSettings} className="shrink-0 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50">Reset defaults</button>
               </div>
               <label className="block text-xs font-semibold text-slate-600">Paper size
-                <select value={paper} onChange={e=>{setPaper(e.target.value as Paper);setCopies(1)}} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="A4">A4 (210 × 297 mm)</option><option value="6x4">6 × 4 inch (152.4 × 101.6 mm)</option></select>
+                <select value={paper} onChange={e=>{const nextPaper=e.target.value as Paper;setPaper(nextPaper);setOrientation("landscape");setCopies(1)}} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="A4">A4 (210 × 297 mm)</option><option value="6x4">6 × 4 inch (152.4 × 101.6 mm)</option></select>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <label className="text-xs text-slate-600">Orientation<select value={orientation} onChange={e=>setOrientation(e.target.value as Orientation)} className="mt-1 h-9 w-full rounded-lg border px-2"><option value="best">Best Fit</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label>
                 <label className="text-xs text-slate-600">Placement<select value={placement} onChange={e=>setPlacement(e.target.value as "top-left"|"center")} className="mt-1 h-9 w-full rounded-lg border px-2"><option value="top-left">Top-left</option><option value="center">Centred</option></select></label>
               </div>
-              <label className="block text-xs text-slate-600">Copies
-                <input type="number" min="1" max={maxCopies} value={fillSheet?maxCopies:copies} onChange={e=>{setFillSheet(false);setCopies(Math.max(1,Math.min(maxCopies,Number(e.target.value)||1)))}} className="mt-1 h-10 w-full rounded-lg border px-3"/>
-              </label>
+              <div className="space-y-2">
+                <span className="block text-xs font-semibold text-slate-600">Number of copies</span>
+                <div className="grid grid-cols-[48px_minmax(0,1fr)_48px] items-center gap-2">
+                  <button type="button" aria-label="Decrease copies" disabled={fillSheet || copies <= 1} onClick={()=>setCopies(v=>Math.max(1,v-1))} className="h-11 rounded-xl border border-indigo-200 bg-indigo-50 text-xl font-bold text-indigo-700 disabled:opacity-40">−</button>
+                  <div className="flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-bold text-slate-800">{fillSheet ? maxCopies : copies}</div>
+                  <button type="button" aria-label="Increase copies" disabled={fillSheet || copies >= maxCopies} onClick={()=>setCopies(v=>Math.min(maxCopies,v+1))} className="h-11 rounded-xl border border-indigo-200 bg-indigo-50 text-xl font-bold text-indigo-700 disabled:opacity-40">+</button>
+                </div>
+                <button type="button" onClick={()=>setFillSheet(v=>!v)} className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold transition ${fillSheet ? "border-indigo-300 bg-indigo-50 text-indigo-800" : "border-slate-200 bg-white text-slate-700 hover:bg-indigo-50"}`}>
+                  <span className={`flex h-5 w-5 items-center justify-center rounded border text-xs ${fillSheet ? "border-indigo-600 bg-indigo-600 text-white" : "border-slate-300 bg-white"}`}>{fillSheet ? "✓" : ""}</span>
+                  Fill one whole sheet
+                </button>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="block text-xs text-slate-600">Border / spacing (mm)<input type="number" min="0" max="10" step="0.5" value={border} onChange={e=>setBorder(Math.max(0,Math.min(10,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-3"/></label>
                 <label className="block text-xs text-slate-600">Sheet margin (mm)<input type="number" min="0" max="30" value={margin} onChange={e=>setMargin(Math.max(0,Math.min(30,Number(e.target.value)||0)))} className="mt-1 h-10 w-full rounded-lg border px-3"/></label>
               </div>
               <label className="block text-xs text-slate-600">Cutting guidelines<select value={guides} onChange={e=>setGuides(e.target.value as Guides)} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="dashed">Dashed outline</option><option value="corners">Corner crop marks</option><option value="none">None</option></select></label>
-              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={fillSheet} onChange={e=>setFillSheet(e.target.checked)}/> Fill the whole sheet ({maxCopies} photos)</label>
+              <p className="rounded-lg bg-indigo-50/70 p-2 text-xs text-slate-600">Fill sheet capacity: {maxCopies} photos</p>
               <label className="flex items-center gap-2 text-xs font-semibold text-slate-700"><input type="checkbox" checked={outline} onChange={e=>setOutline(e.target.checked)}/> Photo border outline</label>
               <p className="rounded-lg bg-indigo-50/70 p-2 text-xs text-slate-600">Preview capacity: {maxCopies} photos · {cols} columns × {rows} rows</p>
               <div className="grid grid-cols-2 gap-2">
