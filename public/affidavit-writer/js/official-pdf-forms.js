@@ -31,7 +31,8 @@ var ncl={
 id:"nc",
 title:"Non-Creamy Layer Affidavit (2023)",
 sub:"ഒറിജിനൽ 2023 സത്യവാങ്മൂലം · PDF background with editable fields",
-pages:[{img:"/affidavit-writer/ncl-affidavit-2023.png?v=20261126-3",w:595.3,h:841.9}],
+paperSize:"letter",
+pages:[{img:"/affidavit-writer/ncl-affidavit-2023.png?v=20261126-4",w:612,h:792}],
 sections:[
 {title:"അപേക്ഷകന്റെ വിവരങ്ങൾ",fields:nclFields.slice(0,9)},
 {title:"പിതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return /^ncl_f_/.test(f.id);})},
@@ -46,20 +47,20 @@ var d=function(f,x0,x1,y,o){P.push(dot(f,0,x0,x1,y,o));};
 var c=function(f,x0,x1,y0,y1,o){P.push(cell(f,0,x0,x1,y0,y1,o));};
 var ct=function(f,x0,x1,y0,y1,o){P.push(cellTop(f,0,x0,x1,y0,y1,o));};
 // Introductory dotted lines on the original scanned PDF.
-d("ncl_taluk",90.7,213.2,136.4,{size:9});
-d("ncl_village",255.9,378.8,136.4,{size:9});
-d("ncl_address",90.7,401.6,149.3,{size:8.5});
+d("ncl_taluk",93.6,218.9,103.2,{size:9});
+d("ncl_village",262.0,386.0,103.2,{size:9});
+d("ncl_address",93.6,413.3,135.6,{size:8.5});
 // Applicant name and age.
-d("ncl_applicant",90.7,312.1,162.3,{size:9});
-d("ncl_age",368.7,417.4,162.3,{size:9});
+d("ncl_applicant",177.0,321.0,153.6,{size:9});
+d("ncl_age",368.7,417.4,153.6,{size:9});
 // Applicant table, rows 1–5, original answer column.
-[[185.8,203.3],[203.3,220.9],[220.9,255.1],[255.1,272.6],[272.6,290.1]].forEach(function(r,i){
-ct(["ncl_purpose","ncl_applicant","ncl_birth","ncl_caste","ncl_occupation"][i],304.8,523.7,r[0],r[1],{size:9,pad:3,multi:i===2});
+[[154.3,172.3],[172.3,190.3],[190.3,225.6],[225.6,243.6],[243.6,261.6]].forEach(function(r,i){
+ct(["ncl_purpose","ncl_applicant","ncl_birth","ncl_caste","ncl_occupation"][i],268.1,538.6,r[0],r[1],{size:9,pad:3,multi:i===2});
 });
 // Parent table, two original columns: Father and Mother.
 var rows=[
-[303.9,315.6],[315.6,332.9],[332.9,367.5],[367.5,384.8],[384.8,402.5],[402.5,420.0],
-[420.0,488.4],[488.4,511.4],[511.4,534.5],[534.5,557.8],[557.8,580.8],[580.8,604.0],[604.0,627.1]
+[287.8,305.5],[305.5,341.0],[341.0,359.0],[359.0,377.0],[377.0,395.0],[395.0,465.4],
+[465.4,489.1],[489.1,512.9],[512.9,536.6],[536.6,560.4],[560.4,584.2],[584.2,607.9]
 ];
 var fields=[
 ["ncl_f_name","ncl_m_name"],["ncl_f_birth","ncl_m_birth"],["ncl_f_caste","ncl_m_caste"],
@@ -68,11 +69,11 @@ var fields=[
 ["ncl_f_income","ncl_m_income"],["ncl_f_tax","ncl_m_tax"],["ncl_f_land","ncl_m_land"]
 ];
 // Table rows 6–17; the tall occupation row uses top-aligned wrapping.
-rows.slice(1).forEach(function(r,i){
+rows.forEach(function(r,i){
 var pair=fields[i];
 var opts={size:8.6,pad:3,multi:[1,5,6,7,8,10,11].indexOf(i)!==-1};
-ct(pair[0],260.7,395.3,r[0],r[1],opts);
-ct(pair[1],395.3,523.7,r[0],r[1],opts);
+ct(pair[0],268.1,406.6,r[0],r[1],opts);
+ct(pair[1],406.6,538.6,r[0],r[1],opts);
 });
 // Place, declarant name and signature are typed beside their printed labels.
 d("ncl_place",118,225,678.0,{size:9});
