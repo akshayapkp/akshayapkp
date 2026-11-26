@@ -32,11 +32,22 @@ function loadImage(src: string) {
   });
 }
 function fitDraw(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number, zoom: number, offsetX: number, offsetY: number) {
-  const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight) * zoom;
+  // Fill the complete passport-photo frame. "contain" sizing can leave thin
+  // white strips at the top/bottom when source and target ratios differ by
+  // even a fraction of a pixel after DPI rounding.
+  const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight) * zoom;
   const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
   ctx.save();
-  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
-  ctx.drawImage(img, x + (w - dw) / 2 + (offsetX / 100) * w, y + (h - dh) / 2 + (offsetY / 100) * h, dw, dh);
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  ctx.drawImage(
+    img,
+    x + (w - dw) / 2 + (offsetX / 100) * w,
+    y + (h - dh) / 2 + (offsetY / 100) * h,
+    dw,
+    dh
+  );
   ctx.restore();
 }
 function crc32(bytes: Uint8Array) {
@@ -96,7 +107,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
   const [dpi, setDpi] = useState(300);
   const [paper, setPaper] = useState<Paper>("A4");
   const [orientation, setOrientation] = useState<Orientation>("best");
-  const [copies, setCopies] = useState(8);
+  const [copies, setCopies] = useState(1);
   const [fillSheet, setFillSheet] = useState(false);
   const [placement, setPlacement] = useState<"top-left" | "center">("top-left");
   const [margin, setMargin] = useState(3);
