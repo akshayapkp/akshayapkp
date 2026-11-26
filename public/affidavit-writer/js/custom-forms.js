@@ -43,14 +43,14 @@
         if (!allowed.has(tag)) { out.appendChild(clean(child)); return; }
         var el = document.createElement(tag.toLowerCase());
         var cls = child.getAttribute("class") || "";
-        var safeClasses = cls.split(/\\s+/).filter(function (name) {
+        var safeClasses = cls.split(/\s+/).filter(function (name) {
           return /^ql-align-(center|right|justify)$/.test(name) || /^ql-indent-[1-8]$/.test(name);
         });
         if (safeClasses.length) el.setAttribute("class", safeClasses.join(" "));
         var style = child.getAttribute("style") || "";
-        var align = /text-align\\s*:\\s*(center|right|justify)/i.exec(style);
-        var color = /(?:^|;)\\s*color\\s*:\\s*(#[0-9a-f]{3,8}|rgb\\([0-9\\s,%.]+\\)|[a-z]{3,20})\\s*(?:;|$)/i.exec(style);
-        var bg = /(?:^|;)\\s*background-color\\s*:\\s*(#[0-9a-f]{3,8}|rgb\\([0-9\\s,%.]+\\)|[a-z]{3,20})\\s*(?:;|$)/i.exec(style);
+        var align = /text-align\s*:\s*(center|right|justify)/i.exec(style);
+        var color = /(?:^|;)\s*color\s*:\s*(#[0-9a-f]{3,8}|rgb\([0-9\s,%.]+\)|[a-z]{3,20})\s*(?:;|$)/i.exec(style);
+        var bg = /(?:^|;)\s*background-color\s*:\s*(#[0-9a-f]{3,8}|rgb\([0-9\s,%.]+\)|[a-z]{3,20})\s*(?:;|$)/i.exec(style);
         var safeStyle = [];
         if (align) safeStyle.push("text-align:" + align[1].toLowerCase());
         if (color) safeStyle.push("color:" + color[1]);
@@ -81,10 +81,11 @@
     var raw = String(value || "");
     if (!raw) return "";
     // Older templates stored plain text; preserve their original line breaks.
-    if (!/<[a-z][\\s\\S]*>/i.test(raw)) return escapeHtml(raw).replace(/\\n/g, "<br>");
+    if (!/<[a-z][\s\S]*>/i.test(raw)) return escapeHtml(raw).replace(/\n/g, "<br>");
     return sanitizeRichHtml(raw);
   }
-\n  function makeDefinition(form) {
+
+  function makeDefinition(form) {
     var fields = (form.fields || []).map(function (field, index) {
       return {
         id: field.id || ("custom_field_" + index),
