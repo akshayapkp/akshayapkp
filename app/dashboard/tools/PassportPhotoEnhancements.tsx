@@ -127,6 +127,52 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
   const [autoAdjusted, setAutoAdjusted] = useState(false);
   const [activeTab, setActiveTab] = useState<"photo" | "sheet">("photo");
 
+  const [printSettingsLoaded, setPrintSettingsLoaded] = useState(false);
+
+  const resetPrintSettings = useCallback(() => {
+    setPaper("A4");
+    setOrientation("best");
+    setCopies(1);
+    setFillSheet(false);
+    setPlacement("top-left");
+    setMargin(3);
+    setBorder(2);
+    setGuides("dashed");
+    setOutline(true);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("pkp-passport-print-settings-v1");
+      if (saved) {
+        const value = JSON.parse(saved) as Record<string, unknown>;
+        if (value.paper === "A4" || value.paper === "6x4") setPaper(value.paper);
+        if (value.orientation === "best" || value.orientation === "portrait" || value.orientation === "landscape") setOrientation(value.orientation);
+        if (typeof value.copies === "number" && Number.isFinite(value.copies)) setCopies(Math.max(1, Math.min(100, Math.floor(value.copies))));
+        if (typeof value.fillSheet === "boolean") setFillSheet(value.fillSheet);
+        if (value.placement === "top-left" || value.placement === "center") setPlacement(value.placement);
+        if (typeof value.margin === "number" && Number.isFinite(value.margin)) setMargin(Math.max(0, Math.min(30, value.margin)));
+        if (typeof value.border === "number" && Number.isFinite(value.border)) setBorder(Math.max(0, Math.min(10, value.border)));
+        if (value.guides === "dashed" || value.guides === "corners" || value.guides === "none") setGuides(value.guides);
+        if (typeof value.outline === "boolean") setOutline(value.outline);
+      }
+    } catch {
+      // Ignore invalid or unavailable browser storage and keep safe defaults.
+    }
+    setPrintSettingsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!printSettingsLoaded) return;
+    try {
+      localStorage.setItem("pkp-passport-print-settings-v1", JSON.stringify({
+        paper, orientation, copies, fillSheet, placement, margin, border, guides, outline,
+      }));
+    } catch {
+      // Printing remains usable even if browser storage is unavailable.
+    }
+  }, [printSettingsLoaded, paper, orientation, copies, fillSheet, placement, margin, border, guides, outline]);
+
   const selectedSize = customSize
     ? { label: "Custom", width: Math.max(10, Math.min(100, Number(customW) || 35)), height: Math.max(10, Math.min(100, Number(customH) || 45)) }
     : SIZES[sizeIndex];
@@ -390,6 +436,10 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
           <details open className="group rounded-2xl border border-indigo-100 bg-white/85">
             <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-900">Print as multiple photos <span className="text-indigo-400 transition group-open:rotate-180">⌄</span></summary>
             <div className="space-y-3 border-t border-indigo-50 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] text-slate-500">Your last print settings are saved automatically for the next photo.</p>
+                <button type="button" onClick={resetPrintSettings} className="shrink-0 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50">Reset defaults</button>
+              </div>
               <label className="block text-xs font-semibold text-slate-600">Paper size
                 <select value={paper} onChange={e=>{setPaper(e.target.value as Paper);setCopies(1)}} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="A4">A4 (210 × 297 mm)</option><option value="6x4">6 × 4 inch (152.4 × 101.6 mm)</option></select>
               </label>
