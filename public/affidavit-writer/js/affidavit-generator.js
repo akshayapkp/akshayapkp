@@ -8,6 +8,12 @@
 	var A4W = 793.7; // A4 width in CSS px
 	var A4H = 1122.5;
 
+	function paperMetrics(def) {
+		return def && def.paperSize === 'letter' ?
+			{ w: 816, h: 1056, format: 'letter', mmw: 215.9, mmh: 279.4 } :
+			{ w: A4W, h: A4H, format: 'a4', mmw: 210, mmh: 297 };
+	}
+
 	var $ = function(id) { return document.getElementById(id); };
 	var esc = function(s) {
 		return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
@@ -584,8 +590,8 @@
 	}
 
 	function sheetsHtml() {
-		var def = state.def;
-		return def.pages.map(function(pg, i) { return pageHtml(def, i, A4W / pg.w); }).join('');
+		var def = state.def, pm = paperMetrics(def);
+		return def.pages.map(function(pg, i) { return pageHtml(def, i, pm.w / pg.w); }).join('');
 	}
 
 	var FONT_LINK = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600&family=Noto+Sans:wght@400;500;600&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap';
@@ -603,9 +609,10 @@
 		return Promise.resolve();
 	}
 
-	function printCss() {
-		return '@page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff}' +
-			'.afp{position:relative;width:' + A4W + 'px;height:' + A4H + 'px;overflow:hidden;page-break-after:always;break-after:page;background:#fff}' +
+	function printCss(def) {
+		var pm = paperMetrics(def);
+		return '@page{size:' + pm.format + ';margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff}' +
+			'.afp{position:relative;width:' + pm.w + 'px;height:' + pm.h + 'px;overflow:hidden;page-break-after:always;break-after:page;background:#fff}' +
 			'.afp:last-child{page-break-after:auto;break-after:auto}' + stageCss();
 	}
 
@@ -658,13 +665,14 @@
 		var pages = Array.prototype.slice.call(stage.querySelectorAll('.afp'));
 		loadFonts().then(function() { return waitAssets(stage); }).then(function() {
 			fitAll(stage);
-			var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', compress: true });
+			var pm = paperMetrics(state.def);
+			var doc = new window.jspdf.jsPDF({ unit: 'mm', format: pm.format, compress: true });
 			var chain = Promise.resolve();
 			pages.forEach(function(pg, i) {
 				chain = chain.then(function() {
 					return html2canvas(pg, { scale: 2.5, backgroundColor: '#ffffff', useCORS: true, logging: false }).then(function(cv) {
 						if (i > 0) doc.addPage();
-						doc.addImage(cv.toDataURL('image/jpeg', 0.93), 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+						doc.addImage(cv.toDataURL('image/jpeg', 0.93), 'JPEG', 0, 0, pm.mmw, pm.mmh, undefined, 'FAST');
 					});
 				});
 			});
