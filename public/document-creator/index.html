@@ -38,7 +38,7 @@ textarea{resize:vertical;min-height:76px;line-height:1.55}
 .logo-icon{width:55px;height:42px;background:#2d3192;clip-path:polygon(50% 0,100% 36%,91% 100%,9% 100%,0 36%);display:grid;place-items:center;color:#fff;font-size:18px;margin:auto auto 3px}
 .center-head{text-align:center;font-family:Inter,sans-serif}.center-head h1{font-size:clamp(15px,2vw,25px);line-height:1.1;margin:0;color:#24218b;font-weight:800;letter-spacing:.02em}.center-head .place{font-size:clamp(10px,1.2vw,15px);color:#29258c;margin-top:6px}.center-head .contact{font-size:9px;color:#475569;margin-top:7px;line-height:1.5}
 .mission{width:54px;height:70px;margin:auto;background:#f4c542;border-radius:9px 9px 15px 15px;display:grid;place-items:center;color:#164e63;font:800 8px Inter,sans-serif;text-align:center;padding:4px}
-.doc-date{text-align:right;font-size:10px;margin:20px 0 24px}
+.certificate-number{text-align:left;font-size:10px;margin:12px 0 -12px;color:#222}.doc-date{text-align:right;font-size:10px;margin:20px 0 24px}
 .doc-title{text-align:center;font:800 16px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin:0 auto 24px;padding-bottom:5px;border-bottom:1px solid #222;width:max-content;max-width:100%}
 .doc-body{font-size:14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;min-height:410px}
 .doc-body p{margin:0 0 12px}.doc-body ul,.doc-body ol{padding-left:24px}.doc-sign{display:flex;justify-content:space-between;gap:25px;margin-top:46px;font-size:12px}.sign-block{width:42%;border-top:1px solid #333;text-align:center;padding-top:7px}
@@ -62,6 +62,9 @@ textarea{resize:vertical;min-height:76px;line-height:1.55}
 .rich-body{border:1px solid #dbe1e9;border-top:0;border-radius:0 0 10px 10px;min-height:180px;padding:12px;font-size:13px;line-height:1.7;background:#fff;white-space:pre-wrap;overflow-wrap:anywhere;outline:none}
 .rich-body:focus{border-color:#93c5fd}
 .rich-body:empty:before{content:attr(data-placeholder);color:#94a3b8}
+.rich-body,.rich-preview{font-family:"Tinos","Noto Sans Malayalam",serif}
+.certificate-number:empty{display:none}
+#certificatePanel[hidden],#genericDocumentContent[hidden]{display:none!important}
 .rich-body b,.rich-body strong{font-weight:700}
 .status-error{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:10px;font-size:11px;margin-top:8px}
 .status-success{color:#166534;font-size:11px;margin-top:8px}
@@ -85,12 +88,15 @@ textarea{resize:vertical;min-height:76px;line-height:1.55}
  <div class="field"><label>Content language</label><div class="lang-switch"><button type="button" id="englishBtn" class="active">English</button><button type="button" id="malayalamBtn">മലയാളം</button></div></div>
  <div class="group-title" id="detailsTitle">Internship / Training Certificate Details</div>
  <div class="field-list" id="dynamicFields"></div>
- <div class="group-title">Document content</div>
+ <div id="genericDocumentContent">
+<div class="group-title">Document content</div>
  <div class="field"><label for="docHeading">Document heading</label><input id="docHeading" value="INTERNSHIP / TRAINING CERTIFICATE"></div>
  <div class="field"><label for="introText">Main paragraph</label><textarea id="introText"></textarea></div>
  <div class="field"><label for="extraContent">Additional content</label><textarea id="extraContent"></textarea><div class="help">Use separate paragraphs. Text appears in the A4 preview.</div></div>
 
- <section class="certificate-panel" id="certificatePanel">
+ </div>
+
+<section class="certificate-panel" id="certificatePanel">
   <div class="group-title">Certificate content</div>
   <div class="field"><label for="certificateNo">Certificate No. (optional)</label><input id="certificateNo" placeholder="e.g. AKS/EXP/2026/012"></div>
   <div class="field"><label for="gender">Gender</label><select id="gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
@@ -124,7 +130,7 @@ textarea{resize:vertical;min-height:76px;line-height:1.55}
  <header class="topbar"><div><div class="top-title">Document Creator</div><div class="top-sub">Create, preview, print or download A4 documents</div></div><div class="actions"><button class="btn" id="backBtn">← Back to Dashboard</button><button class="btn" id="saveBtn">Save Draft</button><button class="btn" id="printBtn">▣ Print</button><button class="btn primary" id="pdfBtn">⇩ Download PDF</button></div></header>
  <section class="workspace"><div class="paper-wrap"><article class="paper" id="paper">
  <div class="doc-header" id="docHeader"><div class="logo-box"><div><div class="logo-icon">✦</div>അക്ഷയ</div></div><div class="center-head"><h1 id="previewCentre">AKSHAYA E CENTRE</h1><div class="place" id="previewPlace">POOKIPARAMB (Code: MPM250)</div><div class="contact" id="previewContact">Mob: 9447906582 | Email: akshayapkp@gmail.com<br>Pookiparamb - 676508</div></div><div class="mission">KERALA<br>STATE<br>MISSION</div></div>
- <div class="doc-date" id="previewDate"></div><h2 class="doc-title" id="previewHeading">INTERNSHIP / TRAINING CERTIFICATE</h2>
+ <div class="certificate-number" id="previewCertificateNo"></div><div class="doc-date" id="previewDate"></div><h2 class="doc-title" id="previewHeading">INTERNSHIP / TRAINING CERTIFICATE</h2>
  <div class="watermark">AKSHAYA</div><div class="doc-body" id="previewBody"></div>
  <div class="doc-sign"><div class="sign-block" id="previewSignLeft">Applicant / Declarant</div><div class="sign-block" id="previewSignRight">Authorised Signatory</div></div><div class="footer-line" id="footerLine"></div>
  </article></div></section>
@@ -138,7 +144,7 @@ textarea{resize:vertical;min-height:76px;line-height:1.55}
 const $=id=>document.getElementById(id);
 const presets={
  training:{title:"Internship / Training Certificate Details",heading:"INTERNSHIP / TRAINING CERTIFICATE",fields:[["name","Name of intern / trainee","Full name"],["institution","Institution / college (optional)","Institution name"],["department","Department / role","e.g. Computer Science"],["from","Training from",""],["to","Training to",""]],intro:v=>"This is to certify that Mr. "+(v.name||"[Name]")+" has successfully completed internship/training in "+(v.department||"[Department / role]")+" at "+($("centreName").value||"AKSHAYA POOKIPARAMB")+" from "+(v.from||"[From]")+" to "+(v.to||"[To]")+".\n\nHe demonstrated sincerity, dedication and a keen interest in learning throughout the training period.\n\nWe wish him success in all future endeavours."},
- experience:{title:"Experience Certificate Details",heading:"EXPERIENCE CERTIFICATE",fields:[["name","Employee name","Full name"],["role","Designation / role",""],["from","Working from",""],["to","Working to",""],["conduct","Work conduct","Satisfactory"]],intro:v=>"This is to certify that "+(v.name||"[Employee name]")+" worked with "+($("centreName").value||"AKSHAYA POOKIPARAMB")+" as "+(v.role||"[Designation]")+" from "+(v.from||"[From]")+" to "+(v.to||"[To]")+".\n\nDuring this period, the employee's conduct and performance were "+(v.conduct||"satisfactory")+". We wish them success in future endeavours."},
+ experience:{title:"Experience Certificate Details",heading:"EXPERIENCE CERTIFICATE",fields:[["name","Name of staff","Full name"],["role","Designation",""],["from","Working from",""],["to","Working to",""],["conduct","Work conduct","Satisfactory"]],intro:v=>"This is to certify that "+(v.name||"[Employee name]")+" worked with "+($("centreName").value||"AKSHAYA POOKIPARAMB")+" as "+(v.role||"[Designation]")+" from "+(v.from||"[From]")+" to "+(v.to||"[To]")+".\n\nDuring this period, the employee's conduct and performance were "+(v.conduct||"satisfactory")+". We wish them success in future endeavours."},
  character:{title:"Character Certificate Details",heading:"CHARACTER CERTIFICATE",fields:[["name","Applicant name","Full name"],["address","Address",""],["purpose","Purpose",""],["period","Known since / period",""]],intro:v=>"This is to certify that "+(v.name||"[Applicant name]")+", residing at "+(v.address||"[Address]")+", is known to this centre "+(v.period||"[period]")+".\n\nTo the best of our knowledge, the applicant's character and conduct are satisfactory. This certificate is issued for "+(v.purpose||"[purpose]")+". "},
  affidavit:{title:"General Affidavit Details",heading:"AFFIDAVIT",fields:[["name","Deponent name","Full name"],["age","Age",""],["address","Full address",""],["subject","Subject / purpose",""],["statement","Declaration statement",""]],intro:v=>"I, "+(v.name||"[Deponent name]")+", aged "+(v.age||"[Age]")+", residing at "+(v.address||"[Address]")+", do hereby solemnly affirm and state as follows:\n\n"+(v.statement||"[Declaration statement]")+"\n\nI hereby declare that the above statements are true and correct to the best of my knowledge and belief."},
  request:{title:"Request Letter Details",heading:"REQUEST LETTER",fields:[["to","To / Office",""],["name","Applicant name",""],["address","Address",""],["subject","Subject",""],["purpose","Request details",""]],intro:v=>"To,\n"+(v.to||"[Office / Authority]")+"\n\nFrom: "+(v.name||"[Applicant name]")+"\n"+(v.address||"[Address]")+"\n\nSubject: "+(v.subject||"[Subject]")+"\n\nRespected Sir / Madam,\n\n"+(v.purpose||"[Write your request here]")+"\n\nThank you.\nYours faithfully,"},
@@ -219,13 +225,28 @@ function safeRich(node){
 function setBody(text){body.innerHTML=plain(text).replace(/\n/g,"<br>");manual=false;renderPreview()}
 function defaultText(){
  const f=values(),name=f.name||"[Name]",role=f.role||f.department||"[Designation]";
- const from=f.joiningDate||f.from||"[Date of joining]";
- const to=f.leavingDate||f.to||"[Date of leaving]";
+ const from=formatDate(f.joiningDate||f.from)||"[Date of joining]";
+ const to=f.leavingDate==="till date"?"till date":(formatDate(f.leavingDate||f.to)||"[Date of leaving]");
  const centre=f.centre||"AKSHAYA E CENTRE";
+ const gender=f.gender||"Male";
+ const honorific=gender==="Female"?"Ms.":gender==="Other"?"Mx.":"Mr.";
+ const staffId=f.staffId?" (Staff ID: "+f.staffId+")":"";
+ const malayalam=$("malayalamBtn").classList.contains("active");
  const type=$("docType").value;
- if(type==="experience")return "This is to certify that "+name+" has worked as "+role+" at "+centre+" from "+from+" to "+to+".\n\nDuring the period of association with us, we found the employee to be sincere, hardworking and disciplined.\n\nWe wish them success in future endeavours.";
- if(type==="training")return "This is to certify that "+name+" has successfully completed internship/training in "+role+" at "+centre+" from "+from+" to "+to+".\n\nThe trainee demonstrated sincerity, dedication and interest in learning throughout the training period.\n\nWe wish them success in future endeavours.";
+ if(type==="experience"){
+  if(malayalam)return "ഇതുവഴി സാക്ഷ്യപ്പെടുത്തുന്നതെന്തെന്നാൽ "+name+" "+centre+" ൽ "+role+" ആയി "+from+" മുതൽ "+to+" വരെ ജോലി ചെയ്തിട്ടുണ്ട്."+staffId+"\n\nജോലി ചെയ്ത കാലയളവിൽ അവരുടെ പെരുമാറ്റവും ജോലിയോടുള്ള സമീപനവും തൃപ്തികരവും ഉത്തരവാദിത്തപരവുമായിരുന്നു.\n\nഭാവിയിലെ എല്ലാ പ്രവർത്തനങ്ങൾക്കും വിജയാശംസകൾ നേരുന്നു.";
+  return "This is to certify that "+honorific+" "+name+" has worked as "+role+" at "+centre+" from "+from+" to "+to+"."+staffId+"\n\nDuring the period of association with us, "+(gender==="Female"?"she":"the employee")+" was sincere, hardworking, disciplined and responsible in the performance of assigned duties.\n\nWe wish "+(gender==="Female"?"her":"them")+" success in all future endeavours.";
+ }
+ if(type==="training"){
+  if(malayalam)return "ഇതുവഴി സാക്ഷ്യപ്പെടുത്തുന്നതെന്തെന്നാൽ "+name+" "+centre+" ൽ "+role+" വിഭാഗത്തിൽ "+from+" മുതൽ "+to+" വരെ പരിശീലനം വിജയകരമായി പൂർത്തിയാക്കിയിരിക്കുന്നു."+staffId+"\n\nപരിശീലന കാലയളവിൽ ആത്മാർത്ഥതയും അർപ്പണബോധവും പഠിക്കാനുള്ള താൽപര്യവും പ്രകടിപ്പിച്ചു.\n\nഭാവിയിലെ എല്ലാ പ്രവർത്തനങ്ങൾക്കും വിജയാശംസകൾ.";
+  return "This is to certify that "+honorific+" "+name+" has successfully completed internship/training in "+role+" at "+centre+" from "+from+" to "+to+"."+staffId+"\n\nThe trainee demonstrated sincerity, dedication and a keen interest in learning throughout the training period.\n\nWe wish "+(gender==="Female"?"her":"them")+" success in future endeavours.";
+ }
  return $("introText").value;
+}
+function formatDate(value){
+ if(!value)return "";
+ const d=new Date(value+"T00:00:00");
+ return Number.isNaN(d.getTime())?value:d.toLocaleDateString("en-GB");
 }
 function renderPreview(){
  const preview=$("previewBody");
@@ -233,13 +254,18 @@ function renderPreview(){
  preview.classList.add("rich-preview");
  const clean=safeRich(body);
  preview.innerHTML=clean+(($("remarks").value||"").trim()?"<p>"+plain($("remarks").value)+"</p>":"");
+ const number=$("certificateNo").value.trim();
+ $("previewCertificateNo").textContent=number?"Certificate No.: "+number:"";
  $("previewSignLeft").textContent="";
- $("previewSignRight").textContent=[$("signatoryName").value,$("signatoryRole").value].filter(Boolean).join(" — ")||"Authorised Signatory";
+ const signName=$("signatoryName").value.trim();
+ const signRole=$("signatoryRole").value.trim();
+ $("previewSignRight").textContent=[signName,signRole].filter(Boolean).join(" — ")||"Authorised Signatory";
 }
 function update(){
  const enabled=certificateTypes.has($("docType").value);
  $("certificatePanel").hidden=!enabled;
- if(!enabled){$("previewBody").classList.remove("rich-preview");return}
+ $("genericDocumentContent").hidden=enabled;
+ if(!enabled){$("previewBody").classList.remove("rich-preview");$("previewCertificateNo").textContent="";return}
  $("leaveDate").disabled=$("stillWorking").checked;
  if(mode==="default"&&!manual&&!generation)setBody(defaultText());
  else renderPreview();
@@ -290,6 +316,12 @@ document.querySelectorAll("[data-field]").forEach(el=>el.addEventListener("input
 const dynamic=$("dynamicFields");
 dynamic.addEventListener("input",()=>setTimeout(update,0));
 $("centreName").addEventListener("input",()=>setTimeout(update,0));
+["letterhead","docDate","showDate","docHeading","introText","extraContent","signLeft","signRight"].forEach(id=>{
+ $(id).addEventListener("input",()=>setTimeout(update,0));
+ $(id).addEventListener("change",()=>setTimeout(update,0));
+});
+$("centrePlace").addEventListener("input",()=>setTimeout(renderPreview,0));
+$("centreContact").addEventListener("input",()=>setTimeout(renderPreview,0));
 $("englishBtn").addEventListener("click",()=>update());
 $("malayalamBtn").addEventListener("click",()=>update());
 const save=$("saveBtn");
