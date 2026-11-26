@@ -42,7 +42,7 @@ var ct=function(f,x0,x1,y0,y1,o){P.push(cellTop(f,0,x0,x1,y0,y1,o));};
 // Introductory dotted lines on the original scanned PDF.
 d("ncl_taluk",90.7,213.2,136.4,{size:9});
 d("ncl_village",255.9,378.8,136.4,{size:9});
-d("ncl_address",90.7,401.6,149.3,{size:8.5,multi:true});
+d("ncl_address",90.7,401.6,149.3,{size:8.5});
 // Applicant name and age.
 d("ncl_applicant",90.7,312.1,162.3,{size:9});
 d("ncl_age",368.7,417.4,162.3,{size:9});
