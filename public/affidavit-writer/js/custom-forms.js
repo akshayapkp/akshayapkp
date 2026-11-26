@@ -40,6 +40,20 @@
         if (child.nodeType === 3) { out.appendChild(document.createTextNode(child.nodeValue || "")); return; }
         if (child.nodeType !== 1) return;
         var tag = child.tagName;
+        if (tag === "OL") {
+          var currentType = null, currentList = null;
+          Array.prototype.forEach.call(child.children, function (item) {
+            if (item.tagName !== "LI") return;
+            var listType = item.getAttribute("data-list") === "bullet" ? "UL" : "OL";
+            if (listType !== currentType) {
+              currentType = listType;
+              currentList = document.createElement(listType.toLowerCase());
+              out.appendChild(currentList);
+            }
+            currentList.appendChild(clean(item));
+          });
+          return;
+        }
         if (!allowed.has(tag)) { out.appendChild(clean(child)); return; }
         var el = document.createElement(tag.toLowerCase());
         var cls = child.getAttribute("class") || "";
@@ -257,7 +271,7 @@
       if (!fields.length) { alert("Add at least one field."); return; }
       var id = "custom_" + Date.now();
       var forms = readForms();
-      forms.push({ id: id, title: title, sub: overlay.querySelector("#cfSub").value.trim(), declaration: (declarationEditor ? sanitizeRichHtml(declarationEditor.root.innerHTML) : (declarationFallback ? escapeHtml(declarationFallback.value.trim()).replace(/\n/g, "<br>") : "")), fields: fields });
+      forms.push({ id: id, title: title, sub: overlay.querySelector("#cfSub").value.trim(), declaration: (declarationEditor ? (declarationEditor.getText().trim() ? sanitizeRichHtml(declarationEditor.root.innerHTML) : "") : (declarationFallback ? escapeHtml(declarationFallback.value.trim()).replace(/\n/g, "<br>") : "")), fields: fields });
       var newForm = forms[forms.length - 1];
       overlay.querySelector("#cfSave").disabled = true;
       overlay.querySelector("#cfSave").textContent = "Saving…";
