@@ -502,7 +502,7 @@
 		if (def.render) return htmlPage(def, pi, k);
 		var pg = def.pages[pi];
 		var h = '<div class="afp" style="width:' + (pg.w * k).toFixed(2) + 'px;height:' + (pg.h * k).toFixed(2) + 'px">' +
-			'<img class="afbg" src="' + esc(CFG.base + pg.img) + '" alt="" draggable="false">';
+			'<img class="afbg" src="' + esc(pg.img.charAt(0) === '/' ? pg.img : CFG.base + pg.img) + '" alt="" draggable="false">';
 		def.place.forEach(function(p) {
 			if (p.p !== pi) return;
 			if (p.table) {
