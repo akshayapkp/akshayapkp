@@ -165,23 +165,58 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
     const pw = mmPx(selectedSize.width, dpi), ph = mmPx(selectedSize.height, dpi);
     const gap = mmPx(border, dpi), mx = mmPx(margin, dpi), my = mx;
     const count = Math.min(actualCopies, maxCopies);
-    const usedCols = Math.max(1, Math.min(cols, count));
-    const usedRows = Math.ceil(count / usedCols);
+    // Fill each column from top to bottom before moving to the next column.
+    // This matches the requested print order: 1 above 2, then 3 above 4.
+    const usedRows = Math.max(1, Math.min(rows, count));
+    const usedCols = Math.max(1, Math.min(cols, Math.ceil(count / usedRows)));
     const totalW = usedCols * pw + Math.max(0, usedCols - 1) * gap;
     const totalH = usedRows * ph + Math.max(0, usedRows - 1) * gap;
     const startX = placement === "center" ? Math.max(mx, Math.round((w - totalW) / 2)) : mx;
     const startY = placement === "center" ? Math.max(my, Math.round((h - totalH) / 2)) : my;
     for (let i = 0; i < count; i++) {
-      const x = startX + (i % usedCols) * (pw + gap);
-      const y = startY + Math.floor(i / usedCols) * (ph + gap);
+      const column = Math.floor(i / usedRows);
+      const row = i % usedRows;
+      const x = startX + column * (pw + gap);
+      const y = startY + row * (ph + gap);
       ctx.drawImage(photo, x, y, pw, ph);
-      if (outline) { ctx.strokeStyle = "#222222"; ctx.lineWidth = Math.max(1, mmPx(0.15, dpi)); ctx.strokeRect(x, y, pw, ph); }
-      if (guides === "dashed") { ctx.save(); ctx.strokeStyle = "#555555"; ctx.lineWidth = Math.max(1, mmPx(0.12, dpi)); ctx.setLineDash([mmPx(1, dpi), mmPx(1, dpi)]); ctx.strokeRect(x, y, pw, ph); ctx.restore(); }
-      if (guides === "corners") {
-        const len = mmPx(2, dpi), lw = Math.max(1, mmPx(0.15, dpi)); ctx.strokeStyle = "#111111"; ctx.lineWidth = lw;
-        for (const [cx, cy, sx, sy] of [[x,y,1,1],[x+pw,y,-1,1],[x,y+ph,1,-1],[x+pw,y+ph,-1,-1]] as number[][]) {
-          ctx.beginPath(); ctx.moveTo(cx, cy + sy * len); ctx.lineTo(cx, cy); ctx.lineTo(cx + sx * len, cy); ctx.stroke();
+
+      if (outline) {
+        ctx.save();
+        ctx.strokeStyle = "#222222";
+        ctx.lineWidth = Math.max(1, mmPx(0.15, dpi));
+        ctx.strokeRect(x, y, pw, ph);
+        ctx.restore();
+      }
+
+      // Cutting guides are placed in the whitespace between photos, not over the photo.
+      if (guides !== "none") {
+        const halfGap = Math.max(1, Math.round(gap / 2));
+        const left = Math.max(0, x - halfGap);
+        const top = Math.max(0, y - halfGap);
+        const right = Math.min(w, x + pw + halfGap);
+        const bottom = Math.min(h, y + ph + halfGap);
+        const lw = Math.max(1, mmPx(0.15, dpi));
+        ctx.save();
+        ctx.strokeStyle = "#343434";
+        ctx.lineWidth = lw;
+        if (guides === "dashed") {
+          ctx.setLineDash([mmPx(1.2, dpi), mmPx(0.8, dpi)]);
+          ctx.strokeRect(left, top, right - left, bottom - top);
+        } else {
+          const len = Math.max(mmPx(2, dpi), mmPx(2.5, dpi));
+          const marks: number[][] = [
+            [left, top, 1, 1], [right, top, -1, 1],
+            [left, bottom, 1, -1], [right, bottom, -1, -1],
+          ];
+          for (const [cx, cy, sx, sy] of marks) {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + sy * len);
+            ctx.lineTo(cx, cy);
+            ctx.lineTo(cx + sx * len, cy);
+            ctx.stroke();
+          }
         }
+        ctx.restore();
       }
     }
     return canvas;
@@ -342,7 +377,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
           </details>
 
           <details open className="group rounded-2xl border border-indigo-100 bg-white/85">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-900">Print Settings <span className="text-indigo-400 transition group-open:rotate-180">⌄</span></summary>
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-900">Print as multiple photos <span className="text-indigo-400 transition group-open:rotate-180">⌄</span></summary>
             <div className="space-y-3 border-t border-indigo-50 p-4">
               <label className="block text-xs font-semibold text-slate-600">Paper size
                 <select value={paper} onChange={e=>{setPaper(e.target.value as Paper);setCopies(1)}} className="mt-1 h-10 w-full rounded-lg border px-2"><option value="A4">A4 (210 × 297 mm)</option><option value="6x4">6 × 4 inch (152.4 × 101.6 mm)</option></select>
