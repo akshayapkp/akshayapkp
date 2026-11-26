@@ -1315,6 +1315,13 @@ export default function DashboardPage() {
       isInternal: true,
     },
     {
+      id: "document-creator",
+      name: "Document Creator",
+      url: "/document-creator",
+      bgColor: "from-indigo-600 to-blue-700",
+      isInternal: true,
+    },
+    {
       id: "aadhaar-gazette",
       name: "Aadhaar Gazette",
       url: "/tools/aadhaar-gazette",
