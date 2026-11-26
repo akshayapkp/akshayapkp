@@ -115,7 +115,7 @@
             (value ? escapeHtml(value).replace(/\n/g, "<br>") : "&#8203;") +
             '</span></div>';
         }).join("");
-        var declaration = escapeHtml(form.declaration || "").replace(/\n/g, "<br>");
+        var declaration = declarationHtml(form.declaration || "");
         return '<div class="custom-aff"><h2>' + escapeHtml(form.title) + '</h2>' +
           (form.sub ? '<p class="sub">' + escapeHtml(form.sub) + '</p>' : "") +
           (declaration ? '<div class="decl">' + declaration + '</div>' : "") +
@@ -181,6 +181,31 @@
       '<div style="display:flex;justify-content:flex-end;gap:9px;margin-top:18px"><button id="cfCancel" type="button" style="border:1px solid #cbd5e1;background:#fff;border-radius:9px;padding:10px 15px;cursor:pointer">Cancel</button><button id="cfSave" type="button" style="border:0;background:#2563eb;color:#fff;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer">Save form</button></div>' +
       '<p style="font-size:11px;color:#64748b;margin:12px 0 0">Note: custom form templates are stored in this browser only in this first version. Do not enter Aadhaar numbers or sensitive customer details into the template builder.</p></div>';
     document.body.appendChild(overlay);
+    var declarationEditor = null;
+    var declarationFallback = null;
+    var editorHost = overlay.querySelector("#cfDeclarationEditor");
+    if (window.Quill) {
+      declarationEditor = new window.Quill(editorHost, {
+        theme: "snow",
+        placeholder: "Type the declaration text that should appear on the printed form…",
+        modules: { toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ["bold", "italic", "underline", "strike"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          [{ align: [] }],
+          ["link"],
+          ["clean"]
+        ] }
+      });
+      declarationEditor.root.setAttribute("aria-label", "Declaration rich text editor");
+      declarationEditor.root.setAttribute("lang", "ml");
+    } else {
+      declarationFallback = document.createElement("textarea");
+      declarationFallback.rows = 5;
+      declarationFallback.placeholder = "Type the declaration text that should appear on the printed form";
+      declarationFallback.style.cssText = "width:100%;padding:11px;border:0;resize:vertical;font:inherit";
+      editorHost.appendChild(declarationFallback);
+    }
     var fieldRoot = overlay.querySelector("#cfFields");
     var savedRoot = overlay.querySelector("#cfSaved");
     function addField(label, type) {
@@ -231,7 +256,7 @@
       if (!fields.length) { alert("Add at least one field."); return; }
       var id = "custom_" + Date.now();
       var forms = readForms();
-      forms.push({ id: id, title: title, sub: overlay.querySelector("#cfSub").value.trim(), declaration: (declarationEditor ? sanitizeRichHtml(declarationEditor.root.innerHTML) : (declarationFallback ? escapeHtml(declarationFallback.value.trim()).replace(/\\n/g, "<br>") : "")), fields: fields });
+      forms.push({ id: id, title: title, sub: overlay.querySelector("#cfSub").value.trim(), declaration: (declarationEditor ? sanitizeRichHtml(declarationEditor.root.innerHTML) : (declarationFallback ? escapeHtml(declarationFallback.value.trim()).replace(/\n/g, "<br>") : "")), fields: fields });
       var newForm = forms[forms.length - 1];
       overlay.querySelector("#cfSave").disabled = true;
       overlay.querySelector("#cfSave").textContent = "Saving…";
