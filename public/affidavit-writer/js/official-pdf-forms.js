@@ -25,7 +25,7 @@ F("ncl_f_retired","റിട്ടയർ ചെയ്യുമ്പോൾ വ�
 F("ncl_f_income","തൊഴിലിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (പിതാവ്)","text",{ml:false}),F("ncl_m_income","തൊഴിലിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (മാതാവ്)","text",{ml:false}),
 F("ncl_f_tax","ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ (അച്ഛൻ)"),F("ncl_m_tax","ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ (അമ്മ)"),
 F("ncl_f_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം (പിതാവ്)"),F("ncl_m_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം (മാതാവ്)"),
-F("ncl_place","സ്ഥലം"),F("ncl_declarant","പേര്"),F("ncl_signature","ഒപ്പ്")
+F("ncl_date","തീയതി","date",{ml:false}),F("ncl_declarant","പേര്"),F("ncl_signature","ഒപ്പ്")
 ];
 var ncl={
 id:"nc",
@@ -41,7 +41,7 @@ sections:[
 ],
 place:(function(){
 var P=[];
-// Match the existing Non-Creamy Layer Certificate renderer: A4-sized page
+// Use the exact original Letter-sized PDF page geometry; field coordinates are measured in page points.
 // with coordinates measured directly against the supplied page background.
 var d=function(f,x0,x1,y,o){P.push(dot(f,0,x0,x1,y,o));};
 var c=function(f,x0,x1,y0,y1,o){P.push(cell(f,0,x0,x1,y0,y1,o));};
@@ -76,9 +76,9 @@ ct(pair[0],268.1,406.6,r[0],r[1],opts);
 ct(pair[1],406.6,538.6,r[0],r[1],opts);
 });
 // Place, declarant name and signature are typed beside their printed labels.
-d("ncl_place",118,225,678.0,{size:9});
-d("ncl_declarant",282,420,678.0,{size:9});
-d("ncl_signature",444,523,678.0,{size:9});
+d("ncl_date",92,220,660.0,{size:9});
+d("ncl_declarant",264,405,660.0,{size:9});
+d("ncl_signature",432,530,660.0,{size:9});
 return P;
 })()
 };
