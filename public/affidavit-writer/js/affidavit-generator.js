@@ -636,7 +636,7 @@
 		document.body.appendChild(fr);
 		var d = fr.contentWindow.document;
 		d.open();
-		d.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(state.def.title) + '</title><link href="' + FONT_LINK + '" rel="stylesheet"><style>' + printCss() + '</style></head><body>' + sheetsHtml() + '</body></html>');
+		d.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(state.def.title) + '</title><link href="' + FONT_LINK + '" rel="stylesheet"><style>' + printCss(state.def) + '</style></head><body>' + sheetsHtml() + '</body></html>');
 		d.close();
 		var go = function() {
 			fitAll(d.body);
