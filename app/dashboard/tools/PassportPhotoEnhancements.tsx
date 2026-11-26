@@ -271,16 +271,16 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0">
           <div className="mb-3 flex items-center gap-1 rounded-xl bg-slate-100 p-1">
-            <button type="button" onClick={() => setActiveTab("photo")} className={\`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition \${activeTab === "photo" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}\`}>Photo</button>
-            <button type="button" onClick={() => setActiveTab("sheet")} className={\`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition \${activeTab === "sheet" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}\`}>Print Sheet</button>
+            <button type="button" onClick={() => setActiveTab("photo")} className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition ${activeTab === "photo" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>Photo</button>
+            <button type="button" onClick={() => setActiveTab("sheet")} className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-bold transition ${activeTab === "sheet" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"}`}>Print Sheet</button>
           </div>
           <div className="flex min-h-[520px] flex-col rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-black text-slate-800">{activeTab === "photo" ? "Photo Preview" : "Print Sheet Preview"}</h3>
-                <p className="mt-1 text-xs text-slate-500">{activeTab === "photo" ? \`\${selectedSize.width} × \${selectedSize.height} mm · \${dpi} DPI\` : \`\${paper} · \${pageW.toFixed(1)} × \${pageH.toFixed(1)} mm · \${actualCopies} copies\`}</p>
+                <p className="mt-1 text-xs text-slate-500">{activeTab === "photo" ? `${selectedSize.width} × ${selectedSize.height} mm · ${dpi} DPI` : `${paper} · ${pageW.toFixed(1)} × ${pageH.toFixed(1)} mm · ${actualCopies} copies`}</p>
               </div>
-              {image && <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-600">{activeTab === "photo" ? "Single photo" : \`Fits up to \${maxCopies} photos\`}</span>}
+              {image && <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-600">{activeTab === "photo" ? "Single photo" : `Fits up to ${maxCopies} photos`}</span>}
             </div>
             {image ? (
               <div className="flex flex-1 items-center justify-center overflow-auto rounded-xl bg-slate-200 p-3">
@@ -336,7 +336,7 @@ export default function PassportPhotoEnhancements({ image, onCropAgain, onChoose
           <details className="group rounded-2xl border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 text-sm font-black text-slate-800">Colour & Light <span className="text-slate-400 transition group-open:rotate-180">⌄</span></summary>
             <div className="space-y-3 border-t border-slate-100 p-4">
-              <div className="grid grid-cols-4 gap-2">{BACKGROUNDS.map(([label,value])=><button type="button" key={value} onClick={()=>setBg(value)} className={\`rounded-lg border p-2 text-[10px] font-semibold \${bg===value?"border-slate-800 ring-2 ring-slate-200":"border-slate-200"}\`}><span className="mx-auto mb-1 block h-6 w-6 rounded-full border" style={{background:value==="transparent"?"repeating-conic-gradient(#ddd 0% 25%, white 0% 50%) 50% / 8px 8px":value==="original"?"linear-gradient(135deg,#d1d5db,#fff)":value}}/>{label}</button>)}</div>
+              <div className="grid grid-cols-4 gap-2">{BACKGROUNDS.map(([label,value])=><button type="button" key={value} onClick={()=>setBg(value)} className={`rounded-lg border p-2 text-[10px] font-semibold ${bg===value?"border-slate-800 ring-2 ring-slate-200":"border-slate-200"}`}><span className="mx-auto mb-1 block h-6 w-6 rounded-full border" style={{background:value==="transparent"?"repeating-conic-gradient(#ddd 0% 25%, white 0% 50%) 50% / 8px 8px":value==="original"?"linear-gradient(135deg,#d1d5db,#fff)":value}}/>{label}</button>)}</div>
               <div className="flex items-center gap-2 text-xs"><input type="color" value={customHex} onChange={e=>{setCustomHex(e.target.value);setBg("custom")}}/><span>Custom background</span><code>{customHex}</code></div>
               <div className="flex items-center justify-between"><span className="text-xs font-bold text-slate-700">Basic auto adjust</span><button type="button" onClick={autoAdjust} className="text-xs font-bold text-blue-700">Auto Adjust</button></div>
               {([[ "Brightness",brightness,setBrightness,0,200 ],[ "Contrast",contrast,setContrast,0,200 ],[ "Shadows",shadows,setShadows,-50,50 ],[ "Saturation",saturation,setSaturation,0,200 ],[ "Warmth",warmth,setWarmth,-100,100 ]] as const).map(([label,value,setter,min,max])=><label key={label} className="block text-xs text-slate-600">{label}<input type="range" min={min} max={max} value={value} onChange={e=>setter(Number(e.target.value))} className="mt-1.5 w-full accent-slate-800"/><span className="float-right text-[10px]">{value}</span></label>)}
