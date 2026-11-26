@@ -21,59 +21,60 @@ F("ncl_f_retired","റിട്ടയർ ചെയ്യുമ്പോൾ വ�
 F("ncl_f_income","തൊഴിലിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (പിതാവ്)","text",{ml:false}),F("ncl_m_income","തൊഴിലിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (മാതാവ്)","text",{ml:false}),
 F("ncl_f_tax","ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ (അച്ഛൻ)"),F("ncl_m_tax","ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ (അമ്മ)"),
 F("ncl_f_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം (പിതാവ്)"),F("ncl_m_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം (മാതാവ്)"),
-F("ncl_place","സ്ഥലം"),F("ncl_date","തീയതി","date",{ml:false}),F("ncl_declarant","പേര്"),F("ncl_signature","ഒപ്പ്")
+F("ncl_place","സ്ഥലം"),F("ncl_declarant","പേര്"),F("ncl_signature","ഒപ്പ്")
 ];
 var ncl={
 id:"nc",
 title:"Non-Creamy Layer Affidavit (2023)",
-sub:"നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം",
-pages:[A],
+sub:"ഒറിജിനൽ 2023 സത്യവാങ്മൂലം · PDF background with editable fields",
+pages:[{img:"ncl-affidavit-2023.png",w:595.3,h:841.9}],
 sections:[
 {title:"അപേക്ഷകന്റെ വിവരങ്ങൾ",fields:nclFields.slice(0,9)},
 {title:"പിതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return /^ncl_f_/.test(f.id);})},
 {title:"മാതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return /^ncl_m_/.test(f.id);})},
-{title:"സ്ഥലം, തീയതി, ഒപ്പ്",fields:nclFields.slice(-4)}
+{title:"സ്ഥലം, പേര്, ഒപ്പ്",fields:nclFields.slice(-3)}
 ],
-render:function(_,v){
-var topRows=[
-[1,"സർട്ടിഫിക്കറ്റിന് എന്ത് ആവശ്യത്തിന്","ncl_purpose"],
-[2,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ പേര്","ncl_applicant"],
-[3,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാൾ ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്","ncl_birth"],
-[4,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ മതം, ജാതി","ncl_caste"],
-[5,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ തൊഴിൽ","ncl_occupation"]
-].map(function(r){return '<tr><td class="nnum">'+r[0]+'</td><td>'+r[1]+'</td><td class="nanswer">'+V(v,r[2])+'</td></tr>';}).join("");
-var parentRows=[
-[6,"പേര്","ncl_f_name","ncl_m_name"],
-[7,"ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്","ncl_f_birth","ncl_m_birth"],
-[8,"മതം, ജാതി","ncl_f_caste","ncl_m_caste"],
-[9,"മരണപ്പെട്ടയാളാണോ (അച്ഛൻ / അമ്മ)","ncl_f_deceased","ncl_m_deceased"],
-[10,"പെൻഷണറാണോ (അച്ഛൻ / അമ്മ)","ncl_f_pension","ncl_m_pension"],
-[11,"തൊഴിൽ (സർക്കാർ - പൊതുമേഖല - ഡിഫൻസ് ജീവനക്കാരാണെങ്കിൽ വകുപ്പും തസ്തികയും രേഖപ്പെടുത്തുക. മരണപ്പെട്ടയാളാണെങ്കിൽ അവസാനമായി വഹിച്ച തസ്തിക, വകുപ്പ് രേഖപ്പെടുത്തുക.)","ncl_f_job","ncl_m_job"],
-[12,"തൊഴിൽ ചെയ്യുന്നത് സ്വദേശത്തോ വിദേശത്തോ","ncl_f_location","ncl_m_location"],
-[13,"ജീവനക്കാരൻ / പെൻഷണറാണെങ്കിൽ സർവീസിൽ പ്രവേശിച്ച തസ്തിക, വകുപ്പ്","ncl_f_service","ncl_m_service"],
-[14,"പെൻഷണറാണെങ്കിൽ റിട്ടയർ ചെയ്യുമ്പോൾ വഹിച്ച തസ്തിക, വകുപ്പ്","ncl_f_retired","ncl_m_retired"],
-[15,"തൊഴിലിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (രൂപ)","ncl_f_income","ncl_m_income"],
-[16,"ഇൻകം ടാക്സ് റിട്ടേൺ ഫയൽ ചെയ്യുന്നയാളാണോ (അച്ഛൻ / അമ്മ)","ncl_f_tax","ncl_m_tax"],
-[17,"എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം","ncl_f_land","ncl_m_land"]
-].map(function(r){return '<tr class="nr'+r[0]+'"><td class="nnum">'+r[0]+'</td><td>'+r[1]+'</td><td class="nanswer">'+V(v,r[2])+'</td><td class="nanswer">'+V(v,r[3])+'</td></tr>';}).join("");
-return '<div class="official ncl2023">'+
-'<h1>നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന അപേക്ഷയിൽ</h1>'+
-'<h2>വില്ലേജ് ഓഫീസർ മുമ്പാകെ സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം</h2>'+
-'<p class="note">(എല്ലാ കോളങ്ങളും പൂരിപ്പിക്കുക. വിവരങ്ങൾ ഇല്ലാത്ത കോളങ്ങളിൽ ഇല്ല എന്ന് രേഖപ്പെടുത്തുക. 18 വയസ്സ് പൂർത്തിയാകാത്ത അപേക്ഷകരാണെങ്കിൽ രക്ഷാകർത്താവ് സത്യവാങ്മൂലം സമർപ്പിക്കുക)</p>'+
-'<div class="nintro">'+B(v,"ncl_taluk",75)+' താലൂക്കിൽ '+B(v,"ncl_village",75)+' വില്ലേജിൽ '+B(v,"ncl_address",125)+' എന്ന മേൽവിലാസത്തിൽ താമസിക്കുന്ന '+B(v,"ncl_applicant",105)+' എന്ന ഞാൻ ('+B(v,"ncl_age",32)+' വയസ്സ്) വില്ലേജ് ഓഫീസർ മുമ്പാകെ സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം.</div>'+
-'<table class="ntop"><tbody>'+topRows+'</tbody></table>'+
-'<div class="nheading">സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ മാതാപിതാക്കളുടെ വിവരങ്ങൾ</div>'+
-'<table class="nparents"><thead><tr><th class="nnum"></th><th></th><th>പിതാവ്</th><th>മാതാവ്</th></tr></thead><tbody>'+parentRows+'</tbody></table>'+
-'<p class="ndecl">മേൽ പ്രസ്താവിച്ച വിവരങ്ങൾ എന്റെ അറിവിലും ഉത്തമവിശ്വാസത്തിലും ശരിയാണെന്ന് സത്യവാങ്മൂലം ചെയ്യുന്നു. വസ്തുതാവിരുദ്ധമായ വിവരങ്ങൾ കണ്ടെത്തിയാൽ നിയമാനുസൃതമായ നടപടി സ്വീകരിക്കുന്നതിന് ഞാൻ വിധേയനാണെന്ന് ഇതിനാൽ ബോധ്യപ്പെടുത്തുന്നു.</p>'+
-'<div class="nsign"><span>സ്ഥലം: '+V(v,"ncl_place")+'</span><span>തീയതി: '+V(v,"ncl_date")+'</span><span>പേര്: '+V(v,"ncl_declarant")+'</span><span>ഒപ്പ്: '+V(v,"ncl_signature")+'</span></div>'+
-'<b class="ndocs-title">ആവശ്യമായ രേഖകൾ</b>'+
-'<div class="ndocs">1. സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ ആധാർ കാർഡ്. 2. സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെയും മാതാപിതാക്കളുടെയും സ്കൂൾ സർട്ടിഫിക്കറ്റുകൾ. 3. റേഷൻ കാർഡ്. 4. മാതാപിതാക്കളുടെ എല്ലാ വില്ലേജിലെയും ഭൂനികുതി രസീതികൾ. 5. മാതാപിതാക്കൾ ബിസിനസ്സ് / പ്രൊഫഷണൽ വരുമാനക്കാരാണെങ്കിൽ കഴിഞ്ഞ മൂന്ന് വർഷത്തെ ഇൻകം ടാക്സ് റിട്ടേൺ. 6. മാതാപിതാക്കൾ സർക്കാർ / പൊതുമേഖല / ഡിഫൻസ് ജീവനക്കാരാണെങ്കിൽ ശമ്പള സർട്ടിഫിക്കറ്റ്. 7. മാതാപിതാക്കൾ പെൻഷണറാണെങ്കിൽ അവസാനമായി വഹിച്ച തസ്തിക തെളിയിക്കുന്ന രേഖ. 8. മാതാപിതാക്കൾ എ, ബി ക്ലാസ്സിൽപ്പെട്ട ജീവനക്കാരാണെങ്കിൽ ഓഫീസ് മേധാവിയിൽ നിന്ന് ലഭ്യമായ സർവീസ് സർട്ടിഫിക്കറ്റ്.</div>'+
-'<div class="nfoot">VOMPM OCT 2022</div></div>';
-}
+place:(function(){
+var P=[];
+var d=function(f,x0,x1,y,o){P.push(dot(f,0,x0,x1,y,o));};
+var c=function(f,x0,x1,y0,y1,o){P.push(cell(f,0,x0,x1,y0,y1,o));};
+var ct=function(f,x0,x1,y0,y1,o){P.push(cellTop(f,0,x0,x1,y0,y1,o));};
+// Introductory dotted lines on the original scanned PDF.
+d("ncl_taluk",90.7,213.2,136.4,{size:9});
+d("ncl_village",255.9,378.8,136.4,{size:9});
+d("ncl_address",90.7,401.6,149.3,{size:8.5,multi:true});
+// Applicant name and age.
+d("ncl_applicant",90.7,312.1,162.3,{size:9});
+d("ncl_age",368.7,417.4,162.3,{size:9});
+// Applicant table, rows 1–5, original answer column.
+[[185.8,203.3],[203.3,220.9],[220.9,255.1],[255.1,272.6],[272.6,290.1]].forEach(function(r,i){
+ct(["ncl_purpose","ncl_applicant","ncl_birth","ncl_caste","ncl_occupation"][i],304.8,523.7,r[0],r[1],{size:9,pad:3,multi:i===2});
+});
+// Parent table, two original columns: Father and Mother.
+var rows=[
+[303.9,315.6],[315.6,332.9],[332.9,367.5],[367.5,384.8],[384.8,402.5],[402.5,420.0],
+[420.0,488.4],[488.4,511.4],[511.4,534.5],[534.5,557.8],[557.8,580.8],[580.8,604.0],[604.0,627.1]
+];
+var fields=[
+["ncl_f_name","ncl_m_name"],["ncl_f_birth","ncl_m_birth"],["ncl_f_caste","ncl_m_caste"],
+["ncl_f_deceased","ncl_m_deceased"],["ncl_f_pension","ncl_m_pension"],["ncl_f_job","ncl_m_job"],
+["ncl_f_location","ncl_m_location"],["ncl_f_service","ncl_m_service"],["ncl_f_retired","ncl_m_retired"],
+["ncl_f_income","ncl_m_income"],["ncl_f_tax","ncl_m_tax"],["ncl_f_land","ncl_m_land"]
+];
+// Table rows 6–17; the tall occupation row uses top-aligned wrapping.
+rows.slice(1).forEach(function(r,i){
+var pair=fields[i];
+var opts={size:8.6,pad:3,multi:[1,5,6,7,8,10,11].indexOf(i)!==-1};
+ct(pair[0],260.7,395.3,r[0],r[1],opts);
+ct(pair[1],395.3,523.7,r[0],r[1],opts);
+});
+// Place, declarant name and signature are typed beside their printed labels.
+d("ncl_place",118,225,678.0,{size:9});
+d("ncl_declarant",282,420,678.0,{size:9});
+d("ncl_signature",444,523,678.0,{size:9});
+return P;
+})()
 };
-window.AFF_HTML_CSS=(window.AFF_HTML_CSS||"")+
-'.ncl2023{font-family:"Noto Sans Malayalam","Noto Sans",Arial,sans-serif;font-size:9px;line-height:1.25;padding:22px 24px!important;color:#111}.ncl2023 h1{font-size:14px!important;line-height:1.35;margin:0 0 2px!important}.ncl2023 h2{font-size:11px!important;margin:0 0 4px!important}.ncl2023 .note{font-size:7.2px;line-height:1.25;margin:0 0 7px!important}.ncl2023 .ofline{display:inline-block;border-bottom:1px solid #222;min-width:35px;min-height:13px;padding:0 2px;color:#092b69;font-weight:600;vertical-align:baseline;overflow-wrap:anywhere}.ncl2023 .nintro{font-size:8.2px;line-height:1.65;text-align:justify;margin:3px 0 7px}.ncl2023 table{width:100%;border-collapse:collapse;table-layout:fixed;margin:3px 0}.ncl2023 td,.ncl2023 th{border:1px solid #333;padding:2px 3px;vertical-align:middle;font-size:7.2px;line-height:1.2}.ncl2023 th{text-align:center;font-weight:700}.ncl2023 .nnum{width:4%;text-align:center}.ncl2023 .ntop td:nth-child(2){width:49%}.ncl2023 .ntop td:nth-child(3){width:47%}.ncl2023 .nparents td:nth-child(2){width:42%}.ncl2023 .nparents td:nth-child(3),.ncl2023 .nparents td:nth-child(4){width:27%}.ncl2023 .nanswer{color:#092b69;font-weight:600;overflow-wrap:anywhere}.ncl2023 .nr11 td{height:47px}.ncl2023 .nheading{font-weight:800;font-size:8.3px;margin:4px 0 2px}.ncl2023 .ndecl{font-size:7.3px;line-height:1.25;text-align:justify;margin:4px 0!important}.ncl2023 .nsign{display:flex;justify-content:space-between;gap:5px;border-bottom:1px solid #222;padding:3px 0 5px;font-size:7.3px;min-height:20px}.ncl2023 .ndocs-title{display:block;font-size:8px;margin:4px 0 2px}.ncl2023 .ndocs{font-size:7px;line-height:1.25;text-align:justify}.ncl2023 .nfoot{text-align:right;font-size:6.5px;margin-top:3px}';
-
 var osFields=[
 F("os_applicant","സത്യപ്രസ്താവന സമർപ്പിക്കുന്ന വ്യക്തിയുടെ പേര്"),F("os_district","ജില്ല"),F("os_taluk","താലൂക്ക്"),F("os_village","വില്ലേജ്"),F("os_panchayat","പഞ്ചായത്ത്"),
 F("os_doc1_no","ആദ്യ രേഖയുടെ നമ്പർ"),F("os_doc1_type","ആദ്യ രേഖയുടെ പേര് / തരം"),F("os_doc1_name","ആദ്യ രേഖയിലെ പേര്"),F("os_doc1_address","ആദ്യ രേഖയിലെ അഡ്രസ്","textarea",{rows:2}),
