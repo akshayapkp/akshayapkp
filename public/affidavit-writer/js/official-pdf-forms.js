@@ -31,7 +31,7 @@ var ncl={
 id:"nc",
 title:"Non-Creamy Layer Affidavit (2023)",
 sub:"ഒറിജിനൽ 2023 സത്യവാങ്മൂലം · PDF background with editable fields",
-pages:[{img:"ncl-affidavit-2023.png",w:595.3,h:841.9}],
+pages:[{img:"/affidavit-writer/ncl-affidavit-2023.png",w:595.3,h:841.9}],
 sections:[
 {title:"അപേക്ഷകന്റെ വിവരങ്ങൾ",fields:nclFields.slice(0,9)},
 {title:"പിതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return /^ncl_f_/.test(f.id);})},
