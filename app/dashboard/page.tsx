@@ -1322,6 +1322,13 @@ export default function DashboardPage() {
       isInternal: true,
     },
     {
+      id: "application-writer",
+      name: "Application Writer",
+      url: "/application-writer",
+      bgColor: "from-sky-500 to-violet-600",
+      isInternal: true,
+    },
+    {
       id: "aadhaar-gazette",
       name: "Aadhaar Gazette",
       url: "/tools/aadhaar-gazette",
