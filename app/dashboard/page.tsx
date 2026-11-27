@@ -1398,8 +1398,11 @@ const loadDashboardData = () => {
                 (
                   legacyUrl === "calculator-modal" ||
                   legacyUrl === "cash-counter-modal" ||
+                  legacyUrl === "/document-creator" ||
+                  legacyUrl === "document-creator" ||
                   legacyName === "calculator" ||
-                  legacyName === "cash counter"
+                  legacyName === "cash counter" ||
+                  legacyName === "document creator"
                 );
               if (isRemovedQuickTool) continue;
               const isLegacyPhotoTool =

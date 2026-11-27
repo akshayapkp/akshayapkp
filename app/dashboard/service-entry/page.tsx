@@ -2436,7 +2436,7 @@ function ServiceEntryForm() {
   );
 }
 
-export function ServiceEntryPage() {
+function ServiceEntryPage() {
   return (
     <Suspense fallback={<div className="p-6 text-center text-slate-500">Loading form...</div>}>
       <ServiceEntryForm />

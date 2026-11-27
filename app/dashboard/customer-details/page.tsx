@@ -16,7 +16,7 @@ interface CustomerRecord {
   balance: number;
 }
 
-export function CustomerDetailsPage() {
+function CustomerDetailsPage() {
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRecord | null>(null);
