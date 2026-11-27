@@ -36,8 +36,8 @@ export async function POST(request: Request) {
     const description = clean(body?.description, 1800);
     const existing = clean(body?.existing, 8000);
     const changes = clean(body?.changes, 1200);
-    if ((action === "generate" || action === "revise") && (!to || !from || description.length < 50)) {
-      return NextResponse.json({ success:false, message:"Enter To, From and at least 50 characters describing the matter." }, { status:400 });
+    if ((action === "generate" || action === "revise") && (!to || !from || !description)) {
+      return NextResponse.json({ success:false, message:"Enter the recipient, applicant details and a short description of the application." }, { status:400 });
     }
     if ((action === "translate" || action === "revise") && !existing) return NextResponse.json({ success:false, message:"There is no existing document to update." }, { status:400 });
     if (action === "revise" && !changes) return NextResponse.json({ success:false, message:"Describe the changes required." }, { status:400 });
@@ -64,6 +64,8 @@ export async function POST(request: Request) {
       "Addressed to: " + to,
       "Applicant and address: " + from,
       "Facts and request supplied by the applicant: " + description,
+      "The description may be very short or written as keywords. Interpret the user's intent and turn it into a complete, natural official application. For example, 'police clearance certificate for job' means the applicant is requesting issuance of a Police Clearance Certificate for employment.",
+      "Do not reject a short description or demand more words. Use reasonable generic wording to connect the stated purpose, but never invent personal facts, dates, addresses, legal requirements or supporting documents. Use [placeholder] only when an essential specific fact is missing.",
       "Target length: about " + Math.max(300, Math.min(1800, Number(body?.length) || 1000)) + " characters.",
       "Use correct official Malayalam when requested, natural respectful language, a clear subject where appropriate, concise paragraphs, and a suitable closing.",
       "Never invent dates, legal provisions, certificates, personal details, or claims. Use only supplied facts; if essential information is missing, omit it or use a clear [placeholder].",
