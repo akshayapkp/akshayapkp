@@ -1315,13 +1315,6 @@ export default function DashboardPage() {
       isInternal: true,
     },
     {
-      id: "document-creator",
-      name: "Document Creator",
-      url: "/document-creator",
-      bgColor: "from-indigo-600 to-blue-700",
-      isInternal: true,
-    },
-    {
       id: "application-writer",
       name: "Application Writer",
       url: "/application-writer",
@@ -1407,6 +1400,12 @@ const loadDashboardData = () => {
             for (const item of parsedOrder) {
               const legacyUrl = String(item?.url || "");
               const legacyName = String(item?.name || "").toLowerCase();
+              const isDocumentCreator =
+                legacyUrl === "/document-creator" ||
+                legacyUrl === "document-creator" ||
+                legacyName === "document creator" ||
+                String(item?.id || "") === "document-creator";
+              if (isDocumentCreator) continue;
               const isRemovedQuickTool =
                 item?.isInternal !== false &&
                 (
@@ -1505,6 +1504,14 @@ const loadDashboardData = () => {
       if (!baseTools.some((item: any) => String(item?.url || "") === "status-center")) {
         baseTools = [...baseTools, STATUS_QUICK_LINK];
       }
+
+      // Remove stale Document Creator entries from the saved dashboard layout as well.
+      baseTools = baseTools.filter((item: any) =>
+        String(item?.url || "") !== "/document-creator" &&
+        String(item?.url || "") !== "document-creator" &&
+        String(item?.name || "").toLowerCase() !== "document creator" &&
+        String(item?.id || "") !== "document-creator"
+      );
 
       const customHubLinks = localStorage.getItem("hub_quick_links");
       if (customHubLinks) {
