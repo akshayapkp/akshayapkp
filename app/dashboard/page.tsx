@@ -1315,13 +1315,6 @@ export default function DashboardPage() {
       isInternal: true,
     },
     {
-      id: "document-creator",
-      name: "Document Creator",
-      url: "/document-creator",
-      bgColor: "from-indigo-600 to-blue-700",
-      isInternal: true,
-    },
-    {
       id: "aadhaar-gazette",
       name: "Aadhaar Gazette",
       url: "/tools/aadhaar-gazette",
@@ -1405,8 +1398,11 @@ const loadDashboardData = () => {
                 (
                   legacyUrl === "calculator-modal" ||
                   legacyUrl === "cash-counter-modal" ||
+                  legacyUrl === "/document-creator" ||
+                  legacyUrl === "document-creator" ||
                   legacyName === "calculator" ||
-                  legacyName === "cash counter"
+                  legacyName === "cash counter" ||
+                  legacyName === "document creator"
                 );
               if (isRemovedQuickTool) continue;
               const isLegacyPhotoTool =
