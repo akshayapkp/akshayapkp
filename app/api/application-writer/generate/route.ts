@@ -29,18 +29,29 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const action = body?.action === "translate" ? "translate" : "generate";
+    const action = body?.action === "translate" ? "translate" : body?.action === "revise" ? "revise" : "generate";
     const language = body?.language === "ml" ? "Malayalam" : "English";
     const type = clean(body?.type, 80) || "application";
     const to = clean(body?.to, 400), from = clean(body?.from, 800);
     const description = clean(body?.description, 1800);
     const existing = clean(body?.existing, 8000);
-    if (action === "generate" && (!to || !from || description.length < 50)) {
+    const changes = clean(body?.changes, 1200);
+    if ((action === "generate" || action === "revise") && (!to || !from || description.length < 50)) {
       return NextResponse.json({ success:false, message:"Enter To, From and at least 50 characters describing the matter." }, { status:400 });
     }
-    if (action === "translate" && !existing) return NextResponse.json({ success:false, message:"There is no document text to convert." }, { status:400 });
+    if ((action === "translate" || action === "revise") && !existing) return NextResponse.json({ success:false, message:"There is no existing document to update." }, { status:400 });
+    if (action === "revise" && !changes) return NextResponse.json({ success:false, message:"Describe the changes required." }, { status:400 });
 
-    const prompt = action === "translate" ? [
+    const prompt = action === "revise" ? [
+      "You are a careful official-letter editor for Kerala, India.",
+      "Make ONLY the requested small changes to the existing letter. Do not rewrite unrelated paragraphs or alter facts.",
+      "Keep the same language, tone, structure and official style as the existing letter.",
+      "Never invent details. If a requested fact is not supplied, use a clear [placeholder] or omit it.",
+      "Document type: " + type,
+      "Requested changes: " + changes,
+      "Existing document:\\n" + existing,
+      "Return only the complete revised document body, without explanation or markdown."
+    ].join("\\n") : action === "translate" ? [
       "You are a professional Malayalam-English translator for official letters in Kerala, India.",
       "Translate the provided document faithfully into " + language + ".",
       "Preserve names, addresses, numbers, dates, facts, paragraph structure and respectful official tone.",
