@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       "Never invent details. If a requested fact is not supplied, use a clear [placeholder] or omit it.",
       "Document type: " + type,
       "Requested changes: " + changes,
-      "Existing document:\\n" + existing,
+      "Existing document:\n" + existing,
       "Return only the complete revised document body, without explanation or markdown."
     ].join("\\n") : action === "translate" ? [
       "You are a professional Malayalam-English translator for official letters in Kerala, India.",
