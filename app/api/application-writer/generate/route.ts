@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     const description = clean(body?.description, 1800);
     const existing = clean(body?.existing, 8000);
     const changes = clean(body?.changes, 1200);
+    const requestedStyle = ["standard","detailed","very-detailed"].includes(body?.generationStyle) ? body.generationStyle : "detailed";
     if ((action === "generate" || action === "revise") && !description) {
       return NextResponse.json({ success:false, message:"Please enter a short description of the application." }, { status:400 });
     }
@@ -64,11 +65,12 @@ export async function POST(request: Request) {
       "Addressed to: " + (to || "[Recipient / authority not specified]"),
       "Applicant and address: " + (from || "[Applicant name and address not specified]"),
       "Facts and request supplied by the applicant: " + description,
-      "The description may be very short or written as keywords. Interpret the user's intent and turn it into a complete, natural official application. For example, 'police clearance certificate for job' means the applicant is requesting issuance of a Police Clearance Certificate for employment.",
-      "Do not reject a short description or demand more words. Use reasonable generic wording to connect the stated purpose, but never invent personal facts, dates, addresses, legal requirements or supporting documents. Use [placeholder] only when an essential specific fact is missing.",
-      "Target length: about " + Math.max(300, Math.min(1800, Number(body?.length) || 1000)) + " characters.",
-      "Use correct official Malayalam when requested, natural respectful language, a clear subject where appropriate, concise paragraphs, and a suitable closing.",
-      "Never invent dates, legal provisions, certificates, personal details, or claims. Use only supplied facts; if recipient or applicant details are missing, use a clear [placeholder] rather than rejecting the request.",
+      "The description may be very short or written as keywords. Understand the purpose and expand it into a complete, polished, ready-to-submit formal application. For example, 'police clearance certificate for job' means the applicant respectfully requests a Police Clearance Certificate for an employment purpose.",
+      "Write in a genuinely formal, courteous government-office style, not as a short generic note. Use a respectful salutation such as 'Respected Sir/Madam,' or the natural Malayalam equivalent. Explain the applicant's stated purpose in a full paragraph, clearly state why the certificate/document is needed using only the supplied reason, make a humble and explicit request for the authority's favourable action, and finish with a respectful closing such as 'I therefore kindly request you to issue the certificate at the earliest' / 'ആയതിനാൽ, മേൽപ്പറഞ്ഞ സാഹചര്യം പരിഗണിച്ച് ആവശ്യമായ സർട്ടിഫിക്കറ്റ് അനുവദിച്ചു തരണമെന്ന് വിനീതമായി അപേക്ഷിക്കുന്നു.' Adapt the wording naturally to the document type and language.",
+      "Generation style: " + requestedStyle + ". For standard, write about 2-3 well-formed paragraphs (approximately 500-700 characters). For detailed, write about 3-4 substantial paragraphs (approximately 900-1200 characters). For very-detailed, write about 4-5 substantial paragraphs (approximately 1300-1700 characters). Detailed is the recommended default. Do not pad with repetition; every paragraph must add useful context.",
+      "When the prompt is brief, elaborate the formal reasoning and request, but do not invent personal circumstances, employment company names, job titles, dates, addresses, application numbers, legal provisions, or documents enclosed. Use a clear [placeholder] only where a missing specific fact is essential. Do not claim an attachment is enclosed unless the user said so.",
+      "Use natural, grammatically correct formal English or Malayalam. In Malayalam, prefer respectful official expressions such as 'വിനീതമായി അപേക്ഷിക്കുന്നു', 'ആയതിനാൽ', 'അനുകൂല നടപടി സ്വീകരിക്കണമെന്ന് അഭ്യർത്ഥിക്കുന്നു' where appropriate; avoid awkward literal translations.",
+      "Never invent facts, legal requirements, dates, or personal details. If recipient or applicant details are missing, use a clear [placeholder] rather than rejecting the request.",
       "Do not include a letterhead, centre contact details, date, place, signature block, markdown, or commentary. Return only the document body."
     ].join("\n");
 
