@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  Calculator,
   FileText,
   FilePlus,
   Receipt,
@@ -64,6 +65,13 @@ const allMenuItems: MenuItem[] = [
     icon: FileText,
     section: "Main",
     permissionKey: "Application Forms",
+  },
+  {
+    name: "Percentage Converter",
+    path: "/dashboard/percentage-converter",
+    icon: Calculator,
+    section: "Main",
+    permissionKey: "Dashboard",
   },
   {
     name: "Service Entry",
