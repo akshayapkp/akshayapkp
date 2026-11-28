@@ -186,6 +186,12 @@ export default function SSLCCalculatorTool({ onClose }: Props) {
               <select id="percentage-institution" value={institution} onChange={(event) => changeInstitution(event.target.value)} className="w-full rounded-xl border border-white bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-sm outline-none focus:ring-4 focus:ring-blue-500/10">
                 {INSTITUTIONS.map((name) => <option key={name} value={name}>{name}</option>)}
               </select>
+              {!isKeralaGradeSystem(institution) && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => { setMode("marks"); setResult(null); setError(""); }} className={`rounded-xl border px-3 py-2 text-xs font-bold transition ${mode === "marks" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600"}`}>Marks to Percentage</button>
+                  <button type="button" onClick={() => { setMode("cgpa"); setResult(null); setError(""); }} className={`rounded-xl border px-3 py-2 text-xs font-bold transition ${mode === "cgpa" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600"}`}>CGPA to Percentage</button>
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-[11px] font-bold text-slate-600">{gradeMode ? "Grade Point Method" : mode === "marks" ? "Marks Method" : "CGPA Conversion"}</span>
                 <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-[11px] font-bold text-slate-600">Live calculation on submit</span>
