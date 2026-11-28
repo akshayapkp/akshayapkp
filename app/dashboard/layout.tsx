@@ -481,6 +481,10 @@ export default function DashboardLayout({
     "System",
   ];
 
+  // Percentage Converter is a standalone full-screen tool, like Resume Builder.
+  // Keep the dashboard layout/auth effects, but do not render dashboard navigation around it.
+  if (pathname === "/dashboard/percentage-converter") return <>{children}</>;
+
   return (
     <>
       {/* Floating Update Bubble */}
