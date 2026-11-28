@@ -1,6 +1,5 @@
 "use client";
 
-import SSLCCalculatorTool from "./tools/SSLCCalculatorTool";
 import PassportSize from "./tools/PassportSize";
 import PhotoStudioTool from "./tools/PhotoStudioTool";
 import PDFToolkitTool from "./tools/PDFTool";
@@ -1169,7 +1168,6 @@ export default function DashboardPage() {
   const [showAllPendingCredits, setShowAllPendingCredits] = useState(false);
 
   // Popup States for Tools
-  const [showSslcModal, setShowSslcModal] = useState(false);
   const [showPhotoStudioModal, setShowPhotoStudioModal] = useState(false);
   const [showPassportToolModal, setShowPassportToolModal] = useState(false);
   const [showPdfToolkitModal, setShowPdfToolkitModal] = useState(false);
@@ -1247,7 +1245,7 @@ export default function DashboardPage() {
     {
       id: 1,
       name: "Percentage Converter",
-      url: "sslc-modal",
+      url: "/dashboard/percentage-converter",
       bgColor: "from-purple-500 to-purple-600",
       isInternal: true,
     },
@@ -1447,8 +1445,8 @@ const loadDashboardData = () => {
                 continue;
               }
               const standaloneToolRoutes: Record<string, string> = {
-                "sslc-modal": "sslc-modal",
-                "/tools/sslc-calculator": "sslc-modal",
+                "sslc-modal": "/dashboard/percentage-converter",
+                "/tools/sslc-calculator": "/dashboard/percentage-converter",
                 "photo-studio-modal": "/tools/photo-studio",
                 "/tools/photo-studio": "/tools/photo-studio",
                 "crop-resize-modal": "/tools/photo-studio",
@@ -1470,8 +1468,8 @@ const loadDashboardData = () => {
                 "aadhaar-name-check-modal": "/tools/aadhaar-name-change",
               };
               const legacyNameRoutes: Record<string, string> = {
-                "sslc percentage": "sslc-modal",
-                "percentage converter": "sslc-modal",
+                "sslc percentage": "/dashboard/percentage-converter",
+                "percentage converter": "/dashboard/percentage-converter",
                 "photo studio": "/tools/photo-studio",
                 "passport size": "/tools/passport-size",
                 "translator": "/tools/translator",
@@ -2107,7 +2105,6 @@ setServiceDirectory(filteredWithUrls);
   return (
     <div className="relative min-h-full overflow-x-hidden bg-transparent p-2 sm:p-3 lg:p-4 xl:p-5">
       <div className="smart-akshaya-tool-layer contents">
-        {showSslcModal && <SSLCCalculatorTool onClose={() => setShowSslcModal(false)} />}
         {showPhotoStudioModal && <PhotoStudioTool onClose={() => setShowPhotoStudioModal(false)} />}
         {showPassportToolModal && <PassportSize onClose={() => setShowPassportToolModal(false)} />}
         {showPdfToolkitModal && <PDFToolkitTool onClose={() => setShowPdfToolkitModal(false)} />}
@@ -2488,7 +2485,7 @@ setServiceDirectory(filteredWithUrls);
               // Only built-in dashboard tools may be routed to local modals.
               // User-added Quick Hub links should always follow their URL.
               const isInternalTool = tool.isInternal;
-              const isSslc = isInternalTool && (tool.name.toLowerCase().includes("sslc") || (tool.url && tool.url.toLowerCase().includes("sslc")));
+              const isSslc = isInternalTool && (tool.url === "sslc-modal" || tool.url === "/tools/sslc-calculator");
               const isPhotoStudio = isInternalTool && (tool.url === "photo-studio-modal" || tool.name.toLowerCase().includes("photo studio"));
               const isCropResize = isInternalTool && (tool.name.toLowerCase().includes("crop") || (tool.url && tool.url.toLowerCase().includes("crop")));
               const isPsc = isInternalTool && (tool.name.toLowerCase().includes("psc") || (tool.url && tool.url.toLowerCase().includes("psc")));
@@ -2518,11 +2515,6 @@ setServiceDirectory(filteredWithUrls);
                     onClick={(e) => {
                       if (isCustomizing) {
                         e.preventDefault();
-                        return;
-                      }
-                      if (isSslc) {
-                        e.preventDefault();
-                        setShowSslcModal(true);
                         return;
                       }
                       if (isConverterTool) {
