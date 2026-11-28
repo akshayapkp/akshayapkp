@@ -2492,7 +2492,7 @@ setServiceDirectory(filteredWithUrls);
               const isPassport = isInternalTool && (tool.name.toLowerCase().includes("passport") || (tool.url && tool.url.toLowerCase().includes("passport")));
               const isPdfTool = isInternalTool && (tool.name.toLowerCase().includes("pdf") || tool.url === "pdf-toolkit-modal");
               const isTranslatorTool = isInternalTool && (tool.name.toLowerCase().includes("translator") || tool.url === "translator-modal");
-              const isConverterTool = isInternalTool && (tool.name.toLowerCase().includes("converter") || tool.url === "converter-modal");
+              const isConverterTool = isInternalTool && (tool.name.toLowerCase() === "converter tool" || tool.url === "converter-modal" || tool.url === "/tools/land-area-converter");
               const isImageToTextTool = isInternalTool && (tool.name.toLowerCase().includes("image") || tool.url === "image-to-text-modal");
               const isResumeBuilderTool = isInternalTool && (tool.url === "resume-builder-modal");
               const isIncomeAffidavitTool = isInternalTool && (tool.url === "income-affidavit-modal");
