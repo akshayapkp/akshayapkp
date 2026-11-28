@@ -1246,7 +1246,7 @@ export default function DashboardPage() {
   const [quickLinks, setQuickLinks] = useState<QuickLinkItem[]>([
     {
       id: 1,
-      name: "SSLC Percentage",
+      name: "Percentage Converter",
       url: "sslc-modal",
       bgColor: "from-purple-500 to-purple-600",
       isInternal: true,
@@ -1471,6 +1471,7 @@ const loadDashboardData = () => {
               };
               const legacyNameRoutes: Record<string, string> = {
                 "sslc percentage": "sslc-modal",
+                "percentage converter": "sslc-modal",
                 "photo studio": "/tools/photo-studio",
                 "passport size": "/tools/passport-size",
                 "translator": "/tools/translator",
