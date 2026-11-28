@@ -22,49 +22,65 @@ F("ncl_f_tax","ഇൻകം ടാക്സ് അടയ്ക്കുന്ന
 F("ncl_f_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം (പിതാവ്)"),F("ncl_m_land","എല്ലാ വില്ലേജുകളിലുമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം (മാതാവ്)"),
 F("ncl_date","തീയതി","date",{ml:false}),F("ncl_place","സ്ഥലം"),F("ncl_declarant","പേര്")
 ];
-var ncl={id:"nc",title:"NCL Affidavit (2023)",sub:"നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം",pages:[A],
+
+/* Coordinates below are measured (in points, on a 595 x 770.2 page matching
+   public/affidavit-writer/images/ncl-2023-page1.png) directly off the real
+   VOMPM OCT-2022 scanned form, the same way the other working affidavits
+   (see affidavit-defs.js) place their answers on top of a background scan.
+   This replaces the earlier from-scratch HTML/CSS re-typeset of this form,
+   whose fixed row heights were too short for the real Malayalam labels and
+   caused typed answers to overlap the row below (the "clear kuravu" /
+   wrong-position bug). D() = single underlined blank, C() = table cell. */
+var nclPlace=[];
+/* named DL (not D) on purpose: this file already uses "D" for window.AFF_DEFS */
+function DL(f,x,yUnderline,w,size){nclPlace.push({p:0,f:f,x:x,y:yUnderline-size*1.05,w:w,h:size*1.3,size:size});}
+function C(f,x,yTop,w,h,size,multi){nclPlace.push({p:0,f:f,x:x+3,y:yTop+2,w:w-6,h:Math.max(h-4,size*1.2),size:size,multi:!!multi,pad:multi?1:0});}
+
+DL("ncl_taluk",90.8,100.8,122,9.5);
+DL("ncl_village",256.2,100.8,122,9.5);
+DL("ncl_address",90.8,113.6,310.7,9.5);
+DL("ncl_applicant",146.8,126.5,165,9.5);
+DL("ncl_age",368.3,126.5,49.2,9.5);
+
+C("ncl_purpose",304.7,150.2,218.8,17.3,8.5,false);
+C("ncl_applicant",304.7,167.5,218.8,17.5,8.5,false);
+C("ncl_birth",304.7,185.0,218.8,34.5,8.5,true);
+C("ncl_caste",304.7,219.5,218.8,17.3,8.5,false);
+C("ncl_occupation",304.7,236.8,218.8,17.5,8.5,false);
+
+[
+["ncl_f_name","ncl_m_name",279.8,17.3,false],
+["ncl_f_birth","ncl_m_birth",297.1,34.5,true],
+["ncl_f_caste","ncl_m_caste",331.6,17.5,false],
+["ncl_f_deceased","ncl_m_deceased",349.1,17.5,false],
+["ncl_f_pension","ncl_m_pension",366.6,17.4,false],
+["ncl_f_job","ncl_m_job",384.0,68.5,true],
+["ncl_f_location","ncl_m_location",452.5,23.1,true],
+["ncl_f_service","ncl_m_service",475.6,23.0,true],
+["ncl_f_retired","ncl_m_retired",498.6,23.2,true],
+["ncl_f_income","ncl_m_income",521.8,23.2,false],
+["ncl_f_tax","ncl_m_tax",545.0,23.0,false],
+["ncl_f_land","ncl_m_land",568.0,23.1,true]
+].forEach(function(r){
+C(r[0],260.6,r[2],134.6,r[3],8,r[4]);
+C(r[1],395.2,r[2],128.3,r[3],8,r[4]);
+});
+
+/* Signature line only prints "തീയതി / പേര് / ഒപ്പ്" on the real form —
+   there is no "സ്ഥലം" slot on paper, so ncl_place stays a form field
+   (kept for the user's own record) but is intentionally not placed here. */
+DL("ncl_date",135,641,135,9);
+DL("ncl_declarant",318,641,107,9);
+
+var ncl={id:"nc",title:"NCL Affidavit (2023)",sub:"നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം",
+pages:[{img:"/affidavit-writer/images/ncl-2023-page1.png",w:595,h:770.2}],
 sections:[
 {title:"അപേക്ഷകന്റെ വിവരങ്ങൾ",fields:nclFields.slice(0,9)},
 {title:"പിതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return f.id.indexOf("ncl_f_")===0;})},
 {title:"മാതാവിന്റെ വിവരങ്ങൾ",fields:nclFields.filter(function(f){return f.id.indexOf("ncl_m_")===0;})},
 {title:"സ്ഥലം, തീയതി",fields:nclFields.slice(-3)}
 ],
-render:function(_,v){
-var rowsTop=[
-[1,"സർട്ടിഫിക്കറ്റ് ആവശ്യമായ കാര്യം","ncl_purpose",26],
-[2,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ പേര്","ncl_applicant",26],
-[3,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാൾ ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്","ncl_birth",36],
-[4,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ മതം, ജാതി","ncl_caste",26],
-[5,"സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ തൊഴിൽ","ncl_occupation",26]
-].map(function(r){return '<tr style="height:'+r[3]+'px"><td class="num">'+r[0]+'</td><td>'+r[1]+'</td><td class="answer">'+V(v,r[2])+'</td></tr>';}).join("");
-var pairs=[
-[6,"പേര്","ncl_f_name","ncl_m_name",27],
-[7,"ജനിച്ചു വളർന്ന താലൂക്ക്, വില്ലേജ്","ncl_f_birth","ncl_m_birth",42],
-[8,"മതം, ജാതി","ncl_f_caste","ncl_m_caste",27],
-[9,"മരണപ്പെട്ടയാളാണോ (അച്ഛൻ / അമ്മ)","ncl_f_deceased","ncl_m_deceased",27],
-[10,"പെൻഷണറാണോ (അച്ഛൻ / അമ്മ)","ncl_f_pension","ncl_m_pension",27],
-[11,"തൊഴിൽ (സർക്കാർ / പൊതുമേഖല / ഡിഫൻസ് / സ്വകാര്യ / വിദേശ ജോലി തുടങ്ങിയവ)","ncl_f_job","ncl_m_job",66],
-[12,"തൊഴിൽ ചെയ്യുന്നത് സ്വദേശത്തോ വിദേശത്തോ","ncl_f_location","ncl_m_location",29],
-[13,"ജീവനക്കാരനാണെങ്കിൽ സർവീസിൽ പ്രവേശിച്ച തസ്തിക, വകുപ്പ്","ncl_f_service","ncl_m_service",35],
-[14,"പെൻഷണറാണെങ്കിൽ വിരമിച്ച തസ്തിക, വകുപ്പ്","ncl_f_retired","ncl_m_retired",35],
-[15,"പെൻഷണറിൽ നിന്ന് ലഭിക്കുന്ന മാസവരുമാനം (രൂപ)","ncl_f_income","ncl_m_income",28],
-[16,"ഇൻകം ടാക്സ് അടയ്ക്കുന്നുണ്ടോ (അച്ഛൻ / അമ്മ)","ncl_f_tax","ncl_m_tax",28],
-[17,"എല്ലാ വില്ലേജുകളിലുമുള്ള ആകെ കൈവശമുള്ള ഭൂമിയുടെ വിസ്തീർണ്ണം","ncl_f_land","ncl_m_land",34]
-].map(function(r){return '<tr style="height:'+r[4]+'px"><td class="num">'+r[0]+'</td><td>'+r[1]+'</td><td class="answer">'+V(v,r[2])+'</td><td class="answer">'+V(v,r[3])+'</td></tr>';}).join("");
-return '<div class="official ncl2023">'+
-'<h1>നോൺ ക്രീമിലെയർ സർട്ടിഫിക്കറ്റിനായി സമർപ്പിക്കുന്ന അപേക്ഷയിൽ</h1><h2>വില്ലേജ് ഓഫീസർ മുമ്പാകെ സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം</h2>'+
-'<p class="note">(എല്ലാ കോളങ്ങളും പൂരിപ്പിക്കുക. വിവരങ്ങൾ ഇല്ലാത്ത കോളങ്ങളിൽ ഇല്ല എന്ന് രേഖപ്പെടുത്തുക. 18 വയസ്സ് പൂർത്തിയാകാത്ത അപേക്ഷകരാണെങ്കിൽ രക്ഷാകർത്താവ് സത്യവാങ്മൂലം സമർപ്പിക്കുക)</p>'+
-'<div class="intro"><span>'+B(v,"ncl_taluk",82)+'</span> താലൂക്കിൽ <span>'+B(v,"ncl_village",82)+'</span> വില്ലേജിൽ <span>'+B(v,"ncl_address",170)+'</span> എന്ന മേൽവിലാസത്തിൽ താമസിക്കുന്ന <span>'+B(v,"ncl_applicant",115)+'</span> എന്ന ഞാൻ ('+B(v,"ncl_age",35)+' വയസ്സ്) വില്ലേജ് ഓഫീസർ മുമ്പാകെ സമർപ്പിക്കുന്ന സത്യവാങ്മൂലം.</div>'+
-'<table class="ncltop"><tbody>'+rowsTop+'</tbody></table>'+
-'<div class="table-heading">സർട്ടിഫിക്കറ്റിന് അവകാശമുള്ളയാളുടെ മാതാപിതാക്കളുടെ വിവരങ്ങൾ</div>'+
-'<table class="nclparents"><thead><tr><th colspan="2"></th><th>പിതാവ്</th><th>മാതാവ്</th></tr></thead><tbody>'+pairs+'</tbody></table>'+
-'<p class="ncl-decl">മേൽ പ്രസ്താവിച്ച വിവരങ്ങൾ എന്റെ അറിവിലും ഉത്തമവിശ്വാസത്തിലും ശരിയാണെന്ന് ഇതിനാൽ സത്യവാങ്മൂലം ചെയ്യുന്നു. വസ്തുതാവിരുദ്ധമായ വിവരങ്ങൾ നൽകിയതായി കണ്ടെത്തിയാൽ നിയമാനുസൃത നടപടി സ്വീകരിക്കുന്നതിന് ഞാൻ വിധേയനാണ്.</p>'+
-'<div class="ncl-sign"><span>സ്ഥലം: '+V(v,"ncl_place")+'</span><span>തീയതി: '+V(v,"ncl_date")+'</span><span>പേര്: '+V(v,"ncl_declarant")+'</span><span>ഒപ്പ്: </span></div>'+
-'<b class="docs-title">ആവശ്യമായ രേഖകൾ</b><div class="docs">1. സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെ ആധാർ കാർഡ്. 2. സർട്ടിഫിക്കറ്റ് ആവശ്യമുള്ളയാളുടെയും മാതാപിതാക്കളുടെയും വിദ്യാഭ്യാസ രേഖകൾ. 3. റേഷൻ കാർഡ്. 4. മാതാപിതാക്കളുടെ എല്ലാ വില്ലേജിലെയും ഭൂനികുതി രസീതികൾ. 5. തൊഴിൽ / വരുമാനം സംബന്ധിച്ച രേഖകൾ. 6. സർക്കാർ / പൊതുമേഖല / ഡിഫൻസ് ജീവനക്കാരാണെങ്കിൽ ശമ്പള സർട്ടിഫിക്കറ്റ്. 7. പെൻഷണറാണെങ്കിൽ അവസാനമായി വഹിച്ച തസ്തിക തെളിയിക്കുന്ന രേഖ. 8. ആവശ്യമായ മറ്റ് അനുബന്ധ രേഖകൾ.</div>'+
-'<div class="foot">VOMPM OCT 2022</div></div>';
-}};
-window.AFF_HTML_CSS=(window.AFF_HTML_CSS||"")+
-'.ncl2023{font-size:10px;line-height:1.25;padding:20px 24px!important}.ncl2023 h1{font-size:14px!important;line-height:1.3}.ncl2023 h2{font-size:11px!important;margin:2px 0 4px!important}.ncl2023 .note{font-size:7.5px;margin:0 0 7px}.ncl2023 .intro{font-size:9px;line-height:1.7;text-align:justify;margin:4px 0 7px}.ncl2023 .ofline{display:inline-block;border-bottom:1px solid #222;min-width:40px;min-height:14px;padding:0 2px;color:#092b69;font-weight:600;overflow-wrap:anywhere}.ncl2023 table{width:100%;border-collapse:collapse;table-layout:fixed;margin:3px 0}.ncl2023 td,.ncl2023 th{border:1px solid #333;padding:2px 3px;vertical-align:middle;font-size:8px;line-height:1.2}.ncl2023 th{text-align:center;font-weight:700}.ncl2023 .num{width:4%;text-align:center}.ncl2023 .ncltop td:nth-child(2){width:48%}.ncl2023 .ncltop td:nth-child(3){width:48%}.ncl2023 .nclparents td:nth-child(2){width:42%}.ncl2023 .nclparents td:nth-child(3),.ncl2023 .nclparents td:nth-child(4){width:27%}.ncl2023 .answer{color:#092b69;font-weight:600;overflow-wrap:anywhere}.ncl2023 .table-heading{font-weight:800;font-size:9px;margin:4px 0 2px}.ncl2023 .ncl-decl{font-size:8px;line-height:1.35;text-align:justify;margin:5px 0}.ncl2023 .ncl-sign{display:flex;justify-content:space-between;gap:7px;border-bottom:1px solid #222;padding:4px 0 6px;font-size:8px}.ncl2023 .docs-title{display:block;font-size:9px;margin:5px 0 2px}.ncl2023 .docs{font-size:7.5px;line-height:1.35;text-align:justify}.ncl2023 .foot{text-align:right;font-size:7px;margin-top:3px}';
+place:nclPlace};
 
 
 var osFields=[
