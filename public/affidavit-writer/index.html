@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Affidavit Writer - Akshaya ACE</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600&family=Tinos:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--tx: #14213d;
+			--tx2: #4a5a78;
+			--mut: #7d8aa5;
+			--ac: #1e6fe0;
+			--ac2: #22c5ee;
+			--bd: rgba(255, 255, 255, .75);
+			--glass: rgba(255, 255, 255, .62);
+			--sh: 0 10px 34px rgba(31, 52, 110, .13);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html,
+		body {
+			margin: 0;
+		}
+
+		body {
+			font-family: 'Inter', 'Noto Sans Malayalam', sans-serif;
+			color: var(--tx);
+			min-height: 100vh;
+			-webkit-font-smoothing: antialiased;
+			background:
+				radial-gradient(circle at 8% 10%, rgba(142, 161, 255, .45), transparent 42%),
+				radial-gradient(circle at 92% 8%, rgba(91, 228, 255, .40), transparent 40%),
+				radial-gradient(circle at 70% 95%, rgba(143, 240, 216, .40), transparent 45%),
+				#eef1fb;
+			background-attachment: fixed;
+		}
+
+		body.noscroll {
+			overflow: hidden;
+		}
+
+		/* top bar */
+		.topbar {
+			position: sticky;
+			top: 0;
+			z-index: 60;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			padding: 6px 24px;
+			background: rgba(255, 255, 255, .55);
+			backdrop-filter: blur(22px) saturate(180%);
+			-webkit-backdrop-filter: blur(22px) saturate(180%);
+			border-bottom: 1px solid var(--bd);
+			box-shadow: 0 4px 22px rgba(31, 52, 110, .08);
+		}
+
+		.topbar img {
+			width: 54px;
+			height: 54px;
+			object-fit: contain;
+			display: block;
+		}
+
+		.tb-title {
+			text-align: center;
+			flex: 1;
+		}
+
+		.tb-title h1 {
+			margin: 0;
+			font-size: 19px;
+			font-weight: 800;
+		}
+
+		.tb-title span {
+			display: block;
+			font-size: 12.5px;
+			color: var(--mut);
+			margin-top: 1px;
+		}
+
+		.back {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 9px 18px;
+			border-radius: 30px;
+			background: rgba(255, 255, 255, .8);
+			border: 1px solid var(--bd);
+			color: var(--tx);
+			text-decoration: none;
+			font-weight: 600;
+			font-size: 13px;
+			box-shadow: 0 5px 14px rgba(31, 52, 110, .10);
+		}
+
+		/* chooser */
+		.wrap {
+			width: 100%;
+			max-width: none;
+			margin: 0;
+			padding: 18px 20px 90px;
+		}
+
+		.chooser {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			flex-wrap: wrap;
+			padding: 12px 16px;
+			margin-bottom: 16px;
+			border-radius: 18px;
+			background: var(--glass);
+			backdrop-filter: blur(18px);
+			-webkit-backdrop-filter: blur(18px);
+			border: 1px solid var(--bd);
+			box-shadow: var(--sh);
+		}
+
+		.chooser label {
+			font-size: 13px;
+			font-weight: 800;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.chooser label i {
+			color: var(--ac);
+		}
+
+		.chooser select {
+			flex: 1;
+			min-width: 260px;
+			max-width: 560px;
+			font-family: inherit;
+			font-size: 14.5px;
+			font-weight: 600;
+			padding: 11px 14px;
+			border-radius: 12px;
+			border: 1.5px solid rgba(30, 111, 224, .3);
+			background: #fff;
+			color: var(--tx);
+			outline: none;
+			cursor: pointer;
+		}
+
+		.chooser select:focus {
+			border-color: var(--ac);
+			box-shadow: 0 0 0 3px rgba(30, 111, 224, .12);
+		}
+
+		.chooser small {
+			font-size: 12px;
+			color: var(--tx2);
+		}
+
+		/* layout */
+		.layout {
+			display: grid;
+			grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+			gap: 18px;
+			align-items: start;
+		}
+
+		.panel {
+			background: var(--glass);
+			backdrop-filter: blur(22px) saturate(170%);
+			-webkit-backdrop-filter: blur(22px) saturate(170%);
+			border: 1px solid var(--bd);
+			border-radius: 20px;
+			box-shadow: var(--sh);
+		}
+
+		.p-head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			flex-wrap: wrap;
+			padding: 14px 16px;
+			border-bottom: 1px solid rgba(255, 255, 255, .7);
+		}
+
+		.p-head h2 {
+			margin: 0;
+			font-size: 15px;
+			font-weight: 800;
+		}
+
+		/* Malayalam switch */
+		.ml-sw {
+			display: inline-flex;
+			align-items: center;
+			gap: 9px;
+			font-size: 12.5px;
+			font-weight: 700;
+			cursor: pointer;
+			user-select: none;
+		}
+
+		.ml-sw input {
+			display: none;
+		}
+
+		.ml-sw .tg {
+			width: 42px;
+			height: 24px;
+			border-radius: 20px;
+			background: #c4cde0;
+			position: relative;
+			transition: background .2s;
+			flex: none;
+		}
+
+		.ml-sw .tg::after {
+			content: '';
+			position: absolute;
+			left: 3px;
+			top: 3px;
+			width: 18px;
+			height: 18px;
+			border-radius: 50%;
+			background: #fff;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
+			transition: transform .2s;
+		}
+
+		.ml-sw input:checked+.tg {
+			background: linear-gradient(135deg, var(--ac), var(--ac2));
+		}
+
+		.ml-sw input:checked+.tg::after {
+			transform: translateX(18px);
+		}
+
+		.ml-hint {
+			margin: 0;
+			padding: 8px 16px;
+			font-size: 11.5px;
+			color: var(--tx2);
+			background: rgba(34, 197, 238, .10);
+			border-bottom: 1px solid rgba(255, 255, 255, .7);
+		}
+
+		/* form */
+		#formBody {
+			padding: 10px 12px 14px;
+			max-height: calc(100vh - 215px);
+			overflow-y: auto;
+		}
+
+		.fs {
+			margin-bottom: 9px;
+			border-radius: 14px;
+			background: rgba(255, 255, 255, .55);
+			border: 1px solid rgba(255, 255, 255, .85);
+		}
+
+		.fs>summary {
+			list-style: none;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 10px 12px;
+			font-size: 13px;
+			font-weight: 700;
+		}
+
+		.fs>summary::-webkit-details-marker {
+			display: none;
+		}
+
+		.fs-n {
+			width: 22px;
+			height: 22px;
+			border-radius: 50%;
+			background: rgba(30, 111, 224, .15);
+			color: var(--ac);
+			font-size: 11px;
+			font-weight: 800;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex: none;
+		}
+
+		.fs>summary i {
+			margin-left: auto;
+			color: var(--mut);
+			font-size: 11px;
+			transition: transform .2s;
+		}
+
+		.fs[open]>summary i {
+			transform: rotate(180deg);
+		}
+
+		.fs-b {
+			padding: 2px 12px 12px;
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			gap: 10px 14px;
+		}
+
+		.fs-b>.tbl,
+		.fs-b>.addrow,
+		.fs-b>.full {
+			grid-column: 1 / -1;
+		}
+
+		.fs-b>.addrow {
+			justify-self: start;
+		}
+
+		.ff {
+			display: block;
+		}
+
+		.ff>span {
+			display: block;
+			font-size: 11.5px;
+			font-weight: 700;
+			color: var(--tx2);
+			margin-bottom: 4px;
+		}
+
+		.ff>span em {
+			font-weight: 500;
+			color: var(--mut);
+			font-style: normal;
+		}
+
+		.af-in {
+			width: 100%;
+			font-family: 'Inter', 'Noto Sans Malayalam', sans-serif;
+			font-size: 14px;
+			padding: 9px 11px;
+			border-radius: 11px;
+			border: 1.5px solid rgba(30, 111, 224, .2);
+			background: rgba(255, 255, 255, .92);
+			color: var(--tx);
+			outline: none;
+			resize: vertical;
+		}
+
+		.af-in:focus {
+			border-color: var(--ac);
+			box-shadow: 0 0 0 3px rgba(30, 111, 224, .12);
+		}
+
+		.pills {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 7px;
+		}
+
+		.pill {
+			font-family: inherit;
+			font-size: 12.5px;
+			font-weight: 600;
+			padding: 7px 13px;
+			border-radius: 20px;
+			border: 1.5px solid rgba(30, 111, 224, .25);
+			background: rgba(255, 255, 255, .85);
+			color: var(--tx2);
+			cursor: pointer;
+		}
+
+		.pill.on {
+			background: linear-gradient(135deg, var(--ac), var(--ac2));
+			color: #fff;
+			border-color: transparent;
+		}
+
+		.tbl {
+			display: grid;
+			gap: 6px;
+			overflow-x: auto;
+		}
+
+		.tr {
+			display: grid;
+			gap: 6px;
+			align-items: center;
+			min-width: 380px;
+		}
+
+		.tr.th span {
+			font-size: 11px;
+			font-weight: 700;
+			color: var(--tx2);
+		}
+
+		.tr .af-in {
+			padding: 7px 9px;
+			font-size: 13px;
+		}
+
+		.tr .rl {
+			font-size: 11.5px;
+			font-weight: 600;
+			color: var(--tx2);
+			line-height: 1.25;
+		}
+
+		.rm {
+			width: 30px;
+			height: 30px;
+			border-radius: 50%;
+			border: none;
+			background: rgba(239, 68, 68, .12);
+			color: #d33;
+			font-size: 17px;
+			cursor: pointer;
+		}
+
+		.addrow {
+			margin-top: 8px;
+			font-family: inherit;
+			font-size: 12.5px;
+			font-weight: 700;
+			padding: 8px 14px;
+			border-radius: 20px;
+			border: 1.5px dashed rgba(30, 111, 224, .45);
+			background: rgba(255, 255, 255, .6);
+			color: var(--ac);
+			cursor: pointer;
+		}
+
+		.addrow:disabled {
+			opacity: .5;
+			cursor: default;
+		}
+
+		.addrow small {
+			font-weight: 500;
+			color: var(--mut);
+		}
+
+		/* preview */
+		.pv-wrap {
+			position: sticky;
+			top: 76px;
+		}
+
+		.pv-bar {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+		}
+
+		.btn {
+			font-family: inherit;
+			font-size: 13px;
+			font-weight: 700;
+			padding: 9px 16px;
+			border-radius: 12px;
+			border: none;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			background: rgba(255, 255, 255, .85);
+			color: var(--tx);
+			box-shadow: 0 5px 14px rgba(31, 52, 110, .12);
+		}
+
+		.btn.pri {
+			background: linear-gradient(135deg, var(--ac), var(--ac2));
+			color: #fff;
+			box-shadow: 0 8px 20px rgba(30, 111, 224, .35);
+		}
+
+		.btn.dng {
+			color: #c0392b;
+		}
+
+		.btn:disabled {
+			opacity: .6;
+			cursor: default;
+		}
+
+		#pvPages {
+			padding: 14px;
+			max-height: calc(100vh - 215px);
+			overflow-y: auto;
+			background: rgba(60, 70, 110, .08);
+			border-radius: 0 0 20px 20px;
+		}
+
+		.pv-sheet {
+			position: relative;
+			margin: 0 auto 16px;
+			width: 100%;
+			max-width: 1100px;
+			box-shadow: 0 8px 26px rgba(20, 30, 70, .22);
+			background: #fff;
+		}
+
+		.pv-no {
+			position: absolute;
+			right: 8px;
+			bottom: -13px;
+			font-size: 10px;
+			color: var(--mut);
+		}
+
+		/* page rendering (also reused in print / pdf) */
+		.afp {
+			position: relative;
+			overflow: hidden;
+			background: #fff;
+		}
+
+		.afbg {
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			display: block;
+			user-select: none;
+			-webkit-user-drag: none;
+		}
+
+		.afv {
+			position: absolute;
+			display: block;
+			overflow: hidden;
+			font-family: 'Noto Sans Malayalam', 'Noto Sans', Arial, sans-serif;
+			font-weight: 500;
+			color: #0a1d52;
+		}
+
+		.afv.multi {
+			line-height: 1.3;
+		}
+
+		.afv.multi span {
+			white-space: pre-wrap;
+			display: block;
+			width: 100%;
+		}
+
+		.afv span {
+			white-space: nowrap;
+		}
+
+		.afs {
+			position: absolute;
+			background: #1a1a1a;
+		}
+
+		/* suggestion popup */
+		.ml-pop {
+			position: fixed;
+			z-index: 1000;
+			display: none;
+			background: #fff;
+			border: 1px solid rgba(30, 111, 224, .3);
+			border-radius: 12px;
+			box-shadow: 0 14px 34px rgba(20, 30, 70, .25);
+			padding: 4px;
+			font-family: 'Noto Sans Malayalam', 'Inter', sans-serif;
+		}
+
+		.mp-it {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 8px 12px;
+			border-radius: 8px;
+			font-size: 16px;
+			cursor: pointer;
+			color: var(--tx);
+		}
+
+		.mp-it b {
+			width: 18px;
+			font-size: 11px;
+			color: var(--mut);
+			font-family: 'Inter', sans-serif;
+		}
+
+		.mp-it.on {
+			background: rgba(30, 111, 224, .14);
+		}
+
+		.mp-it.keep {
+			font-size: 14px;
+			font-family: 'Inter', sans-serif;
+			color: var(--tx);
+			margin-top: 3px;
+			border-top: 1px solid #e4e8f2;
+			border-radius: 0 0 8px 8px;
+			background: #f6f8fd;
+		}
+
+		.mp-it.keep.on {
+			background: rgba(30, 111, 224, .14);
+		}
+
+		.mp-it.keep b {
+			width: auto;
+			min-width: 24px;
+			text-align: center;
+			font-size: 12px;
+			color: #fff;
+			background: #6b7692;
+			border-radius: 5px;
+			padding: 1px 5px;
+		}
+
+		.mp-it.keep .kh {
+			margin-left: auto;
+			font-size: 11px;
+		}
+
+		.mp-it small {
+			color: var(--mut);
+		}
+
+		/* full preview modal */
+		.modal {
+			position: fixed;
+			inset: 0;
+			z-index: 500;
+			display: none;
+			flex-direction: column;
+			background: rgba(15, 22, 50, .72);
+			backdrop-filter: blur(6px);
+		}
+
+		.modal.open {
+			display: flex;
+		}
+
+		.m-bar {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 10px 16px;
+			background: rgba(255, 255, 255, .9);
+		}
+
+		.m-bar h3 {
+			margin: 0 auto 0 0;
+			font-size: 15px;
+		}
+
+		#pvModalBody {
+			flex: 1;
+			overflow-y: auto;
+			padding: 18px 12px 30px;
+		}
+
+		.pv-sheet.big {
+			margin-bottom: 20px;
+		}
+
+		.toast {
+			position: fixed;
+			left: 50%;
+			bottom: 22px;
+			transform: translate(-50%, 90px);
+			background: #14213d;
+			color: #fff;
+			padding: 11px 20px;
+			border-radius: 14px;
+			font-size: 13.5px;
+			font-weight: 600;
+			z-index: 2000;
+			opacity: 0;
+			transition: transform .3s, opacity .3s;
+		}
+
+		.toast.show {
+			transform: translate(-50%, 0);
+			opacity: 1;
+		}
+
+		#pdfStage {
+			position: fixed;
+			left: -12000px;
+			top: 0;
+		}
+
+		/* mobile */
+		@media (max-width: 1020px) {
+			.layout {
+				grid-template-columns: 1fr;
+			}
+
+			.pv-wrap {
+				position: static;
+			}
+
+			#formBody,
+			#pvPages {
+				max-height: none;
+			}
+
+			.topbar {
+				padding: 6px 12px;
+			}
+
+			.wrap {
+				padding: 12px 10px 90px;
+			}
+
+			.mob-bar {
+				display: flex !important;
+			}
+		}
+
+		.mob-bar {
+			display: none;
+			position: fixed;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			z-index: 70;
+			gap: 8px;
+			padding: 10px 12px;
+			background: rgba(255, 255, 255, .9);
+			backdrop-filter: blur(16px);
+			border-top: 1px solid var(--bd);
+		}
+
+		.mob-bar .btn {
+			flex: 1;
+			justify-content: center;
+		}
+
+		@media print {
+
+			.topbar,
+			.wrap,
+			.modal,
+			.mob-bar {
+				display: none !important;
+			}
+		}
+	</style>
+
+<style id="affidavitQuillEditorStyles">
+  .cf-editor .ql-toolbar.ql-snow { border: 0; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+  .cf-editor .ql-container.ql-snow { border: 0; font-family: Inter, "Noto Sans Malayalam", sans-serif; font-size: 14px; }
+  .cf-editor .ql-editor { min-height: 145px; line-height: 1.65; }
+  .cf-editor .ql-editor.ql-blank::before { color: #94a3b8; font-style: normal; }
+  .custom-aff .ql-align-center { text-align: center; }
+  .custom-aff .ql-align-right { text-align: right; }
+  .custom-aff .ql-align-justify { text-align: justify; }
+  .custom-aff ol { list-style-type: decimal; padding-left: 1.5em; }
+  .custom-aff ul { list-style-type: disc; padding-left: 1.5em; }
+  .custom-aff blockquote { border-left: 3px solid #cbd5e1; margin: 8px 0; padding-left: 12px; color: #475569; }
+  .custom-aff a { color: #1d4ed8; text-decoration: underline; }
+  @media print { .custom-aff .ql-align-center { text-align: center; } .custom-aff .ql-align-right { text-align: right; } .custom-aff .ql-align-justify { text-align: justify; } }
+</style>
+</head>
+
+<body>
+
+	<div class="topbar">
+		<img src="/akshaya-logo.png" alt="" onerror="this.style.visibility='hidden'">
+		<div class="tb-title">
+			<h1>Affidavit Writer</h1>
+			<span>Fill, preview, print or download affidavits &amp; passport annexures</span>
+		</div>
+		<a class="back" href="/dashboard" target="_top"><i class="fa-solid fa-arrow-left"></i> Back</a>
+	</div>
+
+	<div class="wrap">
+
+		<div class="chooser">
+			<label for="affSelect"><i class="fa-solid fa-file-signature"></i> Select affidavit</label>
+			<select id="affSelect"></select>
+			<small id="affSub"></small><button type="button" class="btn" id="customFormBtn" style="display:none">＋ Add new form</button>
+		</div>
+
+		<div class="layout">
+
+			<section class="panel">
+				<div class="p-head">
+					<h2 id="formTitle">Details</h2>
+					<label class="ml-sw" id="mlWrap" title="Type English and pick the Malayalam word">
+						<input type="checkbox" id="mlSwitch" checked>
+						<span class="tg"></span>
+						<span>English → മലയാളം</span>
+					</label>
+				</div>
+				<p class="ml-hint" id="mlHint"><b>Malayalam typing is on.</b> Type the name in English (e.g. <i>sajin</i>) and pick one of the Malayalam spellings: click it, use <b>↑ ↓</b>, or just press <b>Space</b> for the first. To <b>keep the English as typed</b>, pick the <b>Aa</b> row at the bottom of the list or press <b>Ctrl+Enter</b> (that word is then remembered and stays English next time). Letters followed by a digit (<i>KL01</i>) stay English automatically. Numeric fields are not converted.</p>
+				<p class="ml-hint" id="enHint" style="display:none"><b>English form.</b> Type in English. Fill the details on the left; the form text on the right fills in as you type. Words that do not apply (father / mother, he / she, I / We ...) are struck through, and reasons that do not apply get a cross mark.</p>
+				<div id="formBody"></div>
+			</section>
+
+			<section class="panel pv-wrap">
+				<div class="p-head">
+					<h2>Live preview</h2>
+					<div class="pv-bar">
+						<button type="button" class="btn" id="btnPreview"><i class="fa-solid fa-expand"></i> Preview</button>
+						<button type="button" class="btn" id="btnPrint"><i class="fa-solid fa-print"></i> Print</button>
+						<button type="button" class="btn pri" id="btnPdf"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+						<button type="button" class="btn dng" id="btnReset" title="Clear all"><i class="fa-solid fa-rotate-left"></i></button>
+					</div>
+				</div>
+				<div id="pvPages"></div>
+			</section>
+
+		</div>
+	</div>
+
+	<div class="mob-bar">
+		<button type="button" class="btn" onclick="document.getElementById('btnPreview').click()"><i class="fa-solid fa-expand"></i> Preview</button>
+		<button type="button" class="btn" onclick="document.getElementById('btnPrint').click()"><i class="fa-solid fa-print"></i> Print</button>
+		<button type="button" class="btn pri" onclick="document.getElementById('btnPdf').click()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+	</div>
+
+	<div class="modal" id="pvModal">
+		<div class="m-bar">
+			<h3>Preview</h3>
+			<button type="button" class="btn" id="pvPrint"><i class="fa-solid fa-print"></i> Print</button>
+			<button type="button" class="btn pri" id="pvPdf"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+			<button type="button" class="btn" id="pvClose"><i class="fa-solid fa-xmark"></i> Close</button>
+		</div>
+		<div id="pvModalBody"></div>
+	</div>
+
+	<div id="pdfStage"></div>
+	<div class="toast" id="toast"></div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script>
+		window.AFF_CFG = {
+			base: 'https://akshayaapp.com/assets/affidavit/',
+			translitUrl: 'https://akshayaapp.com/affidavit_generator/translit'
+		};
+	</script>
+	<script src="/affidavit-writer/js/affidavit-defs.js"></script>
+	<script src="/affidavit-writer/js/affidavit-annexures.js"></script>
+	<script src="/affidavit-writer/js/affidavit-onesame.js"></script>
+	<script src="/affidavit-writer/js/official-pdf-forms.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+	<script src="/affidavit-writer/js/custom-forms.js"></script>
+	<script src="/affidavit-writer/js/affidavit-generator.js"></script>
+
+<script>if(!localStorage.getItem("loggedInUser")){location.href="/login";}</script>
+</body>
+
+</html>

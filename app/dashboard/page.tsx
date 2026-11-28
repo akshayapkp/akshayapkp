@@ -1,13 +1,11 @@
 "use client";
 
 import SSLCCalculatorTool from "./tools/SSLCCalculatorTool";
-import CashCounterTool from "./tools/CashCounterTool";
 import PassportSize from "./tools/PassportSize";
 import PhotoStudioTool from "./tools/PhotoStudioTool";
 import PDFToolkitTool from "./tools/PDFTool";
 import LandAreaConverterTool from "./tools/ConverterTool";
 import ImageToTextTool from "./tools/ImageToText";
-import CalculatorTool from "./tools/calculatol";
 import ResumeBuilder from "./tools/ResumeBuilder";
 import AadhaarStatusPage from "./tools/aadhaar-status/page";
 import AadhaarNameChangePage from "./tools/aadhaar-name-change/page";
@@ -1171,7 +1169,6 @@ export default function DashboardPage() {
   const [showAllPendingCredits, setShowAllPendingCredits] = useState(false);
 
   // Popup States for Tools
-  const [showCashCounterModal, setShowCashCounterModal] = useState(false);
   const [showSslcModal, setShowSslcModal] = useState(false);
   const [showPhotoStudioModal, setShowPhotoStudioModal] = useState(false);
   const [showPassportToolModal, setShowPassportToolModal] = useState(false);
@@ -1179,7 +1176,6 @@ export default function DashboardPage() {
   const [showTranslatorModal, setShowTranslatorModal] = useState(false);
   const [showConverterModal, setShowConverterModal] = useState(false);
   const [showImageToTextModal, setShowImageToTextModal] = useState(false);
-  const [showCalculatorModal, setShowCalculatorModal] = useState(false);
   const [showResumeBuilderModal, setShowResumeBuilderModal] = useState(false);
 
   // The Resume Builder already has two intentional inner scroll areas
@@ -1263,20 +1259,6 @@ export default function DashboardPage() {
       isInternal: true,
     },
     {
-      id: 5,
-      name: "Calculator",
-      url: "calculator-modal",
-      bgColor: "from-amber-500 to-amber-600",
-      isInternal: true,
-    },
-    {
-      id: 6,
-      name: "Cash Counter",
-      url: "cash-counter-modal",
-      bgColor: "from-emerald-500 to-emerald-600",
-      isInternal: true,
-    },
-    {
       id: 7,
       name: "Passport Size",
       url: "passport-size-modal",
@@ -1314,15 +1296,22 @@ export default function DashboardPage() {
     {
   id: 11,
   name: "Resume Builder",
-  url: "resume-builder-modal",
+  url: "/resume-builder",
   bgColor: "from-cyan-500 to-blue-600",
   isInternal: true,
 },
     {
       id: "income-affidavit",
-      name: "Income Affidavit",
-      url: "income-affidavit-modal",
+      name: "Income Update",
+      url: "/income-update",
       bgColor: "from-violet-600 to-fuchsia-600",
+      isInternal: true,
+    },
+    {
+      id: "affidavit-form-writer",
+      name: "Affidavit & Form Writer",
+      url: "/affidavit-writer",
+      bgColor: "from-sky-600 to-blue-700",
       isInternal: true,
     },
     {
@@ -1404,6 +1393,15 @@ const loadDashboardData = () => {
             for (const item of parsedOrder) {
               const legacyUrl = String(item?.url || "");
               const legacyName = String(item?.name || "").toLowerCase();
+              const isRemovedQuickTool =
+                item?.isInternal !== false &&
+                (
+                  legacyUrl === "calculator-modal" ||
+                  legacyUrl === "cash-counter-modal" ||
+                  legacyName === "calculator" ||
+                  legacyName === "cash counter"
+                );
+              if (isRemovedQuickTool) continue;
               const isLegacyPhotoTool =
                 legacyUrl === "crop-resize-modal" ||
                 legacyUrl === "psc-modal" ||
@@ -1420,6 +1418,19 @@ const loadDashboardData = () => {
                   });
                   photoStudioAdded = true;
                 }
+                continue;
+              }
+              // Move legacy modal cards to their standalone routes so saved layouts do not keep launching old modals.
+              if (legacyUrl === "resume-builder-modal" || legacyName === "resume builder") {
+                normalizedOrder.push({ ...item, name: "Resume Builder", url: "/resume-builder", isInternal: true });
+                continue;
+              }
+              if (legacyUrl === "income-affidavit-modal" || legacyName === "income affidavit" || legacyName === "income update") {
+                normalizedOrder.push({ ...item, name: "Income Update", url: "/income-update", isInternal: true });
+                continue;
+              }
+              if (legacyUrl === "/dashboard/affidavit-writer" || legacyUrl === "/affidavit-writer" || legacyName === "affidavit & form writer") {
+                normalizedOrder.push({ ...item, name: "Affidavit & Form Writer", url: "/affidavit-writer", isInternal: true });
                 continue;
               }
               normalizedOrder.push(item);
@@ -2034,7 +2045,6 @@ setServiceDirectory(filteredWithUrls);
   return (
     <div className="relative min-h-full overflow-x-hidden bg-transparent p-2 sm:p-3 lg:p-4 xl:p-5">
       <div className="smart-akshaya-tool-layer contents">
-        {showCashCounterModal && <CashCounterTool onClose={() => setShowCashCounterModal(false)} />}
         {showSslcModal && <SSLCCalculatorTool onClose={() => setShowSslcModal(false)} />}
         {showPhotoStudioModal && <PhotoStudioTool onClose={() => setShowPhotoStudioModal(false)} />}
         {showPassportToolModal && <PassportSize onClose={() => setShowPassportToolModal(false)} />}
@@ -2042,16 +2052,6 @@ setServiceDirectory(filteredWithUrls);
         {showTranslatorModal && <TranslatorTool onClose={() => setShowTranslatorModal(false)} />}
         {showConverterModal && <LandAreaConverterTool onClose={() => setShowConverterModal(false)} />}
         {showImageToTextModal && <ImageToTextTool onClose={() => setShowImageToTextModal(false)} />}
-        {showCalculatorModal && (
-          <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[5px] sm:p-6"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setShowCalculatorModal(false);
-            }}
-          >
-            <CalculatorTool onClose={() => setShowCalculatorModal(false)} />
-          </div>
-        )}
         {showIncomeAffidavitModal && <IncomeAffidavitTool onClose={() => setShowIncomeAffidavitModal(false)} />}
         {showAadhaarGazetteModal && <AadhaarGazetteTool onClose={() => setShowAadhaarGazetteModal(false)} />}
         {showServiceDocumentGeneratorModal && <ServiceDocumentGeneratorTool onClose={() => setShowServiceDocumentGeneratorModal(false)} />}
@@ -2426,7 +2426,6 @@ setServiceDirectory(filteredWithUrls);
               // Only built-in dashboard tools may be routed to local modals.
               // User-added Quick Hub links should always follow their URL.
               const isInternalTool = tool.isInternal;
-              const isCashCounter = isInternalTool && (tool.name.toLowerCase().includes("cash") || (tool.url && tool.url.toLowerCase().includes("cash")));
               const isSslc = isInternalTool && (tool.name.toLowerCase().includes("sslc") || (tool.url && tool.url.toLowerCase().includes("sslc")));
               const isPhotoStudio = isInternalTool && (tool.url === "photo-studio-modal" || tool.name.toLowerCase().includes("photo studio"));
               const isCropResize = isInternalTool && (tool.name.toLowerCase().includes("crop") || (tool.url && tool.url.toLowerCase().includes("crop")));
@@ -2436,7 +2435,6 @@ setServiceDirectory(filteredWithUrls);
               const isTranslatorTool = isInternalTool && (tool.name.toLowerCase().includes("translator") || tool.url === "translator-modal");
               const isConverterTool = isInternalTool && (tool.name.toLowerCase().includes("converter") || tool.url === "converter-modal");
               const isImageToTextTool = isInternalTool && (tool.name.toLowerCase().includes("image") || tool.url === "image-to-text-modal");
-              const isCalculatorTool = isInternalTool && (tool.name.toLowerCase().includes("calculator") || tool.url === "calculator-modal");
               const isResumeBuilderTool = isInternalTool && (tool.url === "resume-builder-modal");
               const isIncomeAffidavitTool = isInternalTool && (tool.url === "income-affidavit-modal");
               const isAadhaarGazetteTool = isInternalTool && (tool.url === "aadhaar-gazette-modal");
@@ -2456,7 +2454,6 @@ setServiceDirectory(filteredWithUrls);
                   <a
                     href={
                       isCustomizing ||
-                      isCashCounter ||
                       isSslc ||
                       isPhotoStudio ||
                       isCropResize ||
@@ -2465,7 +2462,6 @@ setServiceDirectory(filteredWithUrls);
                       isPdfTool ||
                       isConverterTool ||
                       isImageToTextTool ||
-                      isCalculatorTool ||
                       isResumeBuilderTool ||
                       isIncomeAffidavitTool ||
                       isAadhaarGazetteTool ||
@@ -2479,10 +2475,7 @@ setServiceDirectory(filteredWithUrls);
                         e.preventDefault();
                         return;
                       }
-                      if (isCashCounter) {
-                        e.preventDefault();
-                        setShowCashCounterModal(true);
-                      } else if (isSslc) {
+                      if (isSslc) {
                         e.preventDefault();
                         setShowSslcModal(true);
                       } else if (isPhotoStudio || isCropResize || isPsc) {
@@ -2503,9 +2496,6 @@ setServiceDirectory(filteredWithUrls);
                       } else if (isImageToTextTool) {
                         e.preventDefault();
                         setShowImageToTextModal(true);
-                      } else if (isCalculatorTool) {
-                        e.preventDefault();
-                        setShowCalculatorModal(true);
                       } else if (isResumeBuilderTool) {
                         e.preventDefault();
                         setShowResumeBuilderModal(true);
@@ -2547,7 +2537,6 @@ setServiceDirectory(filteredWithUrls);
       <span className="text-xs opacity-80">
   {(
     tool.isInternal ||
-    isCashCounter ||
     isSslc ||
     isCropResize ||
     isPsc ||
@@ -2555,7 +2544,6 @@ setServiceDirectory(filteredWithUrls);
     isPdfTool ||
     isConverterTool ||
     isImageToTextTool ||
-    isCalculatorTool ||
     isResumeBuilderTool ||
     isIncomeAffidavitTool ||
     isAadhaarGazetteTool ||

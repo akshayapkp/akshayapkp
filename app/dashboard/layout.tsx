@@ -351,6 +351,7 @@ export default function DashboardLayout({
 
       const allowed =
         pathname === "/dashboard" ||
+        pathname === "/dashboard/affidavit-writer" ||
         filteredMenus.some((m) => m.path === pathname);
 
       if (!allowed) {
@@ -367,6 +368,12 @@ export default function DashboardLayout({
     };
   }, [pathname, router]);
 
+
+  useEffect(() => {
+    const writerMode = pathname === "/dashboard/affidavit-writer";
+    document.body.classList.toggle("affidavit-writer-mode", writerMode);
+    return () => document.body.classList.remove("affidavit-writer-mode");
+  }, [pathname]);
 
   // Keep mobile drawer behavior separate from desktop hover behavior.
   useEffect(() => {
@@ -516,6 +523,25 @@ export default function DashboardLayout({
       </div>
 
       <style jsx global>{`
+        body.affidavit-writer-mode .dashboard-sidebar-shell,
+        body.affidavit-writer-mode [aria-label="Collapsed navigation"],
+        body.affidavit-writer-mode button[aria-label="Collapse and unpin sidebar"],
+        body.affidavit-writer-mode button[aria-label="Expand and pin sidebar"],
+        body.affidavit-writer-mode button[aria-label="Open navigation"],
+        body.affidavit-writer-mode button[aria-label="Close navigation"] {
+          display: none !important;
+        }
+        body.affidavit-writer-mode .dashboard-surface {
+          height: 100dvh !important;
+          min-height: 100dvh !important;
+        }
+        body.affidavit-writer-mode .dashboard-content {
+          height: 100dvh !important;
+          min-height: 100dvh !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          overflow: hidden !important;
+        }
         @keyframes sidebarArrow {
           0%, 100% { transform: translateX(-1px); opacity: .75; }
           50% { transform: translateX(2px); opacity: 1; }
