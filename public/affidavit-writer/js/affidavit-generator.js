@@ -498,11 +498,19 @@
 		return '<div class="afp" style="width:' + (pg.w * k).toFixed(2) + 'px;height:' + (pg.h * k).toFixed(2) + 'px">' + inner + '</div>';
 	}
 
+	/* Background image URL: existing forms give a bare filename that is resolved
+	   against the external CFG.base host; a page can instead give an absolute
+	   path/URL (starting with "/" or "http") to load an image bundled with this
+	   app itself (e.g. public/affidavit-writer/images/...), bypassing CFG.base. */
+	function pageImgSrc(pg) {
+		return /^(https?:)?\//.test(pg.img) ? pg.img : (CFG.base + pg.img);
+	}
+
 	function pageHtml(def, pi, k) {
 		if (def.render) return htmlPage(def, pi, k);
 		var pg = def.pages[pi];
 		var h = '<div class="afp" style="width:' + (pg.w * k).toFixed(2) + 'px;height:' + (pg.h * k).toFixed(2) + 'px">' +
-			'<img class="afbg" src="' + esc(CFG.base + pg.img) + '" alt="" draggable="false">';
+			'<img class="afbg" src="' + esc(pageImgSrc(pg)) + '" alt="" draggable="false">';
 		def.place.forEach(function(p) {
 			if (p.p !== pi) return;
 			if (p.table) {
