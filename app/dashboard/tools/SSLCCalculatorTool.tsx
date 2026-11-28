@@ -136,8 +136,7 @@ export default function SSLCCalculatorTool({ onClose }: { onClose?: () => void }
 
   return (
     <main className="pcv-page">
-      <header className="pcv-topbar"><div className="pcv-wrap pcv-bar">
-        <div className="pcv-brand"><span className="pcv-brand-mark">AS</span><span>Akshaya Smart</span></div>
+      <header className="pcv-topbar"><div className="pcv-wrap pcv-bar pcv-bar-standalone">
         <button type="button" className="pcv-chip" onClick={() => (onClose ? onClose() : router.push("/dashboard"))}><ArrowLeft size={15}/> Dashboard</button>
       </div></header>
       <div className="pcv-stage-wrap">
