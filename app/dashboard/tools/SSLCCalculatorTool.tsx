@@ -61,7 +61,7 @@ const groups: { label: string; items: Institution[] }[] = [
 const allInstitutions = groups.flatMap((g) => g.items);
 const basisLabels: Record<Basis, string> = { official: "Official rule", common: "Widely used rule. Confirm with your university.", estimate: "Estimate from grade points, not official marks" };
 
-export default function SSLCCalculatorTool() {
+export default function SSLCCalculatorTool({ onClose }: { onClose?: () => void } = {}) {
   const router = useRouter();
   const [type, setType] = useState("");
   const [grades, setGrades] = useState<Record<Grade, number>>(blankGrades);
@@ -138,7 +138,7 @@ export default function SSLCCalculatorTool() {
     <main className="pcv-page">
       <header className="pcv-topbar"><div className="pcv-wrap pcv-bar">
         <div className="pcv-brand"><span className="pcv-brand-mark">AS</span><span>Akshaya Smart</span></div>
-        <button type="button" className="pcv-chip" onClick={() => router.push("/dashboard")}><ArrowLeft size={15}/> Dashboard</button>
+        <button type="button" className="pcv-chip" onClick={() => (onClose ? onClose() : router.push("/dashboard"))}><ArrowLeft size={15}/> Dashboard</button>
       </div></header>
       <div className="pcv-stage-wrap">
         <form className="pcv-wrap pcv-stage" onSubmit={calculate} noValidate>
