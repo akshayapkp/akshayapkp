@@ -2,7 +2,7 @@ import SSLCCalculatorTool from "../tools/SSLCCalculatorTool";
 
 export default function PercentageConverterPage() {
   return (
-    <div className="h-full min-h-0 w-full overflow-hidden">
+    <div className="h-[100dvh] min-h-[100dvh] w-full overflow-hidden">
       <SSLCCalculatorTool />
     </div>
   );
